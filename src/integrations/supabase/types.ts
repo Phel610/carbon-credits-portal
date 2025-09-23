@@ -292,7 +292,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_overall_additionality_score: {
+        Args: {
+          baseline_approach_score: number
+          baseline_reasonableness_score: number
+          baseline_transparency_score: number
+          common_practice_score: number
+          green_flags: string[]
+          incentives_score: number
+          legal_considerations_score: number
+          red_flags: string[]
+          red_green_flags_score: number
+        }
+        Returns: number
+      }
     }
     Enums: {
       project_type:
