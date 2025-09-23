@@ -34,50 +34,50 @@ interface FormData {
 const questions = [
   {
     key: 'assumption_transparency',
-    label: 'Historical rates used in the counterfactual',
-    description: 'How reasonable are the historical rates and trends used to build the counterfactual scenario?',
+    label: 'Key Activity/Impact Rates',
+    description: 'How reasonable are the assumed activity levels or impact rates in the baseline scenario (e.g., energy demand growth, technology use, land-use change, resource consumption)?',
     options: [
-      { value: 'fully_transparent', label: 'Conservative rates with strong justification', score: 5 },
-      { value: 'mostly_transparent', label: 'Reasonable rates with good support', score: 4 },
-      { value: 'partially_transparent', label: 'Acceptable rates with some concerns', score: 3 },
-      { value: 'limited_transparency', label: 'Optimistic rates with weak support', score: 2 },
-      { value: 'opaque', label: 'Unrealistic or unjustified rates', score: 1 }
+      { value: 'fully_transparent', label: 'Conservative estimates well supported by historical or sector data', score: 5 },
+      { value: 'mostly_transparent', label: 'Reasonable estimates with good supporting evidence', score: 4 },
+      { value: 'partially_transparent', label: 'Moderately reasonable estimates with some evidence', score: 3 },
+      { value: 'limited_transparency', label: 'Questionable estimates with limited evidence', score: 2 },
+      { value: 'opaque', label: 'Unrealistic or unsupported estimates', score: 1 }
     ]
   },
   {
     key: 'benchmark_comparison',
-    label: 'Emission factors and stock values',
-    description: 'How appropriate are the emission factors and carbon stock values used in baseline calculations?',
+    label: 'Emission Factors and Performance Parameters',
+    description: 'How appropriate are the emission factors or performance parameters used in the baseline (e.g., grid emission factors, fuel characteristics, yield rates, efficiency levels)?',
     options: [
-      { value: 'excellent_alignment', label: 'Conservative factors from credible sources', score: 5 },
-      { value: 'good_alignment', label: 'Reasonable factors with good documentation', score: 4 },
-      { value: 'reasonable_alignment', label: 'Acceptable factors with minor concerns', score: 3 },
-      { value: 'poor_alignment', label: 'Questionable factors or poor sourcing', score: 2 },
-      { value: 'no_alignment', label: 'Inappropriate or unsupported factors', score: 1 }
+      { value: 'excellent_alignment', label: 'Scientifically robust and locally validated', score: 5 },
+      { value: 'good_alignment', label: 'Appropriate with good validation', score: 4 },
+      { value: 'reasonable_alignment', label: 'Reasonable with adequate validation', score: 3 },
+      { value: 'poor_alignment', label: 'Questionable with limited validation', score: 2 },
+      { value: 'no_alignment', label: 'Inappropriate or unvalidated', score: 1 }
     ]
   },
   {
     key: 'data_quality',
-    label: 'Whole-scenario construction',
-    description: 'How well is the complete baseline scenario constructed and integrated?',
+    label: 'Baseline Scenario Construction',
+    description: 'How credible is the overall construction of the baseline scenario?',
     options: [
-      { value: 'high_quality', label: 'Coherent scenario with conservative assumptions', score: 5 },
-      { value: 'good_quality', label: 'Well-constructed scenario with minor gaps', score: 4 },
-      { value: 'adequate_quality', label: 'Reasonable scenario with some inconsistencies', score: 3 },
-      { value: 'poor_quality', label: 'Poorly integrated scenario with significant issues', score: 2 },
-      { value: 'unreliable', label: 'Incoherent or unrealistic scenario construction', score: 1 }
+      { value: 'high_quality', label: 'Highly credible and conservative baseline', score: 5 },
+      { value: 'good_quality', label: 'Credible with reasonable assumptions', score: 4 },
+      { value: 'adequate_quality', label: 'Moderately credible baseline', score: 3 },
+      { value: 'poor_quality', label: 'Questionable baseline with concerning assumptions', score: 2 },
+      { value: 'unreliable', label: 'Implausible or inflated baseline scenario', score: 1 }
     ]
   },
   {
     key: 'validation_methods',
-    label: 'Without-project scenario realism',
-    description: 'How realistic and credible is the without-project baseline scenario?',
+    label: 'Counterfactual Scenario Credibility',
+    description: 'How realistic is the counterfactual "without-project" scenario?',
     options: [
-      { value: 'comprehensive', label: 'Highly realistic with strong supporting evidence', score: 5 },
-      { value: 'good_validation', label: 'Credible scenario with good validation', score: 4 },
-      { value: 'basic_validation', label: 'Reasonable scenario with basic support', score: 3 },
-      { value: 'limited_validation', label: 'Questionable realism or weak validation', score: 2 },
-      { value: 'no_validation', label: 'Unrealistic or unsupported scenario', score: 1 }
+      { value: 'comprehensive', label: 'Highly realistic and well supported by evidence', score: 5 },
+      { value: 'good_validation', label: 'Realistic with good justification', score: 4 },
+      { value: 'basic_validation', label: 'Moderately realistic', score: 3 },
+      { value: 'limited_validation', label: 'Questionable assumptions', score: 2 },
+      { value: 'no_validation', label: 'Unrealistic or unsupported counterfactual', score: 1 }
     ]
   }
 ];
@@ -246,7 +246,7 @@ const BaselineReasonablenessAssessment = ({ assessmentId, projectData, onComplet
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>1.5.2 Baseline Assumption Reasonableness:</strong> This step evaluates the realism and conservatism of the assumptions used to construct the baseline scenario, focusing on historical rates, emission factors, scenario integration, and overall credibility.
+          <strong>1.5.2 Baseline Assumption Reasonableness:</strong> Assessment of how reasonable and credible the project's baseline scenario assumptions are. Strong assumptions are supported by data, lean toward conservative estimates, and reflect a realistic "without-project" situation.
         </AlertDescription>
       </Alert>
 
@@ -304,7 +304,7 @@ const BaselineReasonablenessAssessment = ({ assessmentId, projectData, onComplet
           <CardHeader>
             <CardTitle>Supporting Evidence</CardTitle>
             <CardDescription>
-              Document baseline assumptions, benchmark comparisons, data sources, and validation methods
+              Upload or reference the data sources, studies, or analysis that support the assumptions used in the baseline scenario.
             </CardDescription>
           </CardHeader>
           <CardContent>
