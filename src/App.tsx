@@ -11,6 +11,9 @@ import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
 import NewProject from "./pages/NewProject";
 import Assessments from "./pages/Assessments";
+import NewAssessment from "./pages/NewAssessment";
+import AssessmentDetail from "./pages/AssessmentDetail";
+import AdditionalityAssessment from "./pages/AdditionalityAssessment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +46,21 @@ const App = () => (
             <Route path="/assessments" element={
               <ProtectedRoute>
                 <Assessments />
+              </ProtectedRoute>
+            } />
+            <Route path="/assessments/new" element={
+              <ProtectedRoute>
+                <NewAssessment />
+              </ProtectedRoute>
+            } />
+            <Route path="/assessments/:id" element={
+              <ProtectedRoute>
+                <AssessmentDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/assessments/:id/additionality" element={
+              <ProtectedRoute>
+                <AdditionalityAssessment />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
