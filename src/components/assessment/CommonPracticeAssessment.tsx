@@ -10,6 +10,10 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { Info, Save, Loader2, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { CriterionHelp } from '@/components/help/CriterionHelp';
+import { ScoringImpact } from '@/components/help/ScoringImpact';
+import { HelpTooltip } from '@/components/help/HelpTooltip';
+import { criteriaHelpContent } from '@/components/help/helpContent';
 
 interface CommonPracticeAssessmentProps {
   assessmentId: string;
