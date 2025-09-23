@@ -144,37 +144,37 @@ const AssessmentDetail = () => {
   const criteriaData = [
     {
       key: 'incentives_score',
-      title: '1.1 Incentives without Carbon Credits',
+      title: '1.1 Financial and Practical Drivers',
       description: 'Financial attractiveness and barrier analysis',
       score: scores.incentives_score
     },
     {
       key: 'common_practice_score',
-      title: '1.2 Common Practice',
+      title: '1.2 Market Prevalence',
       description: 'Market penetration assessment',
       score: scores.common_practice_score
     },
     {
       key: 'legal_considerations_score',
-      title: '1.3 Legal Considerations',
+      title: '1.3 Regulatory Context',
       description: 'Regulatory requirements evaluation',
       score: scores.legal_considerations_score
     },
     {
       key: 'baseline_approach_score',
-      title: '1.4 Baseline Approach',
+      title: '1.4 Baseline Method Choice',
       description: 'Methodology rigor and conservatism',
       score: scores.baseline_approach_score
     },
     {
       key: 'baseline_reasonableness_score',
-      title: '1.5 Baseline Reasonableness',
+      title: '1.5 Baseline Documentation & Assumptions',
       description: 'Transparency and assumption validation',
       score: scores.baseline_reasonableness_score
     },
     {
       key: 'red_green_flags_score',
-      title: '1.6 Red and Green Flags',
+      title: '1.6 External Evidence Signals',
       description: 'Academic literature and industry analysis',
       score: scores.red_green_flags_score
     }
@@ -343,7 +343,7 @@ const AssessmentDetail = () => {
                 <CardHeader>
                   <CardTitle className="text-red-800 flex items-center gap-2">
                     <AlertTriangle className="h-5 w-5" />
-                    Red Flags
+                    Negative Signals
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -361,7 +361,7 @@ const AssessmentDetail = () => {
                 <CardHeader>
                   <CardTitle className="text-green-800 flex items-center gap-2">
                     <CheckCircle className="h-5 w-5" />
-                    Green Flags
+                    Positive Signals
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

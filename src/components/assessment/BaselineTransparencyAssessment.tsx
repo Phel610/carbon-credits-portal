@@ -213,7 +213,7 @@ export default function BaselineTransparencyAssessment({
     <div className="space-y-6">
       <Alert>
         <AlertDescription>
-          <strong>1.5.1 Baseline Transparency:</strong> This assessment evaluates how transparent the project is in documenting its baseline scenario approach, methodology, data sources, and key assumptions. Clear documentation is essential for objective assessment of baseline credibility.
+          <strong>1.5.1 Baseline Documentation Openness:</strong> This assessment evaluates how transparent the project is in documenting its baseline scenario approach, methodology, data sources, and key assumptions. Clear documentation is essential for objective assessment of baseline credibility.
         </AlertDescription>
       </Alert>
 

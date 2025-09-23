@@ -180,17 +180,17 @@ const NewAssessment = () => {
               <div>
                 <h4 className="font-medium mb-2">Assessment Covers:</h4>
                 <ul className="space-y-1 text-muted-foreground">
-                  <li>• Incentives without Carbon Credits</li>
-                  <li>• Common Practice Analysis</li>
-                  <li>• Legal Considerations</li>
+                  <li>• Financial and Practical Drivers</li>
+                  <li>• Market Prevalence Analysis</li>
+                  <li>• Regulatory Context</li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-medium mb-2">Baseline Evaluation:</h4>
                 <ul className="space-y-1 text-muted-foreground">
-                  <li>• Baseline Approach Methodology</li>
-                  <li>• Baseline Reasonableness</li>
-                  <li>• Red & Green Flags Analysis</li>
+                  <li>• Baseline Method Choice</li>
+                  <li>• Baseline Documentation & Assumptions</li>
+                  <li>• External Evidence Signals</li>
                 </ul>
               </div>
             </div>
@@ -330,12 +330,12 @@ const NewAssessment = () => {
             <CardContent>
               <div className="space-y-3">
                 {[
-                  { step: 1, title: "Incentives Analysis", desc: "Financial attractiveness & barriers" },
-                  { step: 2, title: "Common Practice", desc: "Market penetration assessment" },
-                  { step: 3, title: "Legal Requirements", desc: "Regulatory considerations" },
-                  { step: 4, title: "Baseline Approach", desc: "Methodology evaluation" },
-                  { step: 5, title: "Baseline Reasonableness", desc: "Assumptions validation" },
-                  { step: 6, title: "Red & Green Flags", desc: "Literature review" }
+                  { step: 1, title: "Financial & Practical Drivers", desc: "Financial attractiveness & barriers" },
+                  { step: 2, title: "Market Prevalence", desc: "Market penetration assessment" },
+                  { step: 3, title: "Regulatory Context", desc: "Regulatory considerations" },
+                  { step: 4, title: "Baseline Method Choice", desc: "Methodology evaluation" },
+                  { step: 5, title: "Baseline Documentation & Assumptions", desc: "Assumptions validation" },
+                  { step: 6, title: "External Evidence Signals", desc: "Literature review" }
                 ].map((item) => (
                   <div key={item.step} className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-medium text-sm">

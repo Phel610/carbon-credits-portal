@@ -161,7 +161,7 @@ const IncentivesAssessment = ({ assessmentId, projectData, onCompletion, isCompl
     const financialScore = calculateFinancialAttractiveness();
     const barrierScore = calculateBarrierAnalysis();
     
-    // Use highest score with 75% weight, other with 25% (industry-standard inverse weighting methodology)
+    // Use balancing rule that gives more weight to the weaker side
     const highestScore = Math.max(financialScore, barrierScore);
     const lowestScore = Math.min(financialScore, barrierScore);
     
@@ -228,11 +228,11 @@ const IncentivesAssessment = ({ assessmentId, projectData, onCompletion, isCompl
 
         {/* Criterion Help */}
         <CriterionHelp
-          title="1.1 Incentives without Carbon Credits"
-          rationale={criteriaHelpContent.incentives.rationale}
-          scoringLogic={criteriaHelpContent.incentives.scoringLogic}
-          keyPoints={criteriaHelpContent.incentives.keyPoints}
-          relatedCriteria={criteriaHelpContent.incentives.relatedCriteria}
+          title="1.1 Financial and Practical Drivers"
+          rationale={criteriaHelpContent.financialPracticalDrivers.rationale}
+          scoringLogic={criteriaHelpContent.financialPracticalDrivers.scoringLogic}
+          keyPoints={criteriaHelpContent.financialPracticalDrivers.keyPoints}
+          relatedCriteria={criteriaHelpContent.financialPracticalDrivers.relatedCriteria}
         />
 
         {/* Overview Alert */}

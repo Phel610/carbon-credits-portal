@@ -173,15 +173,15 @@ export default function OverallScoreDisplay({ assessmentId }: OverallScoreDispla
           <CardTitle>Detailed Score Breakdown</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Activities Additionality (1.1-1.3) */}
+          {/* Project Drivers (1.1-1.3) */}
           <div className="space-y-2">
             <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-              Activities Additionality
+              Project Drivers
             </h4>
             
             {scoreData.incentives_score && (
               <div className="flex items-center justify-between">
-                <span>1.1 Incentives without Carbon Credits</span>
+                <span>1.1 Financial and Practical Drivers</span>
                 <Badge variant="outline" className={getScoreColor(scoreData.incentives_score)}>
                   {scoreData.incentives_score.toFixed(1)}
                 </Badge>
@@ -190,7 +190,7 @@ export default function OverallScoreDisplay({ assessmentId }: OverallScoreDispla
             
             {scoreData.common_practice_score && (
               <div className="flex items-center justify-between">
-                <span>1.2 Common Practice</span>
+                <span>1.2 Market Prevalence</span>
                 <Badge variant="outline" className={getScoreColor(scoreData.common_practice_score)}>
                   {scoreData.common_practice_score.toFixed(1)}
                 </Badge>
@@ -199,7 +199,7 @@ export default function OverallScoreDisplay({ assessmentId }: OverallScoreDispla
             
             {scoreData.legal_considerations_score && (
               <div className="flex items-center justify-between">
-                <span>1.3 Legal Considerations</span>
+                <span>1.3 Regulatory Context</span>
                 <Badge variant="outline" className={getScoreColor(scoreData.legal_considerations_score)}>
                   {scoreData.legal_considerations_score.toFixed(1)}
                 </Badge>
@@ -209,15 +209,15 @@ export default function OverallScoreDisplay({ assessmentId }: OverallScoreDispla
 
           <Separator />
 
-          {/* Baseline Credibility (1.4-1.5) */}
+          {/* Baseline Quality (1.4-1.5) */}
           <div className="space-y-2">
             <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-              Baseline Credibility
+              Baseline Quality
             </h4>
             
             {scoreData.baseline_approach_score && (
               <div className="flex items-center justify-between">
-                <span>1.4 Baseline Approach</span>
+                <span>1.4 Baseline Method Choice</span>
                 <Badge variant="outline" className={getScoreColor(scoreData.baseline_approach_score)}>
                   {scoreData.baseline_approach_score.toFixed(1)}
                 </Badge>
@@ -226,7 +226,7 @@ export default function OverallScoreDisplay({ assessmentId }: OverallScoreDispla
             
             {scoreData.baseline_transparency_score && (
               <div className="flex items-center justify-between">
-                <span>1.5.1 Baseline Transparency</span>
+                <span>1.5.1 Baseline Documentation Openness</span>
                 <Badge variant="outline" className={getScoreColor(scoreData.baseline_transparency_score)}>
                   {scoreData.baseline_transparency_score.toFixed(1)}
                 </Badge>
@@ -235,7 +235,7 @@ export default function OverallScoreDisplay({ assessmentId }: OverallScoreDispla
             
             {scoreData.baseline_reasonableness_score && (
               <div className="flex items-center justify-between">
-                <span>1.5.2 Baseline Assumptions</span>
+                <span>1.5.2 Baseline Assumption Reasonableness</span>
                 <Badge variant="outline" className={getScoreColor(scoreData.baseline_reasonableness_score)}>
                   {scoreData.baseline_reasonableness_score.toFixed(1)}
                 </Badge>
@@ -245,15 +245,15 @@ export default function OverallScoreDisplay({ assessmentId }: OverallScoreDispla
 
           <Separator />
 
-          {/* Red/Green Flags */}
+          {/* External Evidence Signals */}
           {scoreData.red_green_flags_score && (
             <div className="space-y-2">
               <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-                Additional Factors
+                External Evidence Adjustment
               </h4>
               
               <div className="flex items-center justify-between">
-                <span>1.6 Red and Green Flags</span>
+                <span>1.6 External Evidence Signals</span>
                 <Badge variant="outline" className={getScoreColor(scoreData.red_green_flags_score)}>
                   {scoreData.red_green_flags_score.toFixed(1)}
                 </Badge>
@@ -263,12 +263,12 @@ export default function OverallScoreDisplay({ assessmentId }: OverallScoreDispla
                 <div className="mt-2 space-y-1">
                   {scoreData.red_flags && scoreData.red_flags.length > 0 && (
                     <div className="text-sm text-red-600">
-                      <strong>Red Flags:</strong> {scoreData.red_flags.join(', ')}
+                      <strong>Negative Signals:</strong> {scoreData.red_flags.join(', ')}
                     </div>
                   )}
                   {scoreData.green_flags && scoreData.green_flags.length > 0 && (
                     <div className="text-sm text-green-600">
-                      <strong>Green Flags:</strong> {scoreData.green_flags.join(', ')}
+                      <strong>Positive Signals:</strong> {scoreData.green_flags.join(', ')}
                     </div>
                   )}
                 </div>
@@ -282,7 +282,7 @@ export default function OverallScoreDisplay({ assessmentId }: OverallScoreDispla
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Scoring Methodology:</strong> The overall score uses industry-standard inverse weighting where activities additionality (1.1-1.3) and baseline credibility (1.4-1.5) are inversely weighted. The component with the lower score receives 75% weight to ensure comprehensive evaluation across all criteria. Red/Green flags provide additional adjustments.
+          <strong>Scoring Methodology:</strong> We use a balancing rule that gives more weight to the weaker side of the results. Project drivers (1.1-1.3) and baseline quality (1.4-1.5) are combined using this rule where the component with the lower score receives 75% weight to ensure comprehensive evaluation across all criteria. External evidence signals provide additional adjustments.
         </AlertDescription>
       </Alert>
     </div>
