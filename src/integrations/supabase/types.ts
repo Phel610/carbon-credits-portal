@@ -14,7 +14,279 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      additionality_scores: {
+        Row: {
+          assessment_id: string
+          barrier_analysis_score: number | null
+          baseline_approach_score: number | null
+          baseline_assumptions_score: number | null
+          baseline_reasonableness_score: number | null
+          baseline_transparency_score: number | null
+          common_practice_score: number | null
+          created_at: string
+          financial_attractiveness_score: number | null
+          green_flags: string[] | null
+          id: string
+          incentives_score: number | null
+          legal_considerations_score: number | null
+          market_penetration_score: number | null
+          overall_additionality_score: number | null
+          red_flags: string[] | null
+          red_green_flags_score: number | null
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          barrier_analysis_score?: number | null
+          baseline_approach_score?: number | null
+          baseline_assumptions_score?: number | null
+          baseline_reasonableness_score?: number | null
+          baseline_transparency_score?: number | null
+          common_practice_score?: number | null
+          created_at?: string
+          financial_attractiveness_score?: number | null
+          green_flags?: string[] | null
+          id?: string
+          incentives_score?: number | null
+          legal_considerations_score?: number | null
+          market_penetration_score?: number | null
+          overall_additionality_score?: number | null
+          red_flags?: string[] | null
+          red_green_flags_score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          barrier_analysis_score?: number | null
+          baseline_approach_score?: number | null
+          baseline_assumptions_score?: number | null
+          baseline_reasonableness_score?: number | null
+          baseline_transparency_score?: number | null
+          common_practice_score?: number | null
+          created_at?: string
+          financial_attractiveness_score?: number | null
+          green_flags?: string[] | null
+          id?: string
+          incentives_score?: number | null
+          legal_considerations_score?: number | null
+          market_penetration_score?: number | null
+          overall_additionality_score?: number | null
+          red_flags?: string[] | null
+          red_green_flags_score?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "additionality_scores_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: true
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_responses: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          criterion_code: string
+          data_sources: string[] | null
+          evidence_text: string | null
+          id: string
+          question_key: string
+          response_boolean: boolean | null
+          response_numeric: number | null
+          response_value: string | null
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          criterion_code: string
+          data_sources?: string[] | null
+          evidence_text?: string | null
+          id?: string
+          question_key: string
+          response_boolean?: boolean | null
+          response_numeric?: number | null
+          response_value?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          criterion_code?: string
+          data_sources?: string[] | null
+          evidence_text?: string | null
+          id?: string
+          question_key?: string
+          response_boolean?: boolean | null
+          response_numeric?: number | null
+          response_value?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_responses_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessments: {
+        Row: {
+          assessment_type: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          integrity_rating: string | null
+          name: string
+          overall_score: number | null
+          project_id: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assessment_type?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          integrity_rating?: string | null
+          name: string
+          overall_score?: number | null
+          project_id: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assessment_type?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          integrity_rating?: string | null
+          name?: string
+          overall_score?: number | null
+          project_id?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      countries: {
+        Row: {
+          code: string
+          income_level: string | null
+          name: string
+          region: string | null
+        }
+        Insert: {
+          code: string
+          income_level?: string | null
+          name: string
+          region?: string | null
+        }
+        Update: {
+          code?: string
+          income_level?: string | null
+          name?: string
+          region?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          organization: string | null
+          role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          organization?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          organization?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          country: string
+          created_at: string
+          description: string | null
+          developer_type: string | null
+          id: string
+          location_type: string | null
+          name: string
+          project_size: string | null
+          project_type: Database["public"]["Enums"]["project_type"]
+          start_date: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          country: string
+          created_at?: string
+          description?: string | null
+          developer_type?: string | null
+          id?: string
+          location_type?: string | null
+          name: string
+          project_size?: string | null
+          project_type: Database["public"]["Enums"]["project_type"]
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          description?: string | null
+          developer_type?: string | null
+          id?: string
+          location_type?: string | null
+          name?: string
+          project_size?: string | null
+          project_type?: Database["public"]["Enums"]["project_type"]
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +295,17 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      project_type:
+        | "redd_plus"
+        | "renewables"
+        | "arr"
+        | "cookstoves"
+        | "biochar"
+        | "landfill_gas"
+        | "safe_water"
+        | "ifm"
+        | "waste_mgmt"
+        | "blue_carbon"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +432,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      project_type: [
+        "redd_plus",
+        "renewables",
+        "arr",
+        "cookstoves",
+        "biochar",
+        "landfill_gas",
+        "safe_water",
+        "ifm",
+        "waste_mgmt",
+        "blue_carbon",
+      ],
+    },
   },
 } as const
