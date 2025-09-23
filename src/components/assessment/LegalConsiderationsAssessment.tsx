@@ -37,11 +37,11 @@ const questions = [
     label: 'Regulatory Requirements',
     description: 'Are the project activities legally required by existing regulations?',
     options: [
-      { value: 'not_required', label: 'Not legally required', score: 5 },
-      { value: 'future_requirement', label: 'Future legal requirement (>5 years)', score: 4 },
-      { value: 'near_future', label: 'Near future requirement (2-5 years)', score: 3 },
-      { value: 'upcoming', label: 'Upcoming requirement (<2 years)', score: 2 },
-      { value: 'currently_required', label: 'Currently legally required', score: 1 }
+      { value: 'not_required', label: 'Not required by law', score: 5 },
+      { value: 'future_requirement', label: 'Policy points to a future shift (5+ years)', score: 4 },
+      { value: 'near_future', label: 'Policy shift likely in 2–5 years', score: 3 },
+      { value: 'upcoming', label: 'Policy shift expected within 2 years', score: 2 },
+      { value: 'currently_required', label: 'Activity already required in practice', score: 1 }
     ]
   },
   {
@@ -58,19 +58,19 @@ const questions = [
   },
   {
     key: 'enforcement_level',
-    label: 'Enforcement Effectiveness',
+    label: 'Enforcement in practice',
     description: 'How effectively are relevant regulations enforced in this jurisdiction?',
     options: [
-      { value: 'no_enforcement', label: 'No enforcement mechanism', score: 5 },
-      { value: 'weak_enforcement', label: 'Weak/inconsistent enforcement', score: 4 },
-      { value: 'moderate_enforcement', label: 'Moderate enforcement', score: 3 },
-      { value: 'strong_enforcement', label: 'Strong enforcement', score: 2 },
-      { value: 'strict_enforcement', label: 'Strict enforcement with penalties', score: 1 }
+      { value: 'no_enforcement', label: 'No practical enforcement', score: 5 },
+      { value: 'weak_enforcement', label: 'Patchy enforcement', score: 4 },
+      { value: 'moderate_enforcement', label: 'Somewhat enforced', score: 3 },
+      { value: 'strong_enforcement', label: 'Well enforced', score: 2 },
+      { value: 'strict_enforcement', label: 'Strictly enforced', score: 1 }
     ]
   },
   {
     key: 'compliance_timeline',
-    label: 'Compliance Timeline Pressure',
+    label: 'Timing pressure from rules',
     description: 'Is there time pressure to comply with regulations that would drive adoption?',
     options: [
       { value: 'no_pressure', label: 'No compliance pressure', score: 5 },
@@ -214,10 +214,10 @@ const LegalConsiderationsAssessment = ({ assessmentId, projectData, onCompletion
           });
       }
 
-      toast({
-        title: "Assessment Saved",
-        description: "Legal considerations assessment has been saved successfully.",
-      });
+        toast({
+          title: "Assessment Saved",
+          description: "Regulatory context assessment has been saved successfully.",
+        });
 
     } catch (error) {
       console.error('Error saving:', error);

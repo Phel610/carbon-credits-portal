@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Info, Save, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-interface RedGreenFlagsAssessmentProps {
+interface ExternalEvidenceSignalsAssessmentProps {
   assessmentId: string;
   projectData: {
     id: string;
@@ -29,8 +29,8 @@ interface FormData {
   criticism_level: string;
   third_party_validation: string;
   evidence_text: string;
-  red_flags: string[];
-  green_flags: string[];
+  negative_signals: string[];
+  positive_signals: string[];
 }
 
 const questions = [
@@ -84,35 +84,35 @@ const questions = [
   }
 ];
 
-const commonRedFlags = [
-  'Systematic criticism in academic literature',
-  'Industry-wide skepticism about project type',
-  'Evidence of non-additional projects being certified',
-  'Regulatory changes making projects mandatory',
-  'Market trends showing rapid natural adoption',
-  'Financial viability without carbon credits',
-  'Technology becoming standard practice'
+const commonNegativeSignals = [
+  'Consistent critical findings in peer-reviewed studies',
+  'Sector-wide doubts about this project model',
+  'Credible cases of similar projects found non-additional',
+  'New rules likely to make this activity compulsory',
+  'Fast organic uptake in the market without credits',
+  'Viable returns even without credit income',
+  'Technology now mainstream locally'
 ];
 
-const commonGreenFlags = [
-  'Strong academic support for additionality',
-  'Independent verification studies',
-  'Industry recognition of barriers',
-  'Conservative baseline approaches',
-  'Transparent methodology documentation',
-  'Positive third-party assessments',
-  'Clear evidence of barrier removal'
+const commonPositiveSignals = [
+  'Peer-reviewed studies support additionality drivers',
+  'Independent assessments confirm key claims',
+  'Recognised implementation hurdles documented',
+  'Cautious baseline choices documented',
+  'Clear disclosure of methods and sources',
+  'Positive third-party technical reviews',
+  'Direct proof that barriers were removed'
 ];
 
-const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCompleted }: RedGreenFlagsAssessmentProps) => {
+const ExternalEvidenceSignalsAssessment = ({ assessmentId, projectData, onCompletion, isCompleted }: ExternalEvidenceSignalsAssessmentProps) => {
   const [formData, setFormData] = useState<FormData>({
     literature_support: '',
     industry_endorsement: '',
     criticism_level: '',
     third_party_validation: '',
     evidence_text: '',
-    red_flags: [],
-    green_flags: []
+    negative_signals: [],
+    positive_signals: []
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -133,7 +133,7 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
         .from('assessment_responses')
         .select('*')
         .eq('assessment_id', assessmentId)
-        .eq('criterion_code', 'red_green_flags');
+        .eq('criterion_code', 'external_evidence_signals');
 
       if (responses && responses.length > 0) {
         const responseMap = responses.reduce((acc, response) => {
@@ -149,8 +149,8 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
           criticism_level: responseMap.criticism_level || '',
           third_party_validation: responseMap.third_party_validation || '',
           evidence_text: evidenceResponse?.evidence_text || '',
-          red_flags: responseMap.red_flags ? JSON.parse(responseMap.red_flags) : [],
-          green_flags: responseMap.green_flags ? JSON.parse(responseMap.green_flags) : []
+          negative_signals: responseMap.negative_signals ? JSON.parse(responseMap.negative_signals) : [],
+          positive_signals: responseMap.positive_signals ? JSON.parse(responseMap.positive_signals) : []
         });
       }
 
@@ -164,8 +164,8 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
       if (scoresData) {
         setFormData(prev => ({
           ...prev,
-          red_flags: scoresData.red_flags || [],
-          green_flags: scoresData.green_flags || []
+          negative_signals: scoresData.red_flags || [],
+          positive_signals: scoresData.green_flags || []
         }));
       }
 
@@ -208,15 +208,15 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
     }
   };
 
-  const handleFlagToggle = (flag: string, type: 'red' | 'green') => {
-    const flagArray = type === 'red' ? formData.red_flags : formData.green_flags;
+  const handleFlagToggle = (flag: string, type: 'negative' | 'positive') => {
+    const flagArray = type === 'negative' ? formData.negative_signals : formData.positive_signals;
     const newFlags = flagArray.includes(flag)
       ? flagArray.filter(f => f !== flag)
       : [...flagArray, flag];
     
     setFormData(prev => ({
       ...prev,
-      [type === 'red' ? 'red_flags' : 'green_flags']: newFlags
+      [type === 'negative' ? 'negative_signals' : 'positive_signals']: newFlags
     }));
   };
 
@@ -231,7 +231,7 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
             .from('assessment_responses')
             .upsert({
               assessment_id: assessmentId,
-              criterion_code: 'red_green_flags',
+              criterion_code: 'external_evidence_signals',
               question_key: question.key,
               response_value: value,
               evidence_text: question.key === 'evidence_text' ? formData.evidence_text : null
@@ -246,9 +246,9 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
         .from('assessment_responses')
         .upsert({
           assessment_id: assessmentId,
-          criterion_code: 'red_green_flags',
-          question_key: 'red_flags',
-          response_value: JSON.stringify(formData.red_flags)
+          criterion_code: 'external_evidence_signals',
+          question_key: 'negative_signals',
+          response_value: JSON.stringify(formData.negative_signals)
         }, {
           onConflict: 'assessment_id,criterion_code,question_key'
         });
@@ -257,9 +257,9 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
         .from('assessment_responses')
         .upsert({
           assessment_id: assessmentId,
-          criterion_code: 'red_green_flags',
-          question_key: 'green_flags',
-          response_value: JSON.stringify(formData.green_flags)
+          criterion_code: 'external_evidence_signals',
+          question_key: 'positive_signals',
+          response_value: JSON.stringify(formData.positive_signals)
         }, {
           onConflict: 'assessment_id,criterion_code,question_key'
         });
@@ -270,7 +270,7 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
           .from('assessment_responses')
           .upsert({
             assessment_id: assessmentId,
-            criterion_code: 'red_green_flags',
+            criterion_code: 'external_evidence_signals',
             question_key: 'evidence_text',
             response_value: 'evidence',
             evidence_text: formData.evidence_text
@@ -286,8 +286,8 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
           .upsert({
             assessment_id: assessmentId,
             red_green_flags_score: score,
-            red_flags: formData.red_flags,
-            green_flags: formData.green_flags
+            red_flags: formData.negative_signals,
+            green_flags: formData.positive_signals
           }, {
             onConflict: 'assessment_id'
           });
@@ -295,7 +295,7 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
 
       toast({
         title: "Assessment Saved",
-        description: "Red and green flags assessment has been saved successfully.",
+        description: "External evidence signals assessment has been saved successfully.",
       });
 
     } catch (error) {
@@ -378,29 +378,29 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
           </Card>
         ))}
 
-        {/* Red Flags */}
+        {/* Negative Signals */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-500" />
-              Red Flags
+              Negative signals
             </CardTitle>
             <CardDescription>
-              Select any red flags that apply to this project (factors that reduce additionality confidence)
+              Select any negative signals that apply to this project (factors that reduce additionality confidence)
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-2">
-              {commonRedFlags.map((flag) => (
+              {commonNegativeSignals.map((flag) => (
                 <div key={flag} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    id={`red-${flag}`}
-                    checked={formData.red_flags.includes(flag)}
-                    onChange={() => handleFlagToggle(flag, 'red')}
+                    id={`negative-${flag}`}
+                    checked={formData.negative_signals.includes(flag)}
+                    onChange={() => handleFlagToggle(flag, 'negative')}
                     className="rounded border-gray-300"
                   />
-                  <Label htmlFor={`red-${flag}`} className="flex-1 cursor-pointer text-sm">
+                  <Label htmlFor={`negative-${flag}`} className="flex-1 cursor-pointer text-sm">
                     {flag}
                   </Label>
                 </div>
@@ -409,29 +409,29 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
           </CardContent>
         </Card>
 
-        {/* Green Flags */}
+        {/* Positive Signals */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-500" />
-              Green Flags
+              Positive signals
             </CardTitle>
             <CardDescription>
-              Select any green flags that apply to this project (factors that increase additionality confidence)
+              Select any positive signals that apply to this project (factors that increase additionality confidence)
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-2">
-              {commonGreenFlags.map((flag) => (
+              {commonPositiveSignals.map((flag) => (
                 <div key={flag} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    id={`green-${flag}`}
-                    checked={formData.green_flags.includes(flag)}
-                    onChange={() => handleFlagToggle(flag, 'green')}
+                    id={`positive-${flag}`}
+                    checked={formData.positive_signals.includes(flag)}
+                    onChange={() => handleFlagToggle(flag, 'positive')}
                     className="rounded border-gray-300"
                   />
-                  <Label htmlFor={`green-${flag}`} className="flex-1 cursor-pointer text-sm">
+                  <Label htmlFor={`positive-${flag}`} className="flex-1 cursor-pointer text-sm">
                     {flag}
                   </Label>
                 </div>
@@ -479,4 +479,4 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
   );
 };
 
-export default RedGreenFlagsAssessment;
+export default ExternalEvidenceSignalsAssessment;

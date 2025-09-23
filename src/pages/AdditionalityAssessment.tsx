@@ -27,7 +27,7 @@ import LegalConsiderationsAssessment from '@/components/assessment/LegalConsider
 import BaselineApproachAssessment from '@/components/assessment/BaselineApproachAssessment';
 import BaselineTransparencyAssessment from '@/components/assessment/BaselineTransparencyAssessment';
 import BaselineAssumptionsAssessment from '@/components/assessment/BaselineAssumptionsAssessment';
-import RedGreenFlagsAssessment from '@/components/assessment/RedGreenFlagsAssessment';
+import ExternalEvidenceSignalsAssessment from '@/components/assessment/ExternalEvidenceSignalsAssessment';
 import OverallScoreDisplay from '@/components/assessment/OverallScoreDisplay';
 
 interface Assessment {
@@ -45,45 +45,45 @@ interface Assessment {
 const criteriaSteps = [
   {
     id: 'incentives',
-    title: '1.1 Incentives without Carbon Credits',
+    title: '1.1 Financial and Practical Drivers',
     description: 'Financial attractiveness and barrier analysis',
     component: IncentivesAssessment
   },
   {
     id: 'common_practice',
-    title: '1.2 Common Practice',
+    title: '1.2 Market Prevalence',
     description: 'Market penetration assessment',
     component: CommonPracticeAssessment
   },
   {
     id: 'legal_considerations',
-    title: '1.3 Legal Considerations',
+    title: '1.3 Regulatory Context',
     description: 'Regulatory requirements evaluation',
     component: LegalConsiderationsAssessment
   },
   {
     id: 'baseline_approach',
-    title: '1.4 Baseline Approach',
+    title: '1.4 Baseline Method Choice',
     description: 'Methodology rigor and conservatism',
     component: BaselineApproachAssessment
   },
   {
     id: 'baseline_transparency',
-    title: '1.5.1 Baseline Transparency',
+    title: '1.5.1 Baseline Documentation Openness',
     description: 'Documentation and methodology transparency',
     component: BaselineTransparencyAssessment
   },
   {
     id: 'baseline_assumptions',
-    title: '1.5.2 Baseline Assumptions',
+    title: '1.5.2 Baseline Assumption Reasonableness',
     description: 'Reasonableness of baseline assumptions',
     component: BaselineAssumptionsAssessment
   },
   {
-    id: 'red_green_flags',
-    title: '1.6 Red and Green Flags',
+    id: 'external_evidence_signals',
+    title: '1.6 External Evidence Signals',
     description: 'Academic literature and industry analysis',
-    component: RedGreenFlagsAssessment
+    component: ExternalEvidenceSignalsAssessment
   },
   {
     id: 'overall',

@@ -8,7 +8,7 @@ export const LegalFooter = () => {
         
         <div className="mt-4 pt-4 border-t border-border/50 text-center">
           <p className="text-xs text-muted-foreground">
-            © 2025 Carbon Integrity Platform. Independent assessment tool for carbon market professionals.
+            © 2025 Carbon Integrity Platform. This tool is independent and not affiliated with any single rating provider. We draw on widely used concepts in carbon integrity and public standards. All trademarks and copyrights belong to their owners.
           </p>
         </div>
       </div>

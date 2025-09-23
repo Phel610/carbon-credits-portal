@@ -41,11 +41,11 @@ const questions = [
     label: 'Market Penetration Assessment',
     description: 'What is the current market penetration of this technology/practice in the region?',
     options: [
-      { value: 'very_low', label: 'Very Low (<5%)', score: 5 },
-      { value: 'low', label: 'Low (5-15%)', score: 4 },
-      { value: 'moderate', label: 'Moderate (15-30%)', score: 3 },
-      { value: 'high', label: 'High (30-50%)', score: 2 },
-      { value: 'very_high', label: 'Very High (>50%)', score: 1 }
+      { value: 'rare', label: 'Rare (under 4%)', score: 5 },
+      { value: 'limited', label: 'Limited (4-12%)', score: 4 },
+      { value: 'emerging', label: 'Emerging (12-25%)', score: 3 },
+      { value: 'established', label: 'Established (25-45%)', score: 2 },
+      { value: 'widespread', label: 'Widespread (above 45%)', score: 1 }
     ]
   },
   {
@@ -57,7 +57,7 @@ const questions = [
       { value: 'stable_low', label: 'Stable at low levels', score: 4 },
       { value: 'gradual_increase', label: 'Gradual increase', score: 3 },
       { value: 'rapid_increase', label: 'Rapid increase', score: 2 },
-      { value: 'market_standard', label: 'Becoming market standard', score: 1 }
+      { value: 'market_standard', label: 'Rapidly becoming the norm', score: 1 }
     ]
   },
   {
@@ -65,10 +65,10 @@ const questions = [
     label: 'Regional Context',
     description: 'How does the regional context affect technology adoption?',
     options: [
-      { value: 'strong_barriers', label: 'Strong adoption barriers exist', score: 5 },
+      { value: 'strong_barriers', label: 'Significant local barriers', score: 5 },
       { value: 'some_barriers', label: 'Some barriers to adoption', score: 4 },
       { value: 'neutral', label: 'Neutral environment', score: 3 },
-      { value: 'some_support', label: 'Some supportive factors', score: 2 },
+      { value: 'some_support', label: 'Some local tailwinds', score: 2 },
       { value: 'strong_support', label: 'Strong supportive environment', score: 1 }
     ]
   },
@@ -77,7 +77,7 @@ const questions = [
     label: 'Technology Maturity',
     description: 'What is the maturity level of the technology being deployed?',
     options: [
-      { value: 'cutting_edge', label: 'Cutting-edge/Novel technology', score: 5 },
+      { value: 'cutting_edge', label: 'Frontier / early-stage', score: 5 },
       { value: 'proven_limited', label: 'Proven but limited deployment', score: 4 },
       { value: 'established', label: 'Established technology', score: 3 },
       { value: 'mature', label: 'Mature technology', score: 2 },
@@ -219,10 +219,10 @@ const CommonPracticeAssessment = ({ assessmentId, projectData, onCompletion, isC
           });
       }
 
-      toast({
-        title: "Assessment Saved",
-        description: "Common practice assessment has been saved successfully.",
-      });
+        toast({
+          title: "Assessment Saved",
+          description: "Market prevalence assessment has been saved successfully.",
+        });
 
     } catch (error) {
       console.error('Error saving:', error);

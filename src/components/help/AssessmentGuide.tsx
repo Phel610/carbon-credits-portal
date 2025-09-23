@@ -41,16 +41,16 @@ export const AssessmentGuide = ({ className }: AssessmentGuideProps) => {
     },
     {
       id: 'weighting',
-      title: 'How Scores Are Combined',
+      title: 'How We Combine Scores',
       icon: <Target className="h-4 w-4" />,
-      description: 'Understanding the inverse weighting approach',
+      description: 'Understanding the balancing rule approach',
       content: {
-        overview: 'The overall additionality score uses inverse weighting - higher weight given to the lower-scoring component.',
-        explanation: 'This ensures that a high score in one area cannot compensate for a very low score in another. For example, if Financial Attractiveness scores 5 but Common Practice scores 1, the low Common Practice score receives 75% weight.',
+        overview: 'We use a balancing rule that gives more weight to the weaker side of the results.',
+        explanation: 'A very low score in one area will pull the total down more than a very high score will push it up. This stops strong results in one place from hiding weak spots elsewhere.',
         components: [
-          'Activities Score (1.1 + 1.2 + 1.3) - Financial viability and legal factors',
-          'Baseline Score (1.4 + 1.5) - Methodology and reasonableness',
-          'Red/Green Flags (1.6) - Additional evidence adjustments'
+          'Project Drivers score (covers 1.1–1.3)',
+          'Baseline Quality score (covers 1.4–1.5)',
+          'External Evidence adjustment (formerly 1.6)'
         ]
       }
     },
