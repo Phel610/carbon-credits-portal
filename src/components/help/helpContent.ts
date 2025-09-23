@@ -70,7 +70,7 @@ export const criteriaHelpContent: Record<string, HelpContent> = {
     examples: {
       high: "Very strong method with full analysis, conservative by design, comprehensive data sources",
       medium: "Strong method with good coverage, generally cautious, adequate data quality",
-      low: "Weak method with large gaps, overly optimistic assumptions, poor data foundation"
+      low: "Weak method, large gaps, overly optimistic assumptions, poor data foundation"
     },
     keyPoints: [
       "Methodological rigor and comprehensiveness",

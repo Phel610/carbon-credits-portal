@@ -37,11 +37,11 @@ const questions = [
     label: 'Methodology Rigor and Completeness',
     description: 'How rigorous and complete is the baseline methodology approach?',
     options: [
-      { value: 'highly_rigorous', label: 'Highly rigorous with comprehensive analysis', score: 5 },
-      { value: 'good_rigor', label: 'Good methodological rigor', score: 4 },
-      { value: 'adequate_rigor', label: 'Adequate rigor with some gaps', score: 3 },
-      { value: 'limited_rigor', label: 'Limited methodological rigor', score: 2 },
-      { value: 'poor_rigor', label: 'Poor or incomplete methodology', score: 1 }
+      { value: 'highly_rigorous', label: 'Very strong method with full analysis', score: 5 },
+      { value: 'good_rigor', label: 'Strong method with good coverage', score: 4 },
+      { value: 'adequate_rigor', label: 'Workable method, some gaps', score: 3 },
+      { value: 'limited_rigor', label: 'Method allows broad discretion', score: 2 },
+      { value: 'poor_rigor', label: 'Weak method, large gaps', score: 1 }
     ]
   },
   {
@@ -49,11 +49,11 @@ const questions = [
     label: 'Conservative Baseline Assumptions',
     description: 'How conservative are the baseline scenario assumptions?',
     options: [
-      { value: 'highly_conservative', label: 'Highly conservative assumptions', score: 5 },
-      { value: 'reasonably_conservative', label: 'Reasonably conservative approach', score: 4 },
-      { value: 'balanced_approach', label: 'Balanced conservative/optimistic', score: 3 },
-      { value: 'somewhat_optimistic', label: 'Somewhat optimistic assumptions', score: 2 },
-      { value: 'overly_optimistic', label: 'Overly optimistic baseline', score: 1 }
+      { value: 'highly_conservative', label: 'Conservative by design', score: 5 },
+      { value: 'reasonably_conservative', label: 'Generally cautious', score: 4 },
+      { value: 'balanced_approach', label: 'Mixed', score: 3 },
+      { value: 'somewhat_optimistic', label: 'Some optimism', score: 2 },
+      { value: 'overly_optimistic', label: 'Overly optimistic', score: 1 }
     ]
   },
   {
@@ -244,8 +244,7 @@ const BaselineApproachAssessment = ({ assessmentId, projectData, onCompletion, i
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          This criterion evaluates the rigor, flexibility, and conservatism of the methodology used to
-          establish the baseline scenario for emission reductions.
+          This step looks at how the baseline is built. We check whether the chosen method is a good fit for the project type, limits room for optimistic choices, and encourages cautious estimates.
         </AlertDescription>
       </Alert>
 

@@ -239,8 +239,7 @@ const IncentivesAssessment = ({ assessmentId, projectData, onCompletion, isCompl
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          This criterion evaluates whether carbon credits play a decisive role in making the project financially viable
-          and overcoming implementation barriers that would otherwise prevent the project from proceeding.
+          This step checks if carbon revenue and related support actually tilt the decision to build the project, and whether those funds help overcome hurdles that would otherwise stop it.
         </AlertDescription>
       </Alert>
 
@@ -365,25 +364,25 @@ const IncentivesAssessment = ({ assessmentId, projectData, onCompletion, isCompl
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="strong_evidence" id="strong" />
                 <label htmlFor="strong" className="text-sm">
-                  Strong evidence (board minutes, consultant engagement, registry notifications)
+                  Clear proof before commitment (for example, board notes, a signed scope with a carbon advisor, or early contact with a program)
                 </label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="some_evidence" id="some" />
                 <label htmlFor="some" className="text-sm">
-                  Some evidence (project documents mention carbon credits)
+                  Some signs before commitment (mentions in internal docs)
                 </label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="minimal_evidence" id="minimal" />
                 <label htmlFor="minimal" className="text-sm">
-                  Minimal evidence (retroactive registration, long gap between project start and registration)
+                  Weak signs after the fact (late program contact, long delay between start and registration)
                 </label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="no_evidence" id="none" />
                 <label htmlFor="none" className="text-sm">
-                  No evidence of prior consideration
+                  No evidence provided
                 </label>
               </div>
             </RadioGroup>

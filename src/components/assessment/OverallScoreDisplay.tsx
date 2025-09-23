@@ -282,7 +282,7 @@ export default function OverallScoreDisplay({ assessmentId }: OverallScoreDispla
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Scoring Methodology:</strong> We use a balancing rule that gives more weight to the weaker side of the results. Project drivers (1.1-1.3) and baseline quality (1.4-1.5) are combined using this rule where the component with the lower score receives 75% weight to ensure comprehensive evaluation across all criteria. External evidence signals provide additional adjustments.
+          <strong>How We Combine Scores:</strong> We combine results using a balancing rule that puts extra weight on the weaker side. If one area scores high and another scores low, the low area pulls the total down more. This stops strong results in one place from hiding weak spots elsewhere.
         </AlertDescription>
       </Alert>
     </div>
