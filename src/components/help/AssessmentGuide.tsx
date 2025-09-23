@@ -46,7 +46,7 @@ export const AssessmentGuide = ({ className }: AssessmentGuideProps) => {
       description: 'Understanding the balancing rule approach',
       content: {
         overview: 'We use a balancing rule that gives more weight to the weaker side of the results.',
-        explanation: 'A very low score in one area will pull the total down more than a very high score will push it up. This stops strong results in one place from hiding weak spots elsewhere.',
+        explanation: 'A weak area will pull the total down more than a strong area will push it up. This stops strong results in one place from hiding weak spots elsewhere.',
         components: [
           'Project Drivers score (covers 1.1–1.3)',
           'Baseline Quality score (covers 1.4–1.5)',
