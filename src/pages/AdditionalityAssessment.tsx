@@ -25,8 +25,10 @@ import IncentivesAssessment from '@/components/assessment/IncentivesAssessment';
 import CommonPracticeAssessment from '@/components/assessment/CommonPracticeAssessment';
 import LegalConsiderationsAssessment from '@/components/assessment/LegalConsiderationsAssessment';
 import BaselineApproachAssessment from '@/components/assessment/BaselineApproachAssessment';
-import BaselineReasonablenessAssessment from '@/components/assessment/BaselineReasonablenessAssessment';
+import BaselineTransparencyAssessment from '@/components/assessment/BaselineTransparencyAssessment';
+import BaselineAssumptionsAssessment from '@/components/assessment/BaselineAssumptionsAssessment';
 import RedGreenFlagsAssessment from '@/components/assessment/RedGreenFlagsAssessment';
+import OverallScoreDisplay from '@/components/assessment/OverallScoreDisplay';
 
 interface Assessment {
   id: string;
@@ -66,16 +68,28 @@ const criteriaSteps = [
     component: BaselineApproachAssessment
   },
   {
-    id: 'baseline_reasonableness',
-    title: '1.5 Baseline Reasonableness',
-    description: 'Transparency and assumption validation',
-    component: BaselineReasonablenessAssessment
+    id: 'baseline_transparency',
+    title: '1.5.1 Baseline Transparency',
+    description: 'Documentation and methodology transparency',
+    component: BaselineTransparencyAssessment
+  },
+  {
+    id: 'baseline_assumptions',
+    title: '1.5.2 Baseline Assumptions',
+    description: 'Reasonableness of baseline assumptions',
+    component: BaselineAssumptionsAssessment
   },
   {
     id: 'red_green_flags',
     title: '1.6 Red and Green Flags',
     description: 'Academic literature and industry analysis',
     component: RedGreenFlagsAssessment
+  },
+  {
+    id: 'overall',
+    title: 'Overall Additionality Score',
+    description: 'Complete MSCI additionality assessment with scoring methodology',
+    component: OverallScoreDisplay
   }
 ];
 
@@ -124,8 +138,10 @@ const AdditionalityAssessment = () => {
         if (scoresData.common_practice_score) completed.add(1);
         if (scoresData.legal_considerations_score) completed.add(2);
         if (scoresData.baseline_approach_score) completed.add(3);
-        if (scoresData.baseline_reasonableness_score) completed.add(4);
-        if (scoresData.red_green_flags_score) completed.add(5);
+        if (scoresData.baseline_transparency_score) completed.add(4);
+        if (scoresData.baseline_reasonableness_score) completed.add(5);
+        if (scoresData.red_green_flags_score) completed.add(6);
+        if (scoresData.overall_additionality_score) completed.add(7);
         setCompletedSteps(completed);
       }
 
@@ -273,7 +289,7 @@ const AdditionalityAssessment = () => {
             <Progress value={calculateProgress()} className="h-2 mb-4" />
             
             {/* Step indicators */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {criteriaSteps.map((step, index) => (
                 <button
                   key={step.id}
@@ -285,13 +301,15 @@ const AdditionalityAssessment = () => {
                   )}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium">1.{index + 1}</span>
+                    <span className="text-xs font-medium">
+                      {step.id === 'overall' ? 'Overall' : step.title.match(/^\d+\.\d*\.?\d*/)?.[0] || ''}
+                    </span>
                     {completedSteps.has(index) && (
                       <CheckCircle className="h-3 w-3 text-green-600" />
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground line-clamp-2">
-                    {step.title.replace('1.' + (index + 1) + ' ', '')}
+                    {step.id === 'overall' ? 'Score Summary' : step.title.replace(/^\d+\.\d*\.?\d*\s*/, '')}
                   </div>
                 </button>
               ))}
@@ -311,12 +329,16 @@ const AdditionalityAssessment = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <CurrentComponent
-              assessmentId={id!}
-              projectData={assessment.project}
-              onCompletion={(isCompleted: boolean) => handleStepCompletion(currentStep, isCompleted)}
-              isCompleted={completedSteps.has(currentStep)}
-            />
+            {criteriaSteps[currentStep].id === 'overall' ? (
+              <OverallScoreDisplay assessmentId={id!} />
+            ) : (
+              <CurrentComponent
+                assessmentId={id!}
+                projectData={assessment.project}
+                onCompletion={(isCompleted: boolean) => handleStepCompletion(currentStep, isCompleted)}
+                isCompleted={completedSteps.has(currentStep)}
+              />
+            )}
           </CardContent>
         </Card>
 
@@ -337,9 +359,14 @@ const AdditionalityAssessment = () => {
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Complete Assessment
               </Button>
+            ) : criteriaSteps[currentStep].id === 'overall' ? (
+              <Button onClick={handleSaveAndExit} variant="outline" disabled={saving}>
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Exit Assessment
+              </Button>
             ) : (
               <Button onClick={handleNext}>
-                Next
+                {currentStep === criteriaSteps.length - 2 ? 'View Overall Score' : 'Next'}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             )}
