@@ -28,7 +28,7 @@ interface FormData {
 const questions = [
   {
     key: 'documentation_quality' as keyof FormData,
-    label: 'Quality of Baseline Documentation',
+    label: 'Depth of baseline documentation',
     description: 'How comprehensive and detailed is the project\'s baseline scenario documentation?',
     options: [
       { value: '5', label: 'Very comprehensive with detailed explanations', score: 5 },
@@ -40,7 +40,7 @@ const questions = [
   },
   {
     key: 'methodology_disclosure' as keyof FormData,
-    label: 'Methodology Disclosure',
+    label: 'Clarity on method selection',
     description: 'How clearly does the project disclose its baseline methodology and approach?',
     options: [
       { value: '5', label: 'Full methodology disclosure with clear rationale', score: 5 },
@@ -52,7 +52,7 @@ const questions = [
   },
   {
     key: 'data_sources' as keyof FormData,
-    label: 'Data Source Transparency',
+    label: 'Source traceability',
     description: 'How transparent is the project about its data sources and collection methods?',
     options: [
       { value: '5', label: 'All data sources clearly identified and validated', score: 5 },
@@ -64,7 +64,7 @@ const questions = [
   },
   {
     key: 'assumptions_clarity' as keyof FormData,
-    label: 'Assumptions Clarity',
+    label: 'Assumption explanations',
     description: 'How clearly are key baseline assumptions explained and justified?',
     options: [
       { value: '5', label: 'All assumptions clearly explained and well-justified', score: 5 },
@@ -187,7 +187,7 @@ export default function BaselineTransparencyAssessment({
 
       toast({
         title: 'Assessment Saved',
-        description: 'Your baseline transparency assessment has been saved successfully.',
+        description: 'Your baseline documentation openness assessment has been saved successfully.',
       });
     } catch (error) {
       console.error('Error saving assessment:', error);

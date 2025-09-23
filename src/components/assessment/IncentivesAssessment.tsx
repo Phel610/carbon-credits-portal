@@ -217,8 +217,8 @@ const IncentivesAssessment = ({ assessmentId, projectData, onCompletion, isCompl
   const getScoreBadge = (score: number) => {
     if (score >= 4) return 'High';
     if (score >= 3) return 'Medium';
-    if (score >= 2) return 'Low';
-    return 'Very Low';
+    if (score >= 2) return 'Weak';
+    return 'Minimal';
   };
 
   return (
@@ -424,11 +424,11 @@ const IncentivesAssessment = ({ assessmentId, projectData, onCompletion, isCompl
                 <SelectValue placeholder="Select barrier strength" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="5">Very High - Multiple severe barriers (financial, technical, regulatory, social)</SelectItem>
-                <SelectItem value="4">High - Several significant barriers requiring substantial intervention</SelectItem>
-                <SelectItem value="3">Medium - Some meaningful barriers that credits help address</SelectItem>
-                <SelectItem value="2">Low - Minor barriers that credits only partially address</SelectItem>
-                <SelectItem value="1">Very Low - Minimal or no barriers to implementation</SelectItem>
+                <SelectItem value="5">Substantial - Multiple severe barriers (financial, technical, regulatory, social)</SelectItem>
+                <SelectItem value="4">Strong - Several significant barriers requiring substantial intervention</SelectItem>
+                <SelectItem value="3">Moderate - Some meaningful barriers that credits help address</SelectItem>
+                <SelectItem value="2">Weak - Minor barriers that credits only partially address</SelectItem>
+                <SelectItem value="1">Minimal - Minimal or no barriers to implementation</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -497,8 +497,7 @@ const IncentivesAssessment = ({ assessmentId, projectData, onCompletion, isCompl
             <Alert className="mt-4">
               <TrendingUp className="h-4 w-4" />
               <AlertDescription>
-                <strong>Scoring Method:</strong> Uses industry-standard inverse weighting where the highest sub-score 
-                receives 75% weight and the lowest receives 25% weight, ensuring comprehensive evaluation across both criteria.
+                <strong>Scoring Method:</strong> We use a balancing rule that gives more weight to the weaker side of the results. A very low score in one area will pull the total down more than a very high score will push it up.
               </AlertDescription>
             </Alert>
           </CardContent>

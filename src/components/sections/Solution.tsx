@@ -16,7 +16,7 @@ const Solution = () => {
     {
       icon: FileCheck,
       title: "Standardized Outputs",
-      description: "Generate integrity scores, traffic-light ratings, red/green flags, and remediation guidance for stakeholders."
+      description: "Generate integrity scores, traffic-light ratings, negative/positive signals, and remediation guidance for stakeholders."
     },
     {
       icon: CheckCircle,
