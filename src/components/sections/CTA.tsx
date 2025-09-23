@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Mail, Calendar } from "lucide-react";
 
@@ -19,13 +20,17 @@ const CTA = () => {
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <Button variant="hero" size="lg" className="group">
-            Start Free Assessment
-            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+          <Button variant="hero" size="lg" className="group" asChild>
+            <Link to="/auth">
+              Start Free Assessment
+              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </Button>
-          <Button variant="outline-hero" size="lg" className="group">
-            <Calendar className="mr-2 h-5 w-5" />
-            Schedule Demo
+          <Button variant="outline-hero" size="lg" className="group" asChild>
+            <Link to="/auth">
+              <Calendar className="mr-2 h-5 w-5" />
+              Schedule Demo
+            </Link>
           </Button>
         </div>
         

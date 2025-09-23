@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, TrendingUp } from "lucide-react";
 import heroImage from "@/assets/hero-dashboard.jpg";
@@ -32,12 +33,14 @@ const Hero = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button variant="hero" size="lg" className="group">
-                Start Assessment
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              <Button variant="hero" size="lg" className="group" asChild>
+                <Link to="/auth">
+                  Start Assessment
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
               </Button>
-              <Button variant="outline-hero" size="lg">
-                View Demo
+              <Button variant="outline-hero" size="lg" asChild>
+                <Link to="/auth">View Demo</Link>
               </Button>
             </div>
             

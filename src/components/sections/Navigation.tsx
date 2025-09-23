@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Shield, Menu } from "lucide-react";
 import { useState } from "react";
@@ -42,8 +43,12 @@ const Navigation = () => {
           
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost">Sign In</Button>
-            <Button>Start Assessment</Button>
+            <Button variant="ghost" asChild>
+              <Link to="/auth">Sign In</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/auth">Start Assessment</Link>
+            </Button>
           </div>
           
           {/* Mobile Menu Button */}
@@ -72,8 +77,12 @@ const Navigation = () => {
                 </a>
               ))}
               <div className="flex flex-col gap-2 mt-4">
-                <Button variant="ghost">Sign In</Button>
-                <Button>Start Assessment</Button>
+                <Button variant="ghost" asChild>
+                  <Link to="/auth">Sign In</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/auth">Start Assessment</Link>
+                </Button>
               </div>
             </div>
           </div>
