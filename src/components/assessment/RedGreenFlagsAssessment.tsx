@@ -206,6 +206,8 @@ const RedGreenFlagsAssessment = ({ assessmentId, projectData, onCompletion, isCo
       setScore(null);
       onCompletion(false);
     }
+  };
+
   const handleFlagToggle = (flag: string, type: 'red' | 'green') => {
     const flagArray = type === 'red' ? formData.red_flags : formData.green_flags;
     const newFlags = flagArray.includes(flag)

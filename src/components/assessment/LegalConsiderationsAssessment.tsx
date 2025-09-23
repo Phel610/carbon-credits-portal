@@ -164,6 +164,8 @@ const LegalConsiderationsAssessment = ({ assessmentId, projectData, onCompletion
       setScore(null);
       onCompletion(false);
     }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {

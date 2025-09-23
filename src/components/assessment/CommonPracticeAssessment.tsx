@@ -164,6 +164,8 @@ const CommonPracticeAssessment = ({ assessmentId, projectData, onCompletion, isC
       setScore(null);
       onCompletion(false);
     }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
