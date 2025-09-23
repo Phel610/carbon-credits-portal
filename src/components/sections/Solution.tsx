@@ -11,7 +11,7 @@ const Solution = () => {
     {
       icon: BarChart3,
       title: "Digital Integrity Framework",
-      description: "Translate MSCI and other carbon market frameworks into standardized workflows, calculators, and scorecards."
+      description: "Translate leading carbon market frameworks into standardized workflows, calculators, and scorecards."
     },
     {
       icon: FileCheck,

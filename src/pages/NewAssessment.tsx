@@ -170,7 +170,7 @@ const NewAssessment = () => {
               <div>
                 <CardTitle>Additionality Assessment</CardTitle>
                 <CardDescription>
-                  MSCI-aligned framework to evaluate if emission reductions are truly additional
+                  Industry-standard framework to evaluate if emission reductions are truly additional
                 </CardDescription>
               </div>
             </div>
@@ -277,7 +277,7 @@ const NewAssessment = () => {
                         <div className="flex flex-col">
                           <span>Additionality (Available)</span>
                           <span className="text-xs text-muted-foreground">
-                            MSCI Criterion 1 - Emission reduction additionality
+                            Criterion 1 - Emission reduction additionality
                           </span>
                         </div>
                       </SelectItem>
@@ -285,7 +285,7 @@ const NewAssessment = () => {
                         <div className="flex flex-col">
                           <span>Quantification (Coming Soon)</span>
                           <span className="text-xs text-muted-foreground">
-                            MSCI Criterion 2 - Measurement accuracy
+                            Criterion 2 - Measurement accuracy
                           </span>
                         </div>
                       </SelectItem>

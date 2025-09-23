@@ -17,7 +17,7 @@ const Benefits = () => {
     },
     {
       icon: Shield,
-      title: "MSCI-Aligned Framework",
+      title: "Industry-Standard Framework",
       description: "Built on established carbon market integrity standards and best practices.",
       metric: "100%"
     },
@@ -95,7 +95,7 @@ const Benefits = () => {
             </div>
             <div className="bg-card rounded-xl p-4 border">
               <div className="text-2xl font-bold text-success">100%</div>
-              <div className="text-sm text-muted-foreground">MSCI aligned</div>
+              <div className="text-sm text-muted-foreground">Standards compliant</div>
             </div>
           </div>
         </div>

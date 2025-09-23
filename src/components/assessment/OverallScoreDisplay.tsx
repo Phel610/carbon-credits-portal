@@ -282,7 +282,7 @@ export default function OverallScoreDisplay({ assessmentId }: OverallScoreDispla
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Scoring Methodology:</strong> The overall score uses MSCI's inverse weighting system where activities additionality (1.1-1.3) and baseline credibility (1.4-1.5) are inversely weighted. The component with the lower score receives 75% weight to ensure that high scores in one area cannot fully offset low scores in another. Red/Green flags provide additional adjustments.
+          <strong>Scoring Methodology:</strong> The overall score uses industry-standard inverse weighting where activities additionality (1.1-1.3) and baseline credibility (1.4-1.5) are inversely weighted. The component with the lower score receives 75% weight to ensure comprehensive evaluation across all criteria. Red/Green flags provide additional adjustments.
         </AlertDescription>
       </Alert>
     </div>

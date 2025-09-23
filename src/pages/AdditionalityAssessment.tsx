@@ -88,7 +88,7 @@ const criteriaSteps = [
   {
     id: 'overall',
     title: 'Overall Additionality Score',
-    description: 'Complete MSCI additionality assessment with scoring methodology',
+    description: 'Complete industry-standard additionality assessment with scoring methodology',
     component: OverallScoreDisplay
   }
 ];

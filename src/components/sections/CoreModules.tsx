@@ -57,7 +57,7 @@ const CoreModules = () => {
             <span className="text-primary"> Integrity Criteria</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Each MSCI criterion becomes a comprehensive digital module with guided workflows, 
+            Each integrity criterion becomes a comprehensive digital module with guided workflows, 
             automated calculations, and standardized scoring aligned with industry best practices.
           </p>
         </div>

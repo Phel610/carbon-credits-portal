@@ -51,7 +51,7 @@ const Hero = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                <span>MSCI-aligned framework</span>
+                <span>Industry-standard framework</span>
               </div>
             </div>
           </div>

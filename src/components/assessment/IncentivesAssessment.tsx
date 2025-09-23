@@ -161,7 +161,7 @@ const IncentivesAssessment = ({ assessmentId, projectData, onCompletion, isCompl
     const financialScore = calculateFinancialAttractiveness();
     const barrierScore = calculateBarrierAnalysis();
     
-    // Use highest score with 75% weight, other with 25% (as per MSCI methodology)
+    // Use highest score with 75% weight, other with 25% (industry-standard inverse weighting methodology)
     const highestScore = Math.max(financialScore, barrierScore);
     const lowestScore = Math.min(financialScore, barrierScore);
     
@@ -498,8 +498,8 @@ const IncentivesAssessment = ({ assessmentId, projectData, onCompletion, isCompl
             <Alert className="mt-4">
               <TrendingUp className="h-4 w-4" />
               <AlertDescription>
-                <strong>Scoring Method:</strong> Uses MSCI's inverse weighting approach where the highest sub-score 
-                receives 75% weight and the lowest receives 25% weight, ensuring neither criterion can fully offset the other.
+                <strong>Scoring Method:</strong> Uses industry-standard inverse weighting where the highest sub-score 
+                receives 75% weight and the lowest receives 25% weight, ensuring comprehensive evaluation across both criteria.
               </AlertDescription>
             </Alert>
           </CardContent>

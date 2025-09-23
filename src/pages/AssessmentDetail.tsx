@@ -249,7 +249,7 @@ const AssessmentDetail = () => {
                   Overall Assessment Score
                 </CardTitle>
                 <CardDescription>
-                  Additionality integrity rating based on MSCI framework
+                  Additionality integrity rating based on industry standards
                 </CardDescription>
               </div>
               {scores.overall_additionality_score && (
@@ -302,7 +302,7 @@ const AssessmentDetail = () => {
           <CardHeader>
             <CardTitle>Additionality Criteria Breakdown</CardTitle>
             <CardDescription>
-              Detailed scores for each sub-criterion of the MSCI Additionality framework
+              Detailed scores for each sub-criterion of the Industry-Standard Additionality framework
             </CardDescription>
           </CardHeader>
           <CardContent>
