@@ -31,13 +31,12 @@ export const Disclaimer = ({ className, variant = 'compact' }: DisclaimerProps) 
         <div className="text-sm text-muted-foreground space-y-2">
           <p>
             <strong>Independent Platform:</strong> This assessment platform is independently developed and operated. 
-            We are not affiliated with, endorsed by, or connected to MSCI Inc. or any other carbon market standard-setting organization.
+            We are not affiliated with, endorsed by, or connected to any carbon market standard-setting organization.
           </p>
           
           <p>
-            <strong>Methodology Attribution:</strong> Our assessment framework draws inspiration from publicly available 
-            carbon market integrity standards and best practices, including but not limited to frameworks published by 
-            MSCI, IC-VCM, Gold Standard, and Verra. All content has been independently developed and expressed in our own methodology.
+            <strong>Methodology Attribution:</strong> We review widely cited frameworks across the market and draw inspiration from publicly available 
+            carbon market integrity standards and best practices. All content has been independently developed and expressed in our own methodology.
           </p>
           
           <p>

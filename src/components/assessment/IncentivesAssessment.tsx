@@ -497,7 +497,7 @@ const IncentivesAssessment = ({ assessmentId, projectData, onCompletion, isCompl
             <Alert className="mt-4">
               <TrendingUp className="h-4 w-4" />
               <AlertDescription>
-                <strong>Scoring Method:</strong> We use a balancing rule that gives more weight to the weaker side of the results. A very low score in one area will pull the total down more than a very high score will push it up.
+                <strong>Scoring Method:</strong> We use a balancing rule that gives more weight to the weaker side of the results. A weak area will pull the total down more than a strong area will push it up.
               </AlertDescription>
             </Alert>
           </CardContent>
