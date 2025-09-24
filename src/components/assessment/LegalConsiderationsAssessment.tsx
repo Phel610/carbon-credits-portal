@@ -296,12 +296,7 @@ const LegalConsiderationsAssessment = ({ assessmentId, projectData, onCompletion
                       htmlFor={`${question.key}-${option.value}`} 
                       className="flex-1 cursor-pointer"
                     >
-                      <div className="flex justify-between items-center">
-                        <span>{option.label}</span>
-                        <Badge variant="secondary" className="ml-2">
-                          {option.score}/5
-                        </Badge>
-                      </div>
+                      {option.label}
                     </Label>
                   </div>
                 ))}
