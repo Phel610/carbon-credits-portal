@@ -13,14 +13,13 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Calculator, 
-  TrendingUp, 
-  LayoutDashboard, 
   LogOut, 
   Settings, 
   User,
   ArrowLeftRight,
   FileText,
-  Sliders
+  Sliders,
+  Home
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,7 +28,7 @@ interface FinancialPlatformLayoutProps {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/financial/dashboard', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/financial/dashboard', icon: Home },
   { name: 'Models', href: '/financial/models', icon: Calculator },
   { name: 'Scenarios', href: '/financial/scenarios', icon: Sliders },
   { name: 'Reports', href: '/financial/reports', icon: FileText },

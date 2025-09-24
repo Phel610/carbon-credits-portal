@@ -16,6 +16,9 @@ import NewAssessment from "./pages/NewAssessment";
 import AssessmentDetail from "./pages/AssessmentDetail";
 import AdditionalityAssessment from "./pages/AdditionalityAssessment";
 import FinancialDashboard from "./pages/financial/FinancialDashboard";
+import FinancialModels from "./pages/financial/FinancialModels";
+import NewFinancialModel from "./pages/financial/NewFinancialModel";
+import FinancialModelDetail from "./pages/financial/FinancialModelDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -76,9 +79,29 @@ const App = () => (
             } />
             
             {/* Financial Platform Routes */}
+            <Route path="/financial" element={
+              <ProtectedRoute>
+                <FinancialDashboard />
+              </ProtectedRoute>
+            } />
             <Route path="/financial/dashboard" element={
               <ProtectedRoute>
                 <FinancialDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/financial/models" element={
+              <ProtectedRoute>
+                <FinancialModels />
+              </ProtectedRoute>
+            } />
+            <Route path="/financial/models/new" element={
+              <ProtectedRoute>
+                <NewFinancialModel />
+              </ProtectedRoute>
+            } />
+            <Route path="/financial/models/:id" element={
+              <ProtectedRoute>
+                <FinancialModelDetail />
               </ProtectedRoute>
             } />
             

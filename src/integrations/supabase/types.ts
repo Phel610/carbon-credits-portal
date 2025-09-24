@@ -206,6 +206,171 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_metrics: {
+        Row: {
+          calculation_date: string
+          created_at: string
+          id: string
+          metric_name: string
+          model_id: string
+          value: number | null
+        }
+        Insert: {
+          calculation_date?: string
+          created_at?: string
+          id?: string
+          metric_name: string
+          model_id: string
+          value?: number | null
+        }
+        Update: {
+          calculation_date?: string
+          created_at?: string
+          id?: string
+          metric_name?: string
+          model_id?: string
+          value?: number | null
+        }
+        Relationships: []
+      }
+      financial_models: {
+        Row: {
+          country: string | null
+          created_at: string
+          description: string | null
+          end_year: number
+          id: string
+          name: string
+          project_name: string | null
+          start_year: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          end_year: number
+          id?: string
+          name: string
+          project_name?: string | null
+          start_year: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          end_year?: number
+          id?: string
+          name?: string
+          project_name?: string | null
+          start_year?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      financial_statements: {
+        Row: {
+          created_at: string
+          id: string
+          line_item: string
+          model_id: string
+          statement_type: string
+          updated_at: string
+          value: number | null
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          line_item: string
+          model_id: string
+          statement_type: string
+          updated_at?: string
+          value?: number | null
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          line_item?: string
+          model_id?: string
+          statement_type?: string
+          updated_at?: string
+          value?: number | null
+          year?: number
+        }
+        Relationships: []
+      }
+      model_inputs: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          input_key: string
+          input_value: Json | null
+          model_id: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          input_key: string
+          input_value?: Json | null
+          model_id: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          input_key?: string
+          input_value?: Json | null
+          model_id?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      model_scenarios: {
+        Row: {
+          created_at: string
+          id: string
+          is_base_case: boolean | null
+          model_id: string
+          scenario_data: Json
+          scenario_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_base_case?: boolean | null
+          model_id: string
+          scenario_data: Json
+          scenario_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_base_case?: boolean | null
+          model_id?: string
+          scenario_data?: Json
+          scenario_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -284,6 +449,33 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      sensitivity_analyses: {
+        Row: {
+          base_value: number
+          created_at: string
+          id: string
+          model_id: string
+          sensitivity_range: Json
+          variable_name: string
+        }
+        Insert: {
+          base_value: number
+          created_at?: string
+          id?: string
+          model_id: string
+          sensitivity_range: Json
+          variable_name: string
+        }
+        Update: {
+          base_value?: number
+          created_at?: string
+          id?: string
+          model_id?: string
+          sensitivity_range?: Json
+          variable_name?: string
         }
         Relationships: []
       }
