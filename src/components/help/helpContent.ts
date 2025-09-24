@@ -94,14 +94,14 @@ export const criteriaHelpContent: Record<string, HelpContent> = {
   },
   
   baselineAssumptionReasonableness: {
-    rationale: "Assesses the reasonableness and conservatism of key assumptions used in baseline construction, focusing on parameters that significantly impact emission reduction calculations.",
-    scoringLogic: "Evaluates historical rates, emission factors, scenario construction, and overall realism of without-project scenarios. More conservative and well-supported assumptions score higher.",
+    rationale: "Assessment of how reasonable and credible the project's baseline scenario assumptions are. Strong assumptions are supported by data, lean toward conservative estimates, and reflect a realistic 'without-project' situation.",
+    scoringLogic: "Evaluates key activity rates, performance parameters, scenario construction, and overall realism of counterfactual scenarios. More conservative and well-supported assumptions score higher.",
     keyPoints: [
-      "Historical rates used in the counterfactual",
-      "Emission factors and stock values",
-      "Whole-scenario construction",
-      "Without-project scenario realism",
-      "Sensitivity analysis of key assumptions"
+      "Key activity levels or impact rates in baseline scenario",
+      "Emission factors and performance parameters appropriateness",
+      "Overall baseline scenario construction credibility",
+      "Counterfactual scenario realism and justification",
+      "Conservative nature and evidence support of assumptions"
     ]
   },
   
