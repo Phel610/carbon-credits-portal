@@ -24,6 +24,7 @@ import FinancialStatements from "./pages/financial/FinancialStatements";
 import FinancialReports from "./pages/financial/FinancialReports";
 import FinancialMetrics from "./pages/financial/FinancialMetrics";
 import ModelReports from "./pages/financial/ModelReports";
+import SensitivityScenarios from "./pages/financial/SensitivityScenarios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -131,7 +132,7 @@ const App = () => (
             } />
             <Route path="/financial/models/:id/scenarios" element={
               <ProtectedRoute>
-                <FinancialStatements />
+                <SensitivityScenarios />
               </ProtectedRoute>
             } />
             <Route path="/financial/reports" element={
