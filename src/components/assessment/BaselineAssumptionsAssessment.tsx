@@ -18,7 +18,7 @@ interface BaselineAssumptionsAssessmentProps {
 }
 
 interface FormData {
-  deforestation_rates: string;
+  activity_rates: string;
   emission_factors: string;
   baseline_scenario: string;
   counterfactual_credibility: string;
@@ -27,36 +27,36 @@ interface FormData {
 
 const questions = [
   {
-    key: 'deforestation_rates' as keyof FormData,
-    label: 'Baseline Deforestation/Degradation Rates',
-    description: 'How reasonable are the assumed baseline deforestation or degradation rates?',
+    key: 'activity_rates' as keyof FormData,
+    label: 'Key Activity/Impact Rates',
+    description: 'How reasonable are the assumed activity levels or impact rates in the baseline scenario (e.g., energy demand growth, technology use, land-use change, resource consumption)?',
     options: [
-      { value: '5', label: 'Conservative rates well-supported by historical data', score: 5 },
-      { value: '4', label: 'Reasonable rates with good supporting evidence', score: 4 },
-      { value: '3', label: 'Moderately reasonable rates with some evidence', score: 3 },
-      { value: '2', label: 'Questionable rates with limited evidence', score: 2 },
-      { value: '1', label: 'Unrealistic or unsupported baseline rates', score: 1 },
+      { value: '5', label: 'Conservative estimates well supported by historical or sector data', score: 5 },
+      { value: '4', label: 'Reasonable estimates with good supporting evidence', score: 4 },
+      { value: '3', label: 'Moderately reasonable estimates with some evidence', score: 3 },
+      { value: '2', label: 'Questionable estimates with limited evidence', score: 2 },
+      { value: '1', label: 'Unrealistic or unsupported estimates', score: 1 },
     ],
   },
   {
     key: 'emission_factors' as keyof FormData,
-    label: 'Emission Factors and Carbon Stocks',
-    description: 'How appropriate are the emission factors and carbon stock estimates used?',
+    label: 'Emission Factors and Performance Parameters',
+    description: 'How appropriate are the emission factors or performance parameters used in the baseline (e.g., grid emission factors, fuel characteristics, yield rates, efficiency levels)?',
     options: [
-      { value: '5', label: 'Scientifically robust and locally validated factors', score: 5 },
-      { value: '4', label: 'Appropriate factors with good validation', score: 4 },
-      { value: '3', label: 'Reasonable factors with adequate validation', score: 3 },
-      { value: '2', label: 'Questionable factors with limited validation', score: 2 },
-      { value: '1', label: 'Inappropriate or unvalidated emission factors', score: 1 },
+      { value: '5', label: 'Scientifically robust and locally validated', score: 5 },
+      { value: '4', label: 'Appropriate with good validation', score: 4 },
+      { value: '3', label: 'Reasonable with adequate validation', score: 3 },
+      { value: '2', label: 'Questionable with limited validation', score: 2 },
+      { value: '1', label: 'Inappropriate or unvalidated', score: 1 },
     ],
   },
   {
     key: 'baseline_scenario' as keyof FormData,
     label: 'Baseline Scenario Construction',
-    description: 'How credible is the overall baseline scenario construction?',
+    description: 'How credible is the overall construction of the baseline scenario?',
     options: [
       { value: '5', label: 'Highly credible and conservative baseline', score: 5 },
-      { value: '4', label: 'Credible baseline with reasonable assumptions', score: 4 },
+      { value: '4', label: 'Credible with reasonable assumptions', score: 4 },
       { value: '3', label: 'Moderately credible baseline', score: 3 },
       { value: '2', label: 'Questionable baseline with concerning assumptions', score: 2 },
       { value: '1', label: 'Implausible or inflated baseline scenario', score: 1 },
@@ -65,12 +65,12 @@ const questions = [
   {
     key: 'counterfactual_credibility' as keyof FormData,
     label: 'Counterfactual Scenario Credibility',
-    description: 'How realistic is the counterfactual (without-project) scenario?',
+    description: 'How realistic is the counterfactual "without-project" scenario?',
     options: [
-      { value: '5', label: 'Highly realistic counterfactual well-supported by evidence', score: 5 },
-      { value: '4', label: 'Realistic counterfactual with good justification', score: 4 },
-      { value: '3', label: 'Moderately realistic counterfactual', score: 3 },
-      { value: '2', label: 'Questionable counterfactual assumptions', score: 2 },
+      { value: '5', label: 'Highly realistic and well supported by evidence', score: 5 },
+      { value: '4', label: 'Realistic with good justification', score: 4 },
+      { value: '3', label: 'Moderately realistic', score: 3 },
+      { value: '2', label: 'Questionable assumptions', score: 2 },
       { value: '1', label: 'Unrealistic or unsupported counterfactual', score: 1 },
     ],
   },
@@ -83,7 +83,7 @@ export default function BaselineAssumptionsAssessment({
   isCompleted,
 }: BaselineAssumptionsAssessmentProps) {
   const [formData, setFormData] = useState<FormData>({
-    deforestation_rates: '',
+    activity_rates: '',
     emission_factors: '',
     baseline_scenario: '',
     counterfactual_credibility: '',
@@ -213,7 +213,7 @@ export default function BaselineAssumptionsAssessment({
     <div className="space-y-6">
       <Alert>
         <AlertDescription>
-          <strong>1.5.2 Baseline Assumptions:</strong> This assessment evaluates the reasonableness and credibility of key assumptions used in the project's baseline scenario. Assumptions should be conservative, well-supported by evidence, and represent realistic counterfactual conditions.
+          <strong>1.5.2 Baseline Assumption Reasonableness:</strong> Assessment of how reasonable and credible the project's baseline scenario assumptions are. Strong assumptions are supported by data, lean toward conservative estimates, and reflect a realistic "without-project" situation.
         </AlertDescription>
       </Alert>
 
@@ -263,7 +263,7 @@ export default function BaselineAssumptionsAssessment({
         </CardHeader>
         <CardContent>
           <Textarea
-            placeholder="Provide any additional evidence or analysis supporting your assessment of baseline assumptions..."
+            placeholder="Upload or reference the data sources, studies, or analysis that support the assumptions used in the baseline scenario."
             value={formData.evidence_text}
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, evidence_text: e.target.value }))
