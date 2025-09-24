@@ -1,1 +1,4 @@
 project_id = "vmeapvxhkhmtzwscukfe"
+
+[functions.generate-ai-report-commentary]
+verify_jwt = true

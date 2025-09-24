@@ -7,16 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   ArrowLeft,
-  Download,
+  Eye,
   FileText,
-  PieChart,
   TrendingUp,
-  Printer,
-  Mail,
-  Share2
+  Sparkles,
+  BarChart3
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import ReportPreview from '@/components/financial/ReportPreview';
 
 interface FinancialModel {
   id: string;
@@ -34,6 +33,7 @@ const ModelReports = () => {
   const navigate = useNavigate();
   const [model, setModel] = useState<FinancialModel | null>(null);
   const [loading, setLoading] = useState(true);
+  const [previewReport, setPreviewReport] = useState<'standard' | 'ai-assisted' | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -73,11 +73,8 @@ const ModelReports = () => {
     }
   };
 
-  const handleDownloadReport = (reportType: string) => {
-    toast({
-      title: "Report Generation",
-      description: `${reportType} report generation will be available soon.`,
-    });
+  const handlePreviewReport = (reportType: 'standard' | 'ai-assisted') => {
+    setPreviewReport(reportType);
   };
 
   if (loading) {
@@ -101,238 +98,178 @@ const ModelReports = () => {
   }
 
   return (
-    <FinancialPlatformLayout>
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => navigate(`/financial/models/${id}`)}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Model Overview
-          </Button>
-        </div>
+    <>
+      <FinancialPlatformLayout>
+        <div className="p-6 space-y-6">
+          {/* Header */}
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate(`/financial/models/${id}`)}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Model Overview
+            </Button>
+          </div>
 
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">{model.name} - Reports</h1>
-          <p className="text-muted-foreground">
-            Generate comprehensive reports and investor presentations for your financial model
-          </p>
-        </div>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">{model.name} - Reports</h1>
+            <p className="text-muted-foreground">
+              Generate comprehensive PDF reports with preview functionality
+            </p>
+          </div>
 
-        {/* Report Types */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Executive Summary Report */}
+          {/* Report Types */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Standard PDF Report */}
+            <Card className="relative">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Standard PDF Report
+                </CardTitle>
+                <CardDescription>
+                  Classic financial model output without AI explanations
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Includes:</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Project overview and key assumptions</li>
+                    <li>• Complete financial statements</li>
+                    <li>• Financial metrics (NPV, IRR, payback)</li>
+                    <li>• Sensitivity & scenario analysis</li>
+                    <li>• Charts and visualizations</li>
+                  </ul>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => handlePreviewReport('standard')}
+                    className="flex-1"
+                    variant="outline"
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    Preview Report
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI-Assisted PDF Report */}
+            <Card className="relative border-primary/20">
+              <div className="absolute top-4 right-4">
+                <Badge variant="secondary" className="bg-primary/10 text-primary">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  AI Enhanced
+                </Badge>
+              </div>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  AI-Assisted PDF Report
+                </CardTitle>
+                <CardDescription>
+                  Enhanced report with AI-generated commentary and insights
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Everything in Standard Report plus:</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• AI-generated executive summary</li>
+                    <li>• Automated risk assessment</li>
+                    <li>• Plain English scenario explanations</li>
+                    <li>• Investor-focused highlights</li>
+                    <li>• Intelligent insights and recommendations</li>
+                  </ul>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => handlePreviewReport('ai-assisted')}
+                    className="flex-1"
+                    variant="outline"
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    Preview Report
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Features Overview */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Executive Summary
+                <BarChart3 className="h-5 w-5" />
+                What's Included in Every Report
               </CardTitle>
               <CardDescription>
-                High-level overview with key financial metrics and investment highlights
+                Comprehensive financial analysis for carbon credit projects
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-medium">Includes:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Project overview and key assumptions</li>
-                  <li>• Financial highlights (NPV, IRR, payback)</li>
-                  <li>• Revenue and cost projections</li>
-                  <li>• Investment summary</li>
-                </ul>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  onClick={() => handleDownloadReport('Executive Summary')}
-                  className="flex-1"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download PDF
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleDownloadReport('Executive Summary')}
-                >
-                  <Printer className="h-4 w-4" />
-                </Button>
+            <CardContent>
+              <div className="grid gap-6 md:grid-cols-3">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Financial Statements</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Complete Income Statement</li>
+                    <li>• Full Balance Sheet</li>
+                    <li>• Cash Flow Statement</li>
+                    <li>• All key financial metrics</li>
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-medium">Analysis</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Sensitivity analysis</li>
+                    <li>• Scenario comparisons</li>
+                    <li>• Key performance indicators</li>
+                    <li>• Investment returns</li>
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-medium">Visualizations</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Revenue breakdown charts</li>
+                    <li>• Cash flow waterfall</li>
+                    <li>• Expense composition</li>
+                    <li>• Performance dashboards</li>
+                  </ul>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Detailed Financial Report */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Detailed Financial Analysis
-              </CardTitle>
-              <CardDescription>
-                Comprehensive financial statements and detailed analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-medium">Includes:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Complete financial statements</li>
-                  <li>• Cash flow analysis</li>
-                  <li>• Sensitivity analysis results</li>
-                  <li>• Risk assessment</li>
-                </ul>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  onClick={() => handleDownloadReport('Detailed Financial Analysis')}
-                  className="flex-1"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download PDF
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleDownloadReport('Detailed Financial Analysis')}
-                >
-                  <Printer className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Investor Presentation */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <PieChart className="h-5 w-5" />
-                Investor Presentation
-              </CardTitle>
-              <CardDescription>
-                Professional slide deck for investor meetings and presentations
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-medium">Includes:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Executive summary slides</li>
-                  <li>• Financial charts and graphs</li>
-                  <li>• Market opportunity analysis</li>
-                  <li>• Investment proposition</li>
-                </ul>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  onClick={() => handleDownloadReport('Investor Presentation')}
-                  className="flex-1"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download PPT
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleDownloadReport('Investor Presentation')}
-                >
-                  <Share2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Data Export */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Download className="h-5 w-5" />
-                Raw Data Export
-              </CardTitle>
-              <CardDescription>
-                Export model data for further analysis in Excel or other tools
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-medium">Available formats:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Excel workbook (.xlsx)</li>
-                  <li>• CSV files (comma separated)</li>
-                  <li>• JSON data format</li>
-                </ul>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  onClick={() => handleDownloadReport('Excel Export')}
-                  variant="outline" 
-                  className="flex-1"
-                >
-                  Excel
-                </Button>
-                <Button 
-                  onClick={() => handleDownloadReport('CSV Export')}
-                  variant="outline" 
-                  className="flex-1"
-                >
-                  CSV
-                </Button>
-                <Button 
-                  onClick={() => handleDownloadReport('JSON Export')}
-                  variant="outline" 
-                  className="flex-1"
-                >
-                  JSON
-                </Button>
+          {/* Report Notes */}
+          <Card className="border-muted">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Preview Before Download</p>
+                  <p className="text-sm text-muted-foreground">
+                    Review the complete report content before generating your PDF. Make sure all data looks correct and adjust inputs if needed.
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
+      </FinancialPlatformLayout>
 
-        {/* Report Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Report Customization</CardTitle>
-            <CardDescription>
-              Customize report content and branding (Coming Soon)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <h4 className="font-medium">Branding</h4>
-                <p className="text-sm text-muted-foreground">
-                  Add your company logo and colors
-                </p>
-                <Button variant="outline" size="sm" disabled>
-                  <Mail className="mr-2 h-4 w-4" />
-                  Setup Branding
-                </Button>
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-medium">Content Sections</h4>
-                <p className="text-sm text-muted-foreground">
-                  Choose which sections to include
-                </p>
-                <Button variant="outline" size="sm" disabled>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Customize Sections
-                </Button>
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-medium">Auto-Generation</h4>
-                <p className="text-sm text-muted-foreground">
-                  Schedule automatic report updates
-                </p>
-                <Button variant="outline" size="sm" disabled>
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Setup Auto-Reports
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </FinancialPlatformLayout>
+      {/* Report Preview Modal */}
+      {previewReport && model && (
+        <ReportPreview
+          modelId={id!}
+          reportType={previewReport}
+          modelData={model}
+          onClose={() => setPreviewReport(null)}
+        />
+      )}
+    </>
   );
 };
 
