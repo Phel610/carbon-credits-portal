@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ReactNode, useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { 
@@ -42,7 +42,8 @@ import {
   DollarSign,
   Target,
   Database,
-  Activity
+  Activity,
+  ArrowLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -57,61 +58,83 @@ const globalNavigation = [
 ];
 
 // Model-specific navigation groups (visible when in model context)
-const modelNavigation = [
+const getModelNavigation = (modelId: string | undefined) => [
   {
     name: 'Inputs',
     icon: Edit,
     items: [
-      { name: 'Operational Metrics', href: '/financial/model/:id/inputs' },
-      { name: 'Financing', href: '/financial/model/:id/financing' },
-      { name: 'Expenses', href: '/financial/model/:id/expenses' },
-      { name: 'Investor Assumptions', href: '/financial/model/:id/assumptions' }
+      { name: 'Operational Metrics', href: modelId ? `/financial/models/${modelId}/inputs` : '#' },
+      { name: 'Financing', href: modelId ? `/financial/models/${modelId}/financing` : '#' },
+      { name: 'Expenses', href: modelId ? `/financial/models/${modelId}/expenses` : '#' },
+      { name: 'Investor Assumptions', href: modelId ? `/financial/models/${modelId}/assumptions` : '#' }
     ]
   },
   {
     name: 'Financial Statements',
     icon: Database,
     items: [
-      { name: 'Income Statement', href: '/financial/model/:id/statements/income' },
-      { name: 'Balance Sheet', href: '/financial/model/:id/statements/balance' },
-      { name: 'Cash Flow', href: '/financial/model/:id/statements/cashflow' }
+      { name: 'Income Statement', href: modelId ? `/financial/models/${modelId}/statements/income` : '#' },
+      { name: 'Balance Sheet', href: modelId ? `/financial/models/${modelId}/statements/balance` : '#' },
+      { name: 'Cash Flow', href: modelId ? `/financial/models/${modelId}/statements/cashflow` : '#' }
     ]
   },
   {
     name: 'Sensitivity & Scenarios',
     icon: Sliders,
     items: [
-      { name: 'Sensitivity Analysis', href: '/financial/scenarios' },
-      { name: 'Scenario Manager', href: '/financial/scenarios' },
-      { name: 'Risk Assessment', href: '/financial/scenarios' }
+      { name: 'Sensitivity Analysis', href: modelId ? `/financial/models/${modelId}/scenarios/sensitivity` : '#' },
+      { name: 'Scenario Manager', href: modelId ? `/financial/models/${modelId}/scenarios/manager` : '#' },
+      { name: 'Risk Assessment', href: modelId ? `/financial/models/${modelId}/scenarios/risk` : '#' }
     ]
   },
   {
     name: 'Financial Metrics',
     icon: TrendingUp,
     items: [
-      { name: 'KPI Dashboard', href: '/financial/metrics' },
-      { name: 'Performance Analysis', href: '/financial/metrics' },
-      { name: 'Benchmarking', href: '/financial/metrics' }
+      { name: 'KPI Dashboard', href: modelId ? `/financial/models/${modelId}/metrics/kpi` : '#' },
+      { name: 'Performance Analysis', href: modelId ? `/financial/models/${modelId}/metrics/performance` : '#' },
+      { name: 'Benchmarking', href: modelId ? `/financial/models/${modelId}/metrics/benchmarking` : '#' }
     ]
   },
   {
     name: 'Reports',
     icon: FileText,
     items: [
-      { name: 'Standard Reports', href: '/financial/reports' },
-      { name: 'Custom Reports', href: '/financial/reports' },
-      { name: 'Export Center', href: '/financial/reports' }
+      { name: 'Standard Reports', href: modelId ? `/financial/models/${modelId}/reports/standard` : '#' },
+      { name: 'Custom Reports', href: modelId ? `/financial/models/${modelId}/reports/custom` : '#' },
+      { name: 'Export Center', href: modelId ? `/financial/models/${modelId}/reports/export` : '#' }
     ]
   }
 ];
 
 function FinancialSidebar() {
   const location = useLocation();
+  const params = useParams();
+  const [modelName, setModelName] = useState<string>('');
   
-  const isActivePath = (href: string) => location.pathname === href;
+  // Context detection
+  const modelId = params.id; // Extract model ID from URL params
+  const isInModelContext = Boolean(modelId && location.pathname.includes(`/financial/models/${modelId}`));
+  
+  // Get model-specific navigation with actual ID
+  const modelNavigation = getModelNavigation(modelId);
+  
+  // Fetch model name when in model context
+  useEffect(() => {
+    if (modelId && isInModelContext) {
+      // You can fetch model details here if needed
+      // For now, we'll use a placeholder
+      setModelName('Loading...');
+    }
+  }, [modelId, isInModelContext]);
+  
+  const isActivePath = (href: string) => {
+    if (href === '#') return false; // Disabled links
+    return location.pathname === href || location.pathname.startsWith(href);
+  };
+  
   const isActiveGroup = (items: { href: string }[]) => 
-    items.some(item => location.pathname.startsWith(item.href.split('/').slice(0, -1).join('/')));
+    items.some(item => item.href !== '#' && location.pathname.startsWith(item.href));
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -120,10 +143,28 @@ function FinancialSidebar() {
           <Calculator className="h-6 w-6 text-primary" />
           <span className="font-semibold">Financial Platform</span>
         </div>
+        
+        {/* Model Context Indicator */}
+        {isInModelContext && (
+          <div className="px-4 py-2 border-t">
+            <div className="flex items-center gap-2 mb-2">
+              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+              <Link 
+                to="/financial/models" 
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Back to Models
+              </Link>
+            </div>
+            <div className="text-sm font-medium truncate">
+              Model: {modelName || `ID: ${modelId?.slice(0, 8)}...`}
+            </div>
+          </div>
+        )}
       </SidebarHeader>
       
       <SidebarContent>
-        {/* Global Navigation */}
+        {/* Global Navigation - Always visible */}
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -142,8 +183,8 @@ function FinancialSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Model-specific Navigation Groups */}
-        {modelNavigation.map((group) => (
+        {/* Model-specific Navigation - Only visible in model context */}
+        {isInModelContext && modelNavigation.map((group) => (
           <Collapsible 
             key={group.name} 
             defaultOpen={isActiveGroup(group.items)}
@@ -167,11 +208,21 @@ function FinancialSidebar() {
                         <SidebarMenuButton 
                           asChild 
                           isActive={isActivePath(item.href)}
-                          className="pl-6"
+                          className={cn(
+                            "pl-6",
+                            item.href === '#' && "opacity-50 cursor-not-allowed"
+                          )}
+                          disabled={item.href === '#'}
                         >
-                          <Link to={item.href}>
-                            <span>{item.name}</span>
-                          </Link>
+                          {item.href === '#' ? (
+                            <span className="flex items-center">
+                              <span>{item.name}</span>
+                            </span>
+                          ) : (
+                            <Link to={item.href}>
+                              <span>{item.name}</span>
+                            </Link>
+                          )}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     ))}
