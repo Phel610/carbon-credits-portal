@@ -5,7 +5,7 @@ import FinancialPlatformLayout from '@/components/layout/FinancialPlatformLayout
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { 
   ArrowLeft, 
   Calculator,
@@ -17,7 +17,10 @@ import {
   Globe,
   Calendar,
   Edit,
-  Download
+  Download,
+  CheckCircle,
+  Circle,
+  ChevronRight
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -41,7 +44,13 @@ const FinancialModelDetail = () => {
   const navigate = useNavigate();
   const [model, setModel] = useState<FinancialModel | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [completionStatus, setCompletionStatus] = useState({
+    inputs: false,
+    statements: false,
+    metrics: false,
+    scenarios: false,
+    reports: false,
+  });
 
   useEffect(() => {
     if (id) {
@@ -69,6 +78,7 @@ const FinancialModelDetail = () => {
       }
 
       setModel(data);
+      await checkCompletionStatus(id);
     } catch (error) {
       console.error('Error fetching model:', error);
       toast({
@@ -78,6 +88,48 @@ const FinancialModelDetail = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkCompletionStatus = async (modelId: string) => {
+    try {
+      // Check for inputs
+      const { data: inputs } = await supabase
+        .from('model_inputs')
+        .select('id')
+        .eq('model_id', modelId)
+        .limit(1);
+
+      // Check for statements
+      const { data: statements } = await supabase
+        .from('financial_statements')
+        .select('id')
+        .eq('model_id', modelId)
+        .limit(1);
+
+      // Check for metrics
+      const { data: metrics } = await supabase
+        .from('financial_metrics')
+        .select('id')
+        .eq('model_id', modelId)
+        .limit(1);
+
+      // Check for scenarios
+      const { data: scenarios } = await supabase
+        .from('model_scenarios')
+        .select('id')
+        .eq('model_id', modelId)
+        .limit(1);
+
+      setCompletionStatus({
+        inputs: (inputs && inputs.length > 0) || false,
+        statements: (statements && statements.length > 0) || false,
+        metrics: (metrics && metrics.length > 0) || false,
+        scenarios: (scenarios && scenarios.length > 0) || false,
+        reports: false, // Reports are generated, so we'll mark as complete when other steps are done
+      });
+    } catch (error) {
+      console.error('Error checking completion status:', error);
     }
   };
 
@@ -175,189 +227,245 @@ const FinancialModelDetail = () => {
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="inputs">Inputs</TabsTrigger>
-            <TabsTrigger value="statements">Statements</TabsTrigger>
-            <TabsTrigger value="metrics">Metrics</TabsTrigger>
-            <TabsTrigger value="scenarios">Scenarios</TabsTrigger>
-          </TabsList>
+        {/* Model Overview */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Model Status</CardDescription>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Calculator className="h-5 w-5" />
+                {model.status.replace('_', ' ')}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Projection Period</CardDescription>
+              <CardTitle className="text-xl">
+                {model.end_year - model.start_year + 1} Years
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Completion</CardDescription>
+              <CardTitle className="text-xl">
+                {Math.round((Object.values(completionStatus).filter(Boolean).length / 5) * 100)}%
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Last Updated</CardDescription>
+              <CardTitle className="text-xl">
+                {new Date(model.updated_at).toLocaleDateString()}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardDescription>Model Status</CardDescription>
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <Calculator className="h-5 w-5" />
-                    {model.status.replace('_', ' ')}
-                  </CardTitle>
-                </CardHeader>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardDescription>Projection Period</CardDescription>
-                  <CardTitle className="text-xl">
-                    {model.end_year - model.start_year + 1} Years
-                  </CardTitle>
-                </CardHeader>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardDescription>Completion</CardDescription>
-                  <CardTitle className="text-xl">0%</CardTitle>
-                </CardHeader>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardDescription>Last Updated</CardDescription>
-                  <CardTitle className="text-xl">
-                    {new Date(model.updated_at).toLocaleDateString()}
-                  </CardTitle>
-                </CardHeader>
-              </Card>
+        {/* Guided Workflow */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Financial Model Workflow</CardTitle>
+            <CardDescription>
+              Follow these steps to build and analyze your financial model
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Overall Progress</span>
+                <span>{Math.round((Object.values(completionStatus).filter(Boolean).length / 5) * 100)}%</span>
+              </div>
+              <Progress 
+                value={Math.round((Object.values(completionStatus).filter(Boolean).length / 5) * 100)} 
+                className="h-2"
+              />
             </div>
 
-            {/* Quick Actions */}
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Get Started</CardTitle>
-                  <CardDescription>
-                    Begin building your financial model by entering key inputs
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-            <Button asChild className="w-full" variant="outline">
-              <Link to={`/financial/models/${id}/inputs`}>
-                <FileText className="mr-2 h-4 w-4" />
-                Enter Model Inputs
-              </Link>
-            </Button>
-                  <Button asChild className="w-full" variant="outline">
-                    <Link to={`/financial/models/${id}/statements`}>
-                      <BarChart3 className="mr-2 h-4 w-4" />
-                      View Financial Statements
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
+            {/* Workflow Steps */}
+            <div className="space-y-4">
+              {/* Step 1: Inputs */}
+              <div className={`flex items-center p-4 rounded-lg border transition-colors ${
+                completionStatus.inputs ? 'border-success bg-success/5' : 'border-border'
+              }`}>
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                    1
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold">Model Inputs</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Enter operational metrics, expenses, and financing assumptions
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {completionStatus.inputs ? (
+                      <CheckCircle className="h-5 w-5 text-success" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-muted-foreground" />
+                    )}
+                    <Button asChild variant={completionStatus.inputs ? "outline" : "default"} size="sm">
+                      <Link to={`/financial/models/${id}/inputs`}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        {completionStatus.inputs ? 'Review Inputs' : 'Enter Inputs'}
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Analysis & Reports</CardTitle>
-                  <CardDescription>
-                    Analyze performance and generate investor reports
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button asChild className="w-full" variant="outline">
-                    <Link to={`/financial/models/${id}/metrics`}>
-                      <TrendingUp className="mr-2 h-4 w-4" />
-                      Financial Metrics
-                    </Link>
-                  </Button>
-                  <Button asChild className="w-full" variant="outline">
-                    <Link to={`/financial/models/${id}/scenarios`}>
-                      <DollarSign className="mr-2 h-4 w-4" />
-                      Scenario Analysis
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
+              {/* Step 2: Financial Statements */}
+              <div className={`flex items-center p-4 rounded-lg border transition-colors ${
+                completionStatus.statements ? 'border-success bg-success/5' : 
+                !completionStatus.inputs ? 'border-border bg-muted/20' : 'border-border'
+              }`}>
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                    2
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold">Financial Statements</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Auto-generated income statement, balance sheet, and cash flow
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {completionStatus.statements ? (
+                      <CheckCircle className="h-5 w-5 text-success" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-muted-foreground" />
+                    )}
+                    <Button 
+                      asChild 
+                      variant={completionStatus.statements ? "outline" : "default"} 
+                      size="sm"
+                      disabled={!completionStatus.inputs}
+                    >
+                      <Link to={`/financial/models/${id}/statements`}>
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        View Statements
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 3: Financial Metrics */}
+              <div className={`flex items-center p-4 rounded-lg border transition-colors ${
+                completionStatus.metrics ? 'border-success bg-success/5' : 
+                !completionStatus.statements ? 'border-border bg-muted/20' : 'border-border'
+              }`}>
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                    3
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold">Financial Metrics</h4>
+                    <p className="text-sm text-muted-foreground">
+                      NPV, IRR, payback period and other key performance indicators
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {completionStatus.metrics ? (
+                      <CheckCircle className="h-5 w-5 text-success" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-muted-foreground" />
+                    )}
+                    <Button 
+                      asChild 
+                      variant={completionStatus.metrics ? "outline" : "default"} 
+                      size="sm"
+                      disabled={!completionStatus.statements}
+                    >
+                      <Link to={`/financial/models/${id}/metrics`}>
+                        <TrendingUp className="mr-2 h-4 w-4" />
+                        View Metrics
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 4: Sensitivity & Scenarios */}
+              <div className={`flex items-center p-4 rounded-lg border transition-colors ${
+                completionStatus.scenarios ? 'border-success bg-success/5' : 
+                !completionStatus.metrics ? 'border-border bg-muted/20' : 'border-border'
+              }`}>
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                    4
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold">Sensitivity & Scenarios</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Test different assumptions and create scenario analyses
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {completionStatus.scenarios ? (
+                      <CheckCircle className="h-5 w-5 text-success" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-muted-foreground" />
+                    )}
+                    <Button 
+                      asChild 
+                      variant={completionStatus.scenarios ? "outline" : "default"} 
+                      size="sm"
+                      disabled={!completionStatus.metrics}
+                    >
+                      <Link to={`/financial/models/${id}/scenarios`}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        Create Scenarios
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 5: Reports */}
+              <div className={`flex items-center p-4 rounded-lg border transition-colors ${
+                completionStatus.reports ? 'border-success bg-success/5' : 
+                !completionStatus.scenarios ? 'border-border bg-muted/20' : 'border-border'
+              }`}>
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                    5
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold">Reports</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Generate comprehensive reports and investor presentations
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {completionStatus.reports ? (
+                      <CheckCircle className="h-5 w-5 text-success" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-muted-foreground" />
+                    )}
+                    <Button 
+                      asChild 
+                      variant={completionStatus.reports ? "outline" : "default"} 
+                      size="sm"
+                      disabled={!completionStatus.scenarios}
+                    >
+                      <Link to={`/financial/models/${id}/reports`}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Generate Reports
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </TabsContent>
-
-          {/* Inputs Tab */}
-          <TabsContent value="inputs" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Model Inputs</CardTitle>
-                <CardDescription>
-                  Configure all input parameters for your financial model
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Input Forms Coming Soon</h3>
-                  <p className="text-muted-foreground">
-                    Input forms for operational metrics, expenses, and financing will be available here.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Statements Tab */}
-          <TabsContent value="statements" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Financial Statements</CardTitle>
-                <CardDescription>
-                  Auto-calculated income statement, balance sheet, and cash flow
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Financial Statements</h3>
-                  <p className="text-muted-foreground">
-                    Financial statements will be automatically generated based on your inputs.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Metrics Tab */}
-          <TabsContent value="metrics" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Financial Metrics</CardTitle>
-                <CardDescription>
-                  Key performance indicators and financial ratios
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Financial Metrics</h3>
-                  <p className="text-muted-foreground">
-                    NPV, IRR, payback period and other key metrics will be calculated here.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Scenarios Tab */}
-          <TabsContent value="scenarios" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Scenario Analysis</CardTitle>
-                <CardDescription>
-                  Test different assumptions and sensitivity analysis
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Scenario Analysis</h3>
-                  <p className="text-muted-foreground">
-                    Create and compare different scenarios for your financial model.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </FinancialPlatformLayout>
   );
