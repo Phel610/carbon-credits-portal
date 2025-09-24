@@ -214,17 +214,6 @@ const FinancialModelDetail = () => {
               </div>
             </div>
           </div>
-          
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Model
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
         </div>
 
         {/* Model Overview */}
