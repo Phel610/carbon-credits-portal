@@ -8,27 +8,25 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   BookOpen, 
   Target, 
-  ArrowRight,
   CheckCircle,
   BarChart3,
   HelpCircle
 } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface AssessmentGuidePopupProps {
   className?: string;
 }
 
 export const AssessmentGuidePopup = ({ className }: AssessmentGuidePopupProps) => {
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
-
   const guideData = [
     {
       id: 'scoring',
-      title: 'Understanding the Scoring System',
+      title: 'Scoring System',
+      tabLabel: 'Scoring',
       icon: <BarChart3 className="h-4 w-4" />,
       description: 'Learn how each score translates to additionality likelihood',
       content: {
@@ -44,7 +42,8 @@ export const AssessmentGuidePopup = ({ className }: AssessmentGuidePopupProps) =
     },
     {
       id: 'weighting',
-      title: 'How We Combine Scores',
+      title: 'Score Combination',
+      tabLabel: 'Weighting',
       icon: <Target className="h-4 w-4" />,
       description: 'Understanding the balancing rule approach',
       content: {
@@ -59,7 +58,8 @@ export const AssessmentGuidePopup = ({ className }: AssessmentGuidePopupProps) =
     },
     {
       id: 'best-practices',
-      title: 'Assessment Best Practices',
+      title: 'Best Practices',
+      tabLabel: 'Tips',
       icon: <CheckCircle className="h-4 w-4" />,
       description: 'Tips for conducting thorough assessments',
       content: {
@@ -90,7 +90,7 @@ export const AssessmentGuidePopup = ({ className }: AssessmentGuidePopupProps) =
           </Button>
         </DialogTrigger>
         
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <BookOpen className="h-5 w-5 text-trust" />
@@ -98,87 +98,103 @@ export const AssessmentGuidePopup = ({ className }: AssessmentGuidePopupProps) =
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 mt-4">
+          <Tabs defaultValue="scoring" className="mt-4">
+            <TabsList className="grid w-full grid-cols-3">
+              {guideData.map((section) => (
+                <TabsTrigger 
+                  key={section.id} 
+                  value={section.id}
+                  className="flex items-center gap-2"
+                >
+                  {section.icon}
+                  <span className="hidden sm:inline">{section.tabLabel}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            
             {guideData.map((section) => (
-              <Collapsible 
-                key={section.id}
-                open={expandedSection === section.id}
-                onOpenChange={(open) => setExpandedSection(open ? section.id : null)}
+              <TabsContent 
+                key={section.id} 
+                value={section.id} 
+                className="max-h-[60vh] overflow-y-auto mt-6 space-y-4"
               >
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-start p-3 h-auto hover:bg-muted/50">
-                    <div className="flex items-center gap-3 w-full">
-                      {section.icon}
-                      <div className="text-left flex-1">
-                        <div className="font-medium text-sm">{section.title}</div>
-                        <div className="text-xs text-muted-foreground">{section.description}</div>
-                      </div>
-                      <ArrowRight className="h-4 w-4 transform transition-transform data-[state=open]:rotate-90" />
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg border">
+                    {section.icon}
+                    <div>
+                      <h3 className="font-semibold text-lg">{section.title}</h3>
+                      <p className="text-sm text-muted-foreground">{section.description}</p>
                     </div>
-                  </Button>
-                </CollapsibleTrigger>
-                
-                <CollapsibleContent className="px-3 pb-3">
-                  <div className="space-y-3 mt-3">
-                    {section.id === 'scoring' && (
+                  </div>
+                  
+                  {section.id === 'scoring' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground bg-muted/20 p-3 rounded-lg border">
+                        {section.content.overview}
+                      </p>
+                      <div className="grid gap-3">
+                        {section.content.scoreDescriptions.map((item, index) => (
+                          <div key={index} className="flex items-start gap-3 p-4 rounded-lg bg-card border hover:shadow-sm transition-shadow">
+                            <Badge 
+                              variant={item.score >= 4 ? 'default' : item.score >= 3 ? 'secondary' : 'destructive'}
+                              className="text-base px-3 py-1"
+                            >
+                              {item.score}
+                            </Badge>
+                            <div className="space-y-1">
+                              <div className="font-medium">{item.label}</div>
+                              <div className="text-sm text-muted-foreground leading-relaxed">{item.description}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {section.id === 'weighting' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground bg-muted/20 p-3 rounded-lg border">
+                        {section.content.overview}
+                      </p>
+                      <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <Target className="h-5 w-5 text-warning mt-0.5 flex-shrink-0" />
+                          <p className="text-sm leading-relaxed">{section.content.explanation}</p>
+                        </div>
+                      </div>
                       <div className="space-y-3">
-                        <p className="text-sm text-muted-foreground">{section.content.overview}</p>
-                        <div className="space-y-2">
-                          {section.content.scoreDescriptions.map((item, index) => (
-                            <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-card border">
-                              <Badge 
-                                variant={item.score >= 4 ? 'default' : item.score >= 3 ? 'secondary' : 'destructive'}
-                                className="mt-0.5"
-                              >
-                                {item.score}
-                              </Badge>
-                              <div>
-                                <div className="font-medium text-sm">{item.label}</div>
-                                <div className="text-xs text-muted-foreground">{item.description}</div>
-                              </div>
+                        <h4 className="font-medium flex items-center gap-2">
+                          <BarChart3 className="h-4 w-4" />
+                          Score Components
+                        </h4>
+                        <div className="grid gap-2">
+                          {section.content.components.map((component, index) => (
+                            <div key={index} className="flex items-start gap-3 p-3 rounded-lg border bg-muted/20">
+                              <span className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                              <span className="text-sm leading-relaxed">{component}</span>
                             </div>
                           ))}
                         </div>
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {section.id === 'weighting' && (
-                      <div className="space-y-3">
-                        <p className="text-sm text-muted-foreground">{section.content.overview}</p>
-                        <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
-                          <p className="text-sm">{section.content.explanation}</p>
-                        </div>
-                        <div className="space-y-2">
-                          <h4 className="text-sm font-medium">Score Components:</h4>
-                          <ul className="space-y-1">
-                            {section.content.components.map((component, index) => (
-                              <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                                <span className="w-1 h-1 rounded-full bg-primary mt-2 flex-shrink-0" />
-                                {component}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                  {section.id === 'best-practices' && (
+                    <div className="space-y-4">
+                      <div className="grid gap-3">
+                        {section.content.tips.map((tip, index) => (
+                          <div key={index} className="flex items-start gap-3 p-4 rounded-lg border bg-muted/20 hover:bg-muted/30 transition-colors">
+                            <CheckCircle className="h-4 w-4 text-success mt-1 flex-shrink-0" />
+                            <span className="text-sm leading-relaxed">{tip}</span>
+                          </div>
+                        ))}
                       </div>
-                    )}
-
-                    {section.id === 'best-practices' && (
-                      <div className="space-y-3">
-                        <ul className="space-y-2">
-                          {section.content.tips.map((tip, index) => (
-                            <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                              <CheckCircle className="h-3 w-3 text-success mt-0.5 flex-shrink-0" />
-                              {tip}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
             ))}
-          </div>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
