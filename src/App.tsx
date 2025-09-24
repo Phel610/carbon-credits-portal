@@ -20,6 +20,7 @@ import FinancialModels from "./pages/financial/FinancialModels";
 import NewFinancialModel from "./pages/financial/NewFinancialModel";
 import FinancialModelDetail from "./pages/financial/FinancialModelDetail";
 import ModelInputs from "./pages/financial/ModelInputs";
+import FinancialStatements from "./pages/financial/FinancialStatements";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -108,6 +109,11 @@ const App = () => (
             <Route path="/financial/models/:id/inputs" element={
               <ProtectedRoute>
                 <ModelInputs />
+              </ProtectedRoute>
+            } />
+            <Route path="/financial/models/:id/statements" element={
+              <ProtectedRoute>
+                <FinancialStatements />
               </ProtectedRoute>
             } />
             
