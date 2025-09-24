@@ -4,9 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Download, Loader2, FileText, TrendingUp, PieChart, BarChart3 } from 'lucide-react';
-import IncomeStatementTable from './IncomeStatementTable';
-import BalanceSheetTable from './BalanceSheetTable';
-import CashFlowStatementTable from './CashFlowStatementTable';
 import { FinancialCalculationEngine, ModelInputData } from '@/lib/financial/calculationEngine';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -43,9 +40,42 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
   const [financialData, setFinancialData] = useState<any>(null);
   const [aiCommentary, setAiCommentary] = useState<AICommentary | null>(null);
   const [modelInputs, setModelInputs] = useState<ModelInputData | null>(null);
+  
+  // Dynamic imports for table components to avoid module resolution issues
+  const [IncomeStatementTable, setIncomeStatementTable] = useState<any>(null);
+  const [BalanceSheetTable, setBalanceSheetTable] = useState<any>(null);
+  const [CashFlowStatementTable, setCashFlowStatementTable] = useState<any>(null);
 
   useEffect(() => {
-    fetchReportData();
+    // Load table components dynamically
+    const loadComponents = async () => {
+      try {
+        const [incomeModule, balanceModule, cashFlowModule] = await Promise.all([
+          import('./IncomeStatementTable'),
+          import('./BalanceSheetTable'),
+          import('./CashFlowStatementTable')
+        ]);
+        
+        setIncomeStatementTable(() => incomeModule.default);
+        setBalanceSheetTable(() => balanceModule.default);
+        setCashFlowStatementTable(() => cashFlowModule.default);
+      } catch (error) {
+        console.error('Failed to load table components:', error);
+        toast({
+          title: "Warning",
+          description: "Some table components failed to load",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    loadComponents();
+  }, []);
+
+  useEffect(() => {
+    if (modelId) {
+      fetchReportData();
+    }
   }, [modelId]);
 
   const fetchReportData = async () => {
@@ -331,17 +361,41 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
             <>
               <div>
                 <h3 className="text-xl font-semibold mb-4">Income Statement</h3>
-                <IncomeStatementTable statements={financialData.incomeStatements} />
+                {IncomeStatementTable ? (
+                  <IncomeStatementTable statements={financialData.incomeStatements || []} />
+                ) : (
+                  <Card>
+                    <CardContent className="p-6">
+                      <p className="text-muted-foreground">Loading Income Statement component...</p>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
 
               <div>
                 <h3 className="text-xl font-semibold mb-4">Balance Sheet</h3>
-                <BalanceSheetTable statements={financialData.balanceSheets} />
+                {BalanceSheetTable ? (
+                  <BalanceSheetTable statements={financialData.balanceSheets || []} />
+                ) : (
+                  <Card>
+                    <CardContent className="p-6">
+                      <p className="text-muted-foreground">Loading Balance Sheet component...</p>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
 
               <div>
                 <h3 className="text-xl font-semibold mb-4">Cash Flow Statement</h3>
-                <CashFlowStatementTable statements={financialData.cashFlowStatements} />
+                {CashFlowStatementTable ? (
+                  <CashFlowStatementTable statements={financialData.cashFlowStatements || []} />
+                ) : (
+                  <Card>
+                    <CardContent className="p-6">
+                      <p className="text-muted-foreground">Loading Cash Flow component...</p>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </>
           )}
