@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import PortalLayout from '@/components/layout/PortalLayout';
+import CarbonPlatformLayout from '@/components/layout/CarbonPlatformLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,7 +57,7 @@ const NewProject = () => {
 
       if (error) throw error;
 
-      navigate(`/projects/${data.id}`);
+      navigate(`/carbon/projects/${data.id}`);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -66,12 +66,12 @@ const NewProject = () => {
   };
 
   return (
-    <PortalLayout>
+    <CarbonPlatformLayout>
       <div className="p-6 max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-4">
           <Link 
-            to="/projects" 
+            to="/carbon/projects" 
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -230,14 +230,14 @@ const NewProject = () => {
                   Create Project
                 </Button>
                 <Button type="button" variant="outline" asChild>
-                  <Link to="/projects">Cancel</Link>
+                  <Link to="/carbon/projects">Cancel</Link>
                 </Button>
               </div>
             </form>
           </CardContent>
         </Card>
       </div>
-    </PortalLayout>
+    </CarbonPlatformLayout>
   );
 };
 

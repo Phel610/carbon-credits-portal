@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import PortalLayout from '@/components/layout/PortalLayout';
+import CarbonPlatformLayout from '@/components/layout/CarbonPlatformLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -116,16 +116,16 @@ const Assessments = () => {
 
   if (loading) {
     return (
-      <PortalLayout>
+      <CarbonPlatformLayout>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">Loading assessments...</div>
         </div>
-      </PortalLayout>
+      </CarbonPlatformLayout>
     );
   }
 
   return (
-    <PortalLayout>
+    <CarbonPlatformLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -136,7 +136,7 @@ const Assessments = () => {
             </p>
           </div>
           <Button asChild>
-            <Link to={`/assessments/new${searchParams.get('project') ? `?project=${searchParams.get('project')}` : ''}`}>
+            <Link to={`/carbon/assessments/new${searchParams.get('project') ? `?project=${searchParams.get('project')}` : ''}`}>
               <Plus className="mr-2 h-4 w-4" />
               New Assessment
             </Link>
@@ -188,7 +188,7 @@ const Assessments = () => {
                 </p>
                 {assessments.length === 0 && (
                   <Button asChild>
-                    <Link to="/assessments/new">
+                    <Link to="/carbon/assessments/new">
                       <Plus className="mr-2 h-4 w-4" />
                       Create Your First Assessment
                     </Link>
@@ -229,13 +229,13 @@ const Assessments = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link to={`/assessments/${assessment.id}`}>
+                          <Link to={`/carbon/assessments/${assessment.id}`}>
                             <Eye className="mr-2 h-4 w-4" />
                             View Assessment
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link to={`/assessments/${assessment.id}/edit`}>
+                          <Link to={`/carbon/assessments/${assessment.id}/edit`}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Assessment
                           </Link>
@@ -287,7 +287,7 @@ const Assessments = () => {
 
                   <div className="pt-2">
                     <Button asChild className="w-full" size="sm">
-                      <Link to={`/assessments/${assessment.id}`}>
+                      <Link to={`/carbon/assessments/${assessment.id}`}>
                         {assessment.status === 'completed' ? 'View Results' : 'Continue Assessment'}
                       </Link>
                     </Button>
@@ -298,7 +298,7 @@ const Assessments = () => {
           </div>
         )}
       </div>
-    </PortalLayout>
+    </CarbonPlatformLayout>
   );
 };
 

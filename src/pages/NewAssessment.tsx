@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import PortalLayout from '@/components/layout/PortalLayout';
+import CarbonPlatformLayout from '@/components/layout/CarbonPlatformLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -119,7 +119,7 @@ const NewAssessment = () => {
           overall_additionality_score: null
         });
 
-      navigate(`/assessments/${data.id}/additionality`);
+      navigate(`/carbon/assessments/${data.id}/additionality`);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -129,24 +129,24 @@ const NewAssessment = () => {
 
   if (projectsLoading) {
     return (
-      <PortalLayout>
+      <CarbonPlatformLayout>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
             Loading projects...
           </div>
         </div>
-      </PortalLayout>
+      </CarbonPlatformLayout>
     );
   }
 
   return (
-    <PortalLayout>
+    <CarbonPlatformLayout>
       <div className="p-6 max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-4">
           <Link 
-            to="/assessments" 
+            to="/carbon/assessments" 
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -214,7 +214,7 @@ const NewAssessment = () => {
                   <div className="text-center p-6 border border-dashed rounded-lg">
                     <p className="text-muted-foreground mb-2">No projects available</p>
                     <Button asChild size="sm">
-                      <Link to="/projects/new">Create a Project First</Link>
+                      <Link to="/carbon/projects/new">Create a Project First</Link>
                     </Button>
                   </div>
                 ) : (
@@ -311,7 +311,7 @@ const NewAssessment = () => {
                   Start Assessment
                 </Button>
                 <Button type="button" variant="outline" asChild>
-                  <Link to="/assessments">Cancel</Link>
+                  <Link to="/carbon/assessments">Cancel</Link>
                 </Button>
               </div>
             </form>
@@ -352,7 +352,7 @@ const NewAssessment = () => {
           </Card>
         )}
       </div>
-    </PortalLayout>
+    </CarbonPlatformLayout>
   );
 };
 

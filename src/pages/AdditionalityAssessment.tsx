@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import PortalLayout from '@/components/layout/PortalLayout';
+import CarbonPlatformLayout from '@/components/layout/CarbonPlatformLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -229,20 +229,20 @@ const AdditionalityAssessment = () => {
 
   if (loading) {
     return (
-      <PortalLayout>
+      <CarbonPlatformLayout>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
             Loading assessment...
           </div>
         </div>
-      </PortalLayout>
+      </CarbonPlatformLayout>
     );
   }
 
   if (error || !assessment) {
     return (
-      <PortalLayout>
+      <CarbonPlatformLayout>
         <div className="p-6">
           <Alert>
             <AlertTriangle className="h-4 w-4" />
@@ -251,19 +251,19 @@ const AdditionalityAssessment = () => {
             </AlertDescription>
           </Alert>
         </div>
-      </PortalLayout>
+      </CarbonPlatformLayout>
     );
   }
 
   const CurrentComponent = criteriaSteps[currentStep].component;
 
   return (
-    <PortalLayout>
+    <CarbonPlatformLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="space-y-4">
           <Link 
-            to={`/assessments/${id}`} 
+            to={`/carbon/assessments/${id}`} 
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -393,7 +393,7 @@ const AdditionalityAssessment = () => {
           </div>
         </div>
       </div>
-    </PortalLayout>
+    </CarbonPlatformLayout>
   );
 };
 

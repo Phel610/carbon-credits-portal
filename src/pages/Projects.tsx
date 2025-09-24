@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import PortalLayout from '@/components/layout/PortalLayout';
+import CarbonPlatformLayout from '@/components/layout/CarbonPlatformLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -107,16 +107,16 @@ const Projects = () => {
 
   if (loading) {
     return (
-      <PortalLayout>
+      <CarbonPlatformLayout>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">Loading projects...</div>
         </div>
-      </PortalLayout>
+      </CarbonPlatformLayout>
     );
   }
 
   return (
-    <PortalLayout>
+    <CarbonPlatformLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -127,7 +127,7 @@ const Projects = () => {
             </p>
           </div>
           <Button asChild>
-            <Link to="/projects/new">
+            <Link to="/carbon/projects/new">
               <Plus className="mr-2 h-4 w-4" />
               New Project
             </Link>
@@ -197,7 +197,7 @@ const Projects = () => {
                 </p>
                 {projects.length === 0 && (
                   <Button asChild>
-                    <Link to="/projects/new">
+                    <Link to="/carbon/projects/new">
                       <Plus className="mr-2 h-4 w-4" />
                       Create Your First Project
                     </Link>
@@ -233,13 +233,13 @@ const Projects = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link to={`/projects/${project.id}/edit`}>
+                          <Link to={`/carbon/projects/${project.id}/edit`}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Project
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link to={`/assessments/new?project=${project.id}`}>
+                          <Link to={`/carbon/assessments/new?project=${project.id}`}>
                             <BarChart3 className="mr-2 h-4 w-4" />
                             New Assessment
                           </Link>
@@ -310,7 +310,7 @@ const Projects = () => {
 
                   <div className="pt-2">
                     <Button asChild className="w-full" size="sm">
-                      <Link to={`/projects/${project.id}`}>
+                      <Link to={`/carbon/projects/${project.id}`}>
                         View Details
                       </Link>
                     </Button>
@@ -321,7 +321,7 @@ const Projects = () => {
           </div>
         )}
       </div>
-    </PortalLayout>
+    </CarbonPlatformLayout>
   );
 };
 

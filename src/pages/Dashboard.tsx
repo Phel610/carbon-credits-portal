@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import PortalLayout from '@/components/layout/PortalLayout';
+import CarbonPlatformLayout from '@/components/layout/CarbonPlatformLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -114,16 +114,16 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <PortalLayout>
+      <CarbonPlatformLayout>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">Loading dashboard...</div>
         </div>
-      </PortalLayout>
+      </CarbonPlatformLayout>
     );
   }
 
   return (
-    <PortalLayout>
+    <CarbonPlatformLayout>
       <div className="p-6 space-y-6">
         {/* Welcome Header */}
         <div className="space-y-2">
@@ -201,13 +201,13 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               <Button asChild className="w-full">
-                <Link to="/projects/new">
+                <Link to="/carbon/projects/new">
                   <Plus className="mr-2 h-4 w-4" />
                   Create New Project
                 </Link>
               </Button>
               <Button asChild variant="outline" className="w-full">
-                <Link to="/assessments/new">
+                <Link to="/carbon/assessments/new">
                   <BarChart3 className="mr-2 h-4 w-4" />
                   Start New Assessment
                 </Link>
@@ -254,7 +254,7 @@ const Dashboard = () => {
                 <div className="text-center py-6">
                   <p className="text-muted-foreground">No projects yet</p>
                   <Button asChild className="mt-2" size="sm">
-                    <Link to="/projects/new">Create Your First Project</Link>
+                    <Link to="/carbon/projects/new">Create Your First Project</Link>
                   </Button>
                 </div>
               ) : (
@@ -276,7 +276,7 @@ const Dashboard = () => {
                     </div>
                   ))}
                   <Button asChild variant="outline" className="w-full mt-3">
-                    <Link to="/projects">View All Projects</Link>
+                    <Link to="/carbon/projects">View All Projects</Link>
                   </Button>
                 </div>
               )}
@@ -295,7 +295,7 @@ const Dashboard = () => {
                 <div className="text-center py-6">
                   <p className="text-muted-foreground">No assessments yet</p>
                   <Button asChild className="mt-2" size="sm">
-                    <Link to="/assessments/new">Start Your First Assessment</Link>
+                    <Link to="/carbon/assessments/new">Start Your First Assessment</Link>
                   </Button>
                 </div>
               ) : (
@@ -325,7 +325,7 @@ const Dashboard = () => {
                     </div>
                   ))}
                   <Button asChild variant="outline" className="w-full mt-3">
-                    <Link to="/assessments">View All Assessments</Link>
+                    <Link to="/carbon/assessments">View All Assessments</Link>
                   </Button>
                 </div>
               )}
@@ -333,7 +333,7 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
-    </PortalLayout>
+    </CarbonPlatformLayout>
   );
 };
 
