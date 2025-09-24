@@ -234,12 +234,12 @@ const FinancialModelDetail = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button asChild className="w-full" variant="outline">
-                    <Link to={`/financial/models/${id}/inputs`}>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Enter Model Inputs
-                    </Link>
-                  </Button>
+            <Button asChild className="w-full" variant="outline">
+              <Link to={`/financial/models/${id}/inputs`}>
+                <FileText className="mr-2 h-4 w-4" />
+                Enter Model Inputs
+              </Link>
+            </Button>
                   <Button asChild className="w-full" variant="outline">
                     <Link to={`/financial/models/${id}/statements`}>
                       <BarChart3 className="mr-2 h-4 w-4" />

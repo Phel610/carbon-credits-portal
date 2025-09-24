@@ -19,6 +19,7 @@ import FinancialDashboard from "./pages/financial/FinancialDashboard";
 import FinancialModels from "./pages/financial/FinancialModels";
 import NewFinancialModel from "./pages/financial/NewFinancialModel";
 import FinancialModelDetail from "./pages/financial/FinancialModelDetail";
+import ModelInputs from "./pages/financial/ModelInputs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -102,6 +103,11 @@ const App = () => (
             <Route path="/financial/models/:id" element={
               <ProtectedRoute>
                 <FinancialModelDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/financial/models/:id/inputs" element={
+              <ProtectedRoute>
+                <ModelInputs />
               </ProtectedRoute>
             } />
             
