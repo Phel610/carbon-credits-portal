@@ -21,6 +21,8 @@ import NewFinancialModel from "./pages/financial/NewFinancialModel";
 import FinancialModelDetail from "./pages/financial/FinancialModelDetail";
 import ModelInputs from "./pages/financial/ModelInputs";
 import FinancialStatements from "./pages/financial/FinancialStatements";
+import FinancialReports from "./pages/financial/FinancialReports";
+import FinancialMetrics from "./pages/financial/FinancialMetrics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -114,6 +116,16 @@ const App = () => (
             <Route path="/financial/models/:id/statements" element={
               <ProtectedRoute>
                 <FinancialStatements />
+              </ProtectedRoute>
+            } />
+            <Route path="/financial/models/:id/metrics" element={
+              <ProtectedRoute>
+                <FinancialMetrics />
+              </ProtectedRoute>
+            } />
+            <Route path="/financial/reports" element={
+              <ProtectedRoute>
+                <FinancialReports />
               </ProtectedRoute>
             } />
             

@@ -30,8 +30,8 @@ interface FinancialPlatformLayoutProps {
 const navigation = [
   { name: 'Dashboard', href: '/financial/dashboard', icon: Home },
   { name: 'Models', href: '/financial/models', icon: Calculator },
-  { name: 'Scenarios', href: '/financial/scenarios', icon: Sliders },
   { name: 'Reports', href: '/financial/reports', icon: FileText },
+  { name: 'Scenarios', href: '/financial/scenarios', icon: Sliders },
 ];
 
 export default function FinancialPlatformLayout({ children }: FinancialPlatformLayoutProps) {
