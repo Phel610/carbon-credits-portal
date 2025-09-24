@@ -10,6 +10,8 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { Info, Save, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { CriterionHelp } from '@/components/help/CriterionHelp';
+import { criteriaHelpContent } from '@/components/help/helpContent';
 
 interface ExternalEvidenceSignalsAssessmentProps {
   assessmentId: string;
@@ -320,6 +322,15 @@ const ExternalEvidenceSignalsAssessment = ({ assessmentId, projectData, onComple
 
   return (
     <div className="space-y-6">
+      {/* Criterion Help */}
+      <CriterionHelp
+        title="1.6 External Evidence Signals"
+        rationale={criteriaHelpContent.externalEvidenceSignals.rationale}
+        scoringLogic={criteriaHelpContent.externalEvidenceSignals.scoringLogic}
+        keyPoints={criteriaHelpContent.externalEvidenceSignals.keyPoints}
+        relatedCriteria={criteriaHelpContent.externalEvidenceSignals.relatedCriteria}
+      />
+
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>

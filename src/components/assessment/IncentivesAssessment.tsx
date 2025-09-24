@@ -21,7 +21,6 @@ import {
 import { CriterionHelp } from '@/components/help/CriterionHelp';
 import { ScoringImpact } from '@/components/help/ScoringImpact';
 import { HelpTooltip } from '@/components/help/HelpTooltip';
-import { AssessmentGuide } from '@/components/help/AssessmentGuide';
 import { criteriaHelpContent } from '@/components/help/helpContent';
 import { useToast } from '@/hooks/use-toast';
 
@@ -223,9 +222,6 @@ const IncentivesAssessment = ({ assessmentId, projectData, onCompletion, isCompl
 
   return (
     <div className="space-y-6">
-        {/* Assessment Guide */}
-        <AssessmentGuide className="mb-6" />
-
         {/* Criterion Help */}
         <CriterionHelp
           title="1.1 Financial and Practical Drivers"

@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CriterionHelp } from '@/components/help/CriterionHelp';
+import { criteriaHelpContent } from '@/components/help/helpContent';
 
 interface BaselineAssumptionsAssessmentProps {
   assessmentId: string;
@@ -211,6 +213,15 @@ export default function BaselineAssumptionsAssessment({
 
   return (
     <div className="space-y-6">
+      {/* Criterion Help */}
+      <CriterionHelp
+        title="1.5.2 Baseline Assumption Reasonableness"
+        rationale={criteriaHelpContent.baselineAssumptionReasonableness.rationale}
+        scoringLogic={criteriaHelpContent.baselineAssumptionReasonableness.scoringLogic}
+        keyPoints={criteriaHelpContent.baselineAssumptionReasonableness.keyPoints}
+        relatedCriteria={criteriaHelpContent.baselineAssumptionReasonableness.relatedCriteria}
+      />
+
       <Alert>
         <AlertDescription>
           <strong>1.5.2 Baseline Assumption Reasonableness:</strong> Assessment of how reasonable and credible the project's baseline scenario assumptions are. Strong assumptions are supported by data, lean toward conservative estimates, and reflect a realistic "without-project" situation.

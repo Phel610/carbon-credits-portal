@@ -29,6 +29,7 @@ import BaselineTransparencyAssessment from '@/components/assessment/BaselineTran
 import BaselineAssumptionsAssessment from '@/components/assessment/BaselineAssumptionsAssessment';
 import ExternalEvidenceSignalsAssessment from '@/components/assessment/ExternalEvidenceSignalsAssessment';
 import OverallScoreDisplay from '@/components/assessment/OverallScoreDisplay';
+import { AssessmentGuide } from '@/components/help/AssessmentGuide';
 
 interface Assessment {
   id: string;
@@ -274,6 +275,9 @@ const AdditionalityAssessment = () => {
             </div>
           </div>
         </div>
+
+        {/* Assessment Guide */}
+        <AssessmentGuide className="mb-6" />
 
         {/* Progress */}
         <Card>

@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CriterionHelp } from '@/components/help/CriterionHelp';
+import { criteriaHelpContent } from '@/components/help/helpContent';
 
 interface BaselineTransparencyAssessmentProps {
   assessmentId: string;
@@ -211,6 +213,15 @@ export default function BaselineTransparencyAssessment({
 
   return (
     <div className="space-y-6">
+      {/* Criterion Help */}
+      <CriterionHelp
+        title="1.5.1 Baseline Documentation Openness"
+        rationale={criteriaHelpContent.baselineDocumentationOpenness.rationale}
+        scoringLogic={criteriaHelpContent.baselineDocumentationOpenness.scoringLogic}
+        keyPoints={criteriaHelpContent.baselineDocumentationOpenness.keyPoints}
+        relatedCriteria={criteriaHelpContent.baselineDocumentationOpenness.relatedCriteria}
+      />
+
       <Alert>
         <AlertDescription>
           <strong>1.5.1 Baseline Documentation Openness:</strong> This assessment evaluates how transparent the project is in documenting its baseline scenario approach, methodology, data sources, and key assumptions. Clear documentation is essential for objective assessment of baseline credibility.

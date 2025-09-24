@@ -11,8 +11,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Info, Save, Loader2, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { CriterionHelp } from '@/components/help/CriterionHelp';
-import { ScoringImpact } from '@/components/help/ScoringImpact';
-import { HelpTooltip } from '@/components/help/HelpTooltip';
 import { criteriaHelpContent } from '@/components/help/helpContent';
 
 interface CommonPracticeAssessmentProps {
@@ -246,6 +244,15 @@ const CommonPracticeAssessment = ({ assessmentId, projectData, onCompletion, isC
 
   return (
     <div className="space-y-6">
+      {/* Criterion Help */}
+      <CriterionHelp
+        title="1.2 Market Prevalence"
+        rationale={criteriaHelpContent.marketPrevalence.rationale}
+        scoringLogic={criteriaHelpContent.marketPrevalence.scoringLogic}
+        keyPoints={criteriaHelpContent.marketPrevalence.keyPoints}
+        relatedCriteria={criteriaHelpContent.marketPrevalence.relatedCriteria}
+      />
+
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>

@@ -10,6 +10,8 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { Info, Save, Loader2, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { CriterionHelp } from '@/components/help/CriterionHelp';
+import { criteriaHelpContent } from '@/components/help/helpContent';
 
 interface BaselineApproachAssessmentProps {
   assessmentId: string;
@@ -241,6 +243,15 @@ const BaselineApproachAssessment = ({ assessmentId, projectData, onCompletion, i
 
   return (
     <div className="space-y-6">
+      {/* Criterion Help */}
+      <CriterionHelp
+        title="1.4 Baseline Method Choice"
+        rationale={criteriaHelpContent.baselineMethodChoice.rationale}
+        scoringLogic={criteriaHelpContent.baselineMethodChoice.scoringLogic}
+        keyPoints={criteriaHelpContent.baselineMethodChoice.keyPoints}
+        relatedCriteria={criteriaHelpContent.baselineMethodChoice.relatedCriteria}
+      />
+
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>

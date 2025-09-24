@@ -10,6 +10,8 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { Info, Save, Loader2, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { CriterionHelp } from '@/components/help/CriterionHelp';
+import { criteriaHelpContent } from '@/components/help/helpContent';
 
 interface LegalConsiderationsAssessmentProps {
   assessmentId: string;
@@ -241,6 +243,15 @@ const LegalConsiderationsAssessment = ({ assessmentId, projectData, onCompletion
 
   return (
     <div className="space-y-6">
+      {/* Criterion Help */}
+      <CriterionHelp
+        title="1.3 Regulatory Context"
+        rationale={criteriaHelpContent.regulatoryContext.rationale}
+        scoringLogic={criteriaHelpContent.regulatoryContext.scoringLogic}
+        keyPoints={criteriaHelpContent.regulatoryContext.keyPoints}
+        relatedCriteria={criteriaHelpContent.regulatoryContext.relatedCriteria}
+      />
+
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
