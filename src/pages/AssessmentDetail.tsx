@@ -49,7 +49,8 @@ interface AdditionalityScores {
 }
 
 const AssessmentDetail = () => {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id: string }>();
+  const id = params.id;
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -58,14 +59,29 @@ const AssessmentDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  console.log('URL params:', params);
+  console.log('Assessment ID:', id);
+
   useEffect(() => {
-    if (user && id) {
+    if (user && id && id !== ':id') {
       fetchAssessmentData();
+    } else if (!user) {
+      setError('Authentication required');
+      setLoading(false);
+    } else if (!id || id === ':id') {
+      setError('Invalid assessment ID');
+      setLoading(false);
     }
   }, [user, id]);
 
   const fetchAssessmentData = async () => {
     try {
+      console.log('ID from params:', id);
+      
+      if (!id) {
+        throw new Error('Assessment ID is missing');
+      }
+
       // Fetch assessment details
       const { data: assessmentData, error: assessmentError } = await supabase
         .from('assessments')
@@ -74,7 +90,7 @@ const AssessmentDetail = () => {
           project:projects(id, name, project_type, country)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (assessmentError) throw assessmentError;
       setAssessment(assessmentData);

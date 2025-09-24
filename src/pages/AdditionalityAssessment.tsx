@@ -95,7 +95,8 @@ const criteriaSteps = [
 ];
 
 const AdditionalityAssessment = () => {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id: string }>();
+  const id = params.id;
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -106,14 +107,29 @@ const AdditionalityAssessment = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  console.log('AdditionalityAssessment - URL params:', params);
+  console.log('AdditionalityAssessment - Assessment ID:', id);
+
   useEffect(() => {
-    if (user && id) {
+    if (user && id && id !== ':id') {
       fetchAssessment();
+    } else if (!user) {
+      setError('Authentication required');
+      setLoading(false);
+    } else if (!id || id === ':id') {
+      setError('Invalid assessment ID');
+      setLoading(false);
     }
   }, [user, id]);
 
   const fetchAssessment = async () => {
     try {
+      console.log('Fetching assessment with ID:', id);
+      
+      if (!id) {
+        throw new Error('Assessment ID is missing');
+      }
+
       const { data, error } = await supabase
         .from('assessments')
         .select(`
@@ -121,7 +137,7 @@ const AdditionalityAssessment = () => {
           project:projects(id, name, project_type, country)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setAssessment(data);
