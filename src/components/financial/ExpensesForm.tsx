@@ -291,7 +291,7 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
                 max="1"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Decimal (0.15 = 15% of revenue)
+                % of <strong>total revenue</strong>
               </p>
             </div>
             

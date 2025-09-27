@@ -149,6 +149,11 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
     metric.issuance_flag === 1 && metric.credits_generated === 0 && i === 0
   );
   const hasValidIssuanceSchedule = totalIssuance <= totalCredits;
+  
+  // Hard validation: issuance flag must be exactly 0 or 1
+  const hasValidIssuanceFlags = yearlyMetrics.every(metric => 
+    metric.issuance_flag === 0 || metric.issuance_flag === 1
+  );
 
   return (
     <div className="space-y-6">
@@ -181,7 +186,21 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
         </Card>
       </div>
 
-      {/* Validation Alert */}
+      {/* Validation Alerts */}
+      {!hasValidIssuanceFlags && (
+        <Card className="border-destructive bg-destructive/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              <p className="font-medium">Validation Error: Issuance flag must be exactly 0 or 1</p>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              All issuance flag values must be either 0 (no issuance) or 1 (issue credits). No other values are allowed.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+      
       {!hasValidIssuanceSchedule && (
         <Card className="border-destructive bg-destructive/5">
           <CardContent className="pt-6">
@@ -323,7 +342,7 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
       <div className="flex justify-end">
         <Button 
           onClick={saveOperationalMetrics} 
-          disabled={loading || !hasValidIssuanceSchedule}
+          disabled={loading || !hasValidIssuanceSchedule || !hasValidIssuanceFlags}
           className="bg-trust hover:bg-trust/90"
         >
           {loading ? 'Saving...' : 'Save Operational Metrics'}
