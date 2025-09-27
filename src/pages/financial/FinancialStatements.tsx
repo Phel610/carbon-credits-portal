@@ -20,6 +20,9 @@ import { FinancialCalculationEngine, ModelInputData } from '@/lib/financial/calc
 import IncomeStatementTable from '@/components/financial/IncomeStatementTable';
 import BalanceSheetTable from '@/components/financial/BalanceSheetTable';
 import CashFlowStatementTable from '@/components/financial/CashFlowStatementTable';
+import DebtScheduleTable from '@/components/financial/DebtScheduleTable';
+import CarbonStreamTable from '@/components/financial/CarbonStreamTable';
+import FreeCashFlowTable from '@/components/financial/FreeCashFlowTable';
 
 interface FinancialModel {
   id: string;
@@ -432,10 +435,13 @@ const FinancialStatements = () => {
 
             {/* Financial Statements Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="income">Income Statement</TabsTrigger>
                 <TabsTrigger value="balance">Balance Sheet</TabsTrigger>
-                <TabsTrigger value="cashflow">Cash Flow Statement</TabsTrigger>
+                <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
+                <TabsTrigger value="debt">Debt Schedule</TabsTrigger>
+                <TabsTrigger value="carbon">Carbon Stream</TabsTrigger>
+                <TabsTrigger value="fcf">Free Cash Flow</TabsTrigger>
               </TabsList>
 
               <TabsContent value="income">
@@ -448,6 +454,21 @@ const FinancialStatements = () => {
 
               <TabsContent value="cashflow">
                 <CashFlowStatementTable statements={statements.cashFlowStatements} />
+              </TabsContent>
+
+              <TabsContent value="debt">
+                <DebtScheduleTable statements={statements.debtSchedule} />
+              </TabsContent>
+
+              <TabsContent value="carbon">
+                <CarbonStreamTable 
+                  statements={statements.carbonStream} 
+                  investorIRR={statements.metrics.investor_irr}
+                />
+              </TabsContent>
+
+              <TabsContent value="fcf">
+                <FreeCashFlowTable statements={statements.freeCashFlow} />
               </TabsContent>
             </Tabs>
           </>
