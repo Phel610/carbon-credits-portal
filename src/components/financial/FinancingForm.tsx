@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Building, CreditCard, Handshake, Plus, Trash2 } from 'lucide-react';
+import { Building, CreditCard, Handshake, Plus, Trash2, Percent } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -19,155 +19,89 @@ interface FinancingFormProps {
   };
 }
 
-interface EquityInvestment {
+interface YearlyFinancing {
   year: number;
-  amount: number;
-  investor_type: string;
-}
-
-interface DebtFacility {
-  name: string;
-  principal: number;
-  interest_rate: number;
-  term_years: number;
-  drawdown_year: number;
-}
-
-interface PrePurchaseAgreement {
-  buyer: string;
-  credits_quantity: number;
-  price_per_credit: number;
-  advance_payment: number;
-  delivery_year: number;
+  equity_injection: number;
+  debt_draw: number;
+  purchase_amount: number; // Pre-purchase advance payments
 }
 
 const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
-  // Equity investments by year
-  const [equityInvestments, setEquityInvestments] = useState<EquityInvestment[]>([
-    {
-      year: model.start_year,
-      amount: 0,
-      investor_type: 'Founder Investment',
+  // Debt parameters (single facility for simplicity, matching Excel)
+  const [interestRate, setInterestRate] = useState(0.08); // 8% as decimal
+  const [debtDurationYears, setDebtDurationYears] = useState(5);
+  
+  // Pre-purchase parameters (NEW per Excel spec)
+  const [purchaseShare, setPurchaseShare] = useState(0.30); // 30% of credits pre-purchased
+  
+  // Returns calculation
+  const [discountRate, setDiscountRate] = useState(0.12); // 12% as decimal
+  const [initialEquityT0, setInitialEquityT0] = useState(100000); // Initial founder equity
+  
+  // Yearly financing schedule
+  const [yearlyFinancing, setYearlyFinancing] = useState<YearlyFinancing[]>(() => {
+    const years = [];
+    for (let year = model.start_year; year <= model.end_year; year++) {
+      years.push({
+        year,
+        equity_injection: year === model.start_year ? 100000 : 0, // Initial equity
+        debt_draw: year === model.start_year ? 500000 : 0,        // Initial debt draw
+        purchase_amount: 0, // Pre-purchase advances
+      });
     }
-  ]);
-
-  // Debt facilities
-  const [debtFacilities, setDebtFacilities] = useState<DebtFacility[]>([]);
-
-  // Pre-purchase agreements
-  const [prePurchaseAgreements, setPrePurchaseAgreements] = useState<PrePurchaseAgreement[]>([]);
+    return years;
+  });
 
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Equity Investment Functions
-  const addEquityInvestment = () => {
-    setEquityInvestments([
-      ...equityInvestments,
-      {
-        year: model.start_year,
-        amount: 0,
-        investor_type: 'Series A',
-      }
-    ]);
-  };
-
-  const updateEquityInvestment = (index: number, field: keyof EquityInvestment, value: any) => {
-    setEquityInvestments(prev => 
-      prev.map((investment, i) => 
-        i === index 
-          ? { ...investment, [field]: value }
-          : investment
+  const updateYearlyFinancing = (year: number, field: keyof Omit<YearlyFinancing, 'year'>, value: number) => {
+    setYearlyFinancing(prev => 
+      prev.map(financing => 
+        financing.year === year 
+          ? { ...financing, [field]: value }
+          : financing
       )
     );
-  };
-
-  const removeEquityInvestment = (index: number) => {
-    setEquityInvestments(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Debt Facility Functions
-  const addDebtFacility = () => {
-    setDebtFacilities([
-      ...debtFacilities,
-      {
-        name: 'Term Loan',
-        principal: 0,
-        interest_rate: 8.0,
-        term_years: 5,
-        drawdown_year: model.start_year,
-      }
-    ]);
-  };
-
-  const updateDebtFacility = (index: number, field: keyof DebtFacility, value: any) => {
-    setDebtFacilities(prev => 
-      prev.map((facility, i) => 
-        i === index 
-          ? { ...facility, [field]: value }
-          : facility
-      )
-    );
-  };
-
-  const removeDebtFacility = (index: number) => {
-    setDebtFacilities(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Pre-Purchase Agreement Functions
-  const addPrePurchaseAgreement = () => {
-    setPrePurchaseAgreements([
-      ...prePurchaseAgreements,
-      {
-        buyer: 'Corporate Buyer',
-        credits_quantity: 0,
-        price_per_credit: 10,
-        advance_payment: 0,
-        delivery_year: model.start_year + 2,
-      }
-    ]);
-  };
-
-  const updatePrePurchaseAgreement = (index: number, field: keyof PrePurchaseAgreement, value: any) => {
-    setPrePurchaseAgreements(prev => 
-      prev.map((agreement, i) => 
-        i === index 
-          ? { ...agreement, [field]: value }
-          : agreement
-      )
-    );
-  };
-
-  const removePrePurchaseAgreement = (index: number) => {
-    setPrePurchaseAgreements(prev => prev.filter((_, i) => i !== index));
   };
 
   const saveFinancingStrategy = async () => {
     setLoading(true);
     try {
       const financingInputs = [
-        // Equity investments
-        ...equityInvestments.map((investment, index) => ({
+        // Debt parameters
+        {
           model_id: modelId,
           category: 'financing',
-          input_key: 'equity_investment',
-          input_value: investment as any,
-          year: investment.year,
-        })),
-        // Debt facilities
-        ...debtFacilities.map((facility, index) => ({
+          input_key: 'interest_rate',
+          input_value: { value: interestRate },
+        },
+        {
           model_id: modelId,
           category: 'financing',
-          input_key: 'debt_facility',
-          input_value: facility as any,
-        })),
-        // Pre-purchase agreements
-        ...prePurchaseAgreements.map((agreement, index) => ({
+          input_key: 'debt_duration_years',
+          input_value: { value: debtDurationYears },
+        },
+        // Pre-purchase parameters
+        {
           model_id: modelId,
           category: 'financing',
-          input_key: 'pre_purchase_agreement',
-          input_value: agreement as any,
-        })),
+          input_key: 'purchase_share',
+          input_value: { value: purchaseShare },
+        },
+        // Returns parameters
+        {
+          model_id: modelId,
+          category: 'financing',
+          input_key: 'discount_rate',
+          input_value: { value: discountRate },
+        },
+        {
+          model_id: modelId,
+          category: 'financing',
+          input_key: 'initial_equity_t0',
+          input_value: { value: initialEquityT0 },
+        },
         // Notes
         {
           model_id: modelId,
@@ -176,6 +110,33 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           input_value: { value: notes },
         },
       ];
+
+      // Add yearly financing inputs
+      const yearlyInputs = yearlyFinancing.flatMap(financing => [
+        {
+          model_id: modelId,
+          category: 'financing',
+          input_key: 'equity_injection',
+          input_value: { value: financing.equity_injection },
+          year: financing.year,
+        },
+        {
+          model_id: modelId,
+          category: 'financing',
+          input_key: 'debt_draw',
+          input_value: { value: financing.debt_draw },
+          year: financing.year,
+        },
+        {
+          model_id: modelId,
+          category: 'financing',
+          input_key: 'purchase_amount',
+          input_value: { value: financing.purchase_amount },
+          year: financing.year,
+        },
+      ]);
+
+      const allInputs = [...financingInputs, ...yearlyInputs];
 
       // Delete existing financing inputs
       const { error: deleteError } = await supabase
@@ -189,7 +150,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
       // Insert new inputs
       const { error: insertError } = await supabase
         .from('model_inputs')
-        .insert(financingInputs);
+        .insert(allInputs);
 
       if (insertError) throw insertError;
 
@@ -209,14 +170,14 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
     }
   };
 
-  const totalEquity = equityInvestments.reduce((sum, investment) => sum + investment.amount, 0);
-  const totalDebt = debtFacilities.reduce((sum, facility) => sum + facility.principal, 0);
-  const totalAdvancePayments = prePurchaseAgreements.reduce((sum, agreement) => sum + agreement.advance_payment, 0);
+  const totalEquity = yearlyFinancing.reduce((sum, financing) => sum + financing.equity_injection, 0);
+  const totalDebt = yearlyFinancing.reduce((sum, financing) => sum + financing.debt_draw, 0);
+  const totalPurchaseAdvances = yearlyFinancing.reduce((sum, financing) => sum + financing.purchase_amount, 0);
 
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Equity</CardDescription>
@@ -232,265 +193,231 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Pre-Purchase Advances</CardDescription>
-            <CardTitle className="text-2xl">${totalAdvancePayments.toLocaleString()}</CardTitle>
+            <CardTitle className="text-2xl">${totalPurchaseAdvances.toLocaleString()}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Pre-Purchase Share</CardDescription>
+            <CardTitle className="text-2xl">{(purchaseShare * 100).toFixed(1)}%</CardTitle>
           </CardHeader>
         </Card>
       </div>
 
-      {/* Equity Investments */}
+      {/* Financing Parameters */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Debt Facility */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Debt Facility Parameters
+            </CardTitle>
+            <CardDescription>
+              Single debt facility with PPMT amortization (Excel compatible)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="interest-rate">Interest Rate</Label>
+              <Input
+                id="interest-rate"
+                type="number"
+                step="0.001"
+                value={interestRate}
+                onChange={(e) => setInterestRate(Number(e.target.value))}
+                placeholder="0.08"
+                min="0"
+                max="1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Decimal (0.08 = 8% annual rate)
+              </p>
+            </div>
+            
+            <div>
+              <Label htmlFor="debt-duration">Debt Duration (Years)</Label>
+              <Input
+                id="debt-duration"
+                type="number"
+                value={debtDurationYears}
+                onChange={(e) => setDebtDurationYears(Number(e.target.value))}
+                placeholder="5"
+                min="1"
+                max="30"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Amortization period for principal payments
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pre-Purchase Agreement */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Handshake className="h-5 w-5" />
+              Pre-Purchase Agreement
+            </CardTitle>
+            <CardDescription>
+              Forward sales with advance payments (Excel carbon stream logic)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="purchase-share">Purchase Share</Label>
+              <Input
+                id="purchase-share"
+                type="number"
+                step="0.001"
+                value={purchaseShare}
+                onChange={(e) => setPurchaseShare(Number(e.target.value))}
+                placeholder="0.30"
+                min="0"
+                max="1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Decimal (0.30 = 30% of credits pre-purchased)
+              </p>
+            </div>
+            
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-sm font-medium">Revenue Split Logic</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                When purchase amount &gt; 0: Spot Revenue = Credits × Price × (1 - Purchase Share)
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Pre-purchase Revenue = Purchased Credits × Implied Purchase Price
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Returns Parameters */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5" />
-                Equity Investments
-              </CardTitle>
-              <CardDescription>
-                Founder investments, venture capital, and other equity financing
-              </CardDescription>
-            </div>
-            <Button onClick={addEquityInvestment} variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Investment
-            </Button>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Percent className="h-5 w-5" />
+            Returns Calculation Parameters
+          </CardTitle>
+          <CardDescription>
+            Parameters for NPV, IRR, and payback period calculations
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {equityInvestments.map((investment, index) => (
-              <div key={index} className="grid gap-4 md:grid-cols-4 p-4 border rounded-lg">
-                <div>
-                  <Label>Investor Type</Label>
-                  <Input
-                    value={investment.investor_type}
-                    onChange={(e) => updateEquityInvestment(index, 'investor_type', e.target.value)}
-                    placeholder="e.g., Founder, Series A"
-                  />
-                </div>
-                <div>
-                  <Label>Investment Year</Label>
-                  <Input
-                    type="number"
-                    value={investment.year}
-                    onChange={(e) => updateEquityInvestment(index, 'year', Number(e.target.value))}
-                    min={model.start_year}
-                    max={model.end_year}
-                  />
-                </div>
-                <div>
-                  <Label>Amount (USD)</Label>
-                  <Input
-                    type="number"
-                    value={investment.amount}
-                    onChange={(e) => updateEquityInvestment(index, 'amount', Number(e.target.value))}
-                    placeholder="0"
-                    min="0"
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    onClick={() => removeEquityInvestment(index)}
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            {equityInvestments.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                No equity investments added. Click "Add Investment" to get started.
-              </div>
-            )}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label htmlFor="discount-rate">Discount Rate</Label>
+              <Input
+                id="discount-rate"
+                type="number"
+                step="0.001"
+                value={discountRate}
+                onChange={(e) => setDiscountRate(Number(e.target.value))}
+                placeholder="0.12"
+                min="0"
+                max="1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Decimal (0.12 = 12% WACC for NPV calculation)
+              </p>
+            </div>
+            
+            <div>
+              <Label htmlFor="initial-equity">Initial Equity (t=0)</Label>
+              <Input
+                id="initial-equity"
+                type="number"
+                value={initialEquityT0}
+                onChange={(e) => setInitialEquityT0(Number(e.target.value))}
+                placeholder="100000"
+                min="0"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Initial founder investment for IRR calculation
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Debt Facilities */}
+      {/* Yearly Financing Schedule */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Debt Facilities
-              </CardTitle>
-              <CardDescription>
-                Bank loans, development finance, and other debt financing
-              </CardDescription>
-            </div>
-            <Button onClick={addDebtFacility} variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Debt Facility
-            </Button>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="h-5 w-5" />
+            Yearly Financing Schedule
+          </CardTitle>
+          <CardDescription>
+            Equity injections, debt drawdowns, and pre-purchase advance payments by year
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {debtFacilities.map((facility, index) => (
-              <div key={index} className="grid gap-4 md:grid-cols-6 p-4 border rounded-lg">
+            {yearlyFinancing.map((financing, index) => (
+              <div key={financing.year} className="grid gap-4 md:grid-cols-4 p-4 border rounded-lg">
                 <div>
-                  <Label>Facility Name</Label>
-                  <Input
-                    value={facility.name}
-                    onChange={(e) => updateDebtFacility(index, 'name', e.target.value)}
-                    placeholder="Term Loan"
-                  />
+                  <Label>Year {financing.year}</Label>
+                  <Badge variant="outline" className="mt-1">
+                    Project Year {index + 1}
+                  </Badge>
                 </div>
+                
                 <div>
-                  <Label>Principal (USD)</Label>
+                  <Label htmlFor={`equity-${financing.year}`}>Equity Injection</Label>
                   <Input
+                    id={`equity-${financing.year}`}
                     type="number"
-                    value={facility.principal}
-                    onChange={(e) => updateDebtFacility(index, 'principal', Number(e.target.value))}
+                    value={financing.equity_injection}
+                    onChange={(e) => updateYearlyFinancing(financing.year, 'equity_injection', Number(e.target.value))}
                     placeholder="0"
                     min="0"
                   />
+                  <p className="text-xs text-muted-foreground">New equity investment</p>
                 </div>
+                
                 <div>
-                  <Label>Interest Rate (%)</Label>
+                  <Label htmlFor={`debt-${financing.year}`}>Debt Draw</Label>
                   <Input
+                    id={`debt-${financing.year}`}
                     type="number"
-                    step="0.1"
-                    value={facility.interest_rate}
-                    onChange={(e) => updateDebtFacility(index, 'interest_rate', Number(e.target.value))}
-                    placeholder="8.0"
+                    value={financing.debt_draw}
+                    onChange={(e) => updateYearlyFinancing(financing.year, 'debt_draw', Number(e.target.value))}
+                    placeholder="0"
                     min="0"
                   />
+                  <p className="text-xs text-muted-foreground">New debt drawdown</p>
                 </div>
+                
                 <div>
-                  <Label>Term (Years)</Label>
+                  <Label htmlFor={`purchase-${financing.year}`}>Purchase Amount</Label>
                   <Input
+                    id={`purchase-${financing.year}`}
                     type="number"
-                    value={facility.term_years}
-                    onChange={(e) => updateDebtFacility(index, 'term_years', Number(e.target.value))}
-                    placeholder="5"
-                    min="1"
+                    value={financing.purchase_amount}
+                    onChange={(e) => updateYearlyFinancing(financing.year, 'purchase_amount', Number(e.target.value))}
+                    placeholder="0"
+                    min="0"
                   />
-                </div>
-                <div>
-                  <Label>Drawdown Year</Label>
-                  <Input
-                    type="number"
-                    value={facility.drawdown_year}
-                    onChange={(e) => updateDebtFacility(index, 'drawdown_year', Number(e.target.value))}
-                    min={model.start_year}
-                    max={model.end_year}
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    onClick={() => removeDebtFacility(index)}
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <p className="text-xs text-muted-foreground">Pre-purchase advance</p>
                 </div>
               </div>
             ))}
-            {debtFacilities.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                No debt facilities added. Click "Add Debt Facility" to get started.
-              </div>
-            )}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Pre-Purchase Agreements */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Handshake className="h-5 w-5" />
-                Pre-Purchase Agreements
-              </CardTitle>
-              <CardDescription>
-                Forward sales contracts with advance payments from buyers
-              </CardDescription>
-            </div>
-            <Button onClick={addPrePurchaseAgreement} variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Agreement
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {prePurchaseAgreements.map((agreement, index) => (
-              <div key={index} className="grid gap-4 md:grid-cols-6 p-4 border rounded-lg">
-                <div>
-                  <Label>Buyer Name</Label>
-                  <Input
-                    value={agreement.buyer}
-                    onChange={(e) => updatePrePurchaseAgreement(index, 'buyer', e.target.value)}
-                    placeholder="Corporate Buyer"
-                  />
-                </div>
-                <div>
-                  <Label>Credits Quantity</Label>
-                  <Input
-                    type="number"
-                    value={agreement.credits_quantity}
-                    onChange={(e) => updatePrePurchaseAgreement(index, 'credits_quantity', Number(e.target.value))}
-                    placeholder="0"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <Label>Price/Credit (USD)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={agreement.price_per_credit}
-                    onChange={(e) => updatePrePurchaseAgreement(index, 'price_per_credit', Number(e.target.value))}
-                    placeholder="10.00"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <Label>Advance Payment</Label>
-                  <Input
-                    type="number"
-                    value={agreement.advance_payment}
-                    onChange={(e) => updatePrePurchaseAgreement(index, 'advance_payment', Number(e.target.value))}
-                    placeholder="0"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <Label>Delivery Year</Label>
-                  <Input
-                    type="number"
-                    value={agreement.delivery_year}
-                    onChange={(e) => updatePrePurchaseAgreement(index, 'delivery_year', Number(e.target.value))}
-                    min={model.start_year}
-                    max={model.end_year}
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    onClick={() => removePrePurchaseAgreement(index)}
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            {prePurchaseAgreements.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                No pre-purchase agreements added. Click "Add Agreement" to get started.
-              </div>
-            )}
+          
+          <div className="mt-4 p-4 bg-muted rounded-lg">
+            <h4 className="font-medium mb-2">Excel Formula Implementation</h4>
+            <p className="text-sm text-muted-foreground">
+              • Debt Schedule: Uses PPMT function for principal payments matching Excel
+            </p>
+            <p className="text-sm text-muted-foreground">
+              • Pre-purchase: Single implied price from first purchase year
+            </p>
+            <p className="text-sm text-muted-foreground">
+              • FCF to Equity: NI + Depreciation - ΔWC + CAPEX + Net Borrowing
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -500,14 +427,14 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
         <CardHeader>
           <CardTitle>Additional Notes</CardTitle>
           <CardDescription>
-            Any additional details about your financing strategy
+            Any additional assumptions about financing strategy and terms
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="e.g., Financing conditions, milestones, warrant coverage, board composition..."
+            placeholder="e.g., Credit covenants, collateral requirements, equity dilution assumptions, buyer creditworthiness..."
             className="min-h-[100px]"
           />
         </CardContent>

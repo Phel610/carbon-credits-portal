@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DollarSign, Calculator, Building, Receipt } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { DollarSign, Calculator, Building, Receipt, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -21,46 +22,54 @@ interface ExpensesFormProps {
 
 interface YearlyExpenses {
   year: number;
-  capex: number;
+  feasibility_costs: number;  // Negative values per Excel
+  pdd_costs: number;         // Negative values per Excel
+  mrv_costs: number;         // Negative values per Excel
+  staff_costs: number;       // Negative values per Excel
+  capex: number;             // Negative values per Excel
+  depreciation: number;      // Negative values per Excel
 }
 
 const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
-  // Cost of Goods Sold
-  const [cogsPercentage, setCogsPercentage] = useState(15); // Default 15%
+  // Cost of Goods Sold (rate)
+  const [cogsRate, setCogsRate] = useState(0.15); // 15% as decimal
 
-  // Development Costs (one-time)
-  const [feasibilityStudyCost, setFeasibilityStudyCost] = useState(50000);
-  const [pddDevelopmentCost, setPddDevelopmentCost] = useState(75000);
-  const [initialMrvCost, setInitialMrvCost] = useState(25000);
+  // Working capital rates (NEW per Excel spec)
+  const [arRate, setArRate] = useState(0.05); // 5% of revenue as A/R
+  const [apRate, setApRate] = useState(0.10); // 10% of OPEX as A/P
 
-  // Ongoing Costs (annual)
-  const [annualMrvCost, setAnnualMrvCost] = useState(15000);
-  const [staffCosts, setStaffCosts] = useState(100000);
+  // Tax rate
+  const [incomeTaxRate, setIncomeTaxRate] = useState(0.25); // 25% as decimal
 
-  // CAPEX by year
-  const [yearlyCapex, setYearlyCapex] = useState<YearlyExpenses[]>(() => {
+  // Depreciation settings
+  const [depreciationMethod, setDepreciationMethod] = useState('straight_line');
+  const [depreciationYears, setDepreciationYears] = useState(10);
+
+  // Yearly expenses (all as negative numbers per Excel convention)
+  const [yearlyExpenses, setYearlyExpenses] = useState<YearlyExpenses[]>(() => {
     const years = [];
     for (let year = model.start_year; year <= model.end_year; year++) {
-      years.push({ year, capex: 0 });
+      years.push({ 
+        year, 
+        feasibility_costs: year === model.start_year ? -50000 : 0, // One-time cost
+        pdd_costs: year === model.start_year ? -75000 : 0,         // One-time cost
+        mrv_costs: year === model.start_year ? -40000 : -15000,    // Initial + annual
+        staff_costs: -100000,  // Annual cost
+        capex: 0,              // Equipment/infrastructure
+        depreciation: 0,       // Will be calculated
+      });
     }
     return years;
   });
 
-  // Depreciation
-  const [depreciationMethod, setDepreciationMethod] = useState('straight_line');
-  const [depreciationYears, setDepreciationYears] = useState(10);
-
-  // Tax
-  const [incomeTaxRate, setIncomeTaxRate] = useState(25); // Default 25%
-
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const updateYearlyCapex = (year: number, capex: number) => {
-    setYearlyCapex(prev => 
+  const updateYearlyExpense = (year: number, field: keyof Omit<YearlyExpenses, 'year'>, value: number) => {
+    setYearlyExpenses(prev => 
       prev.map(expense => 
         expense.year === year 
-          ? { ...expense, capex }
+          ? { ...expense, [field]: value }
           : expense
       )
     );
@@ -69,48 +78,34 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
   const saveExpenses = async () => {
     setLoading(true);
     try {
-      // Prepare all expense inputs
+      // Prepare all expense inputs with Excel sign conventions
       const expenseInputs = [
-        // COGS
+        // Rates (as decimals, not percentages)
         {
           model_id: modelId,
           category: 'expenses',
-          input_key: 'cogs_percentage',
-          input_value: { value: cogsPercentage },
-        },
-        // Development costs
-        {
-          model_id: modelId,
-          category: 'expenses',
-          input_key: 'feasibility_study_cost',
-          input_value: { value: feasibilityStudyCost },
+          input_key: 'cogs_rate',
+          input_value: { value: cogsRate },
         },
         {
           model_id: modelId,
           category: 'expenses',
-          input_key: 'pdd_development_cost',
-          input_value: { value: pddDevelopmentCost },
+          input_key: 'ar_rate',
+          input_value: { value: arRate },
         },
         {
           model_id: modelId,
           category: 'expenses',
-          input_key: 'initial_mrv_cost',
-          input_value: { value: initialMrvCost },
-        },
-        // Ongoing costs
-        {
-          model_id: modelId,
-          category: 'expenses',
-          input_key: 'annual_mrv_cost',
-          input_value: { value: annualMrvCost },
+          input_key: 'ap_rate',
+          input_value: { value: apRate },
         },
         {
           model_id: modelId,
           category: 'expenses',
-          input_key: 'staff_costs',
-          input_value: { value: staffCosts },
+          input_key: 'income_tax_rate',
+          input_value: { value: incomeTaxRate },
         },
-        // Depreciation
+        // Depreciation settings
         {
           model_id: modelId,
           category: 'expenses',
@@ -123,13 +118,6 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
           input_key: 'depreciation_years',
           input_value: { value: depreciationYears },
         },
-        // Tax
-        {
-          model_id: modelId,
-          category: 'expenses',
-          input_key: 'income_tax_rate',
-          input_value: { value: incomeTaxRate },
-        },
         // Notes
         {
           model_id: modelId,
@@ -139,16 +127,53 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
         },
       ];
 
-      // Add yearly CAPEX inputs
-      const capexInputs = yearlyCapex.map(expense => ({
-        model_id: modelId,
-        category: 'expenses',
-        input_key: 'capex',
-        input_value: { value: expense.capex },
-        year: expense.year,
-      }));
+      // Add yearly expense inputs (all as negative numbers)  
+      const yearlyInputs = yearlyExpenses.flatMap(expense => [
+        {
+          model_id: modelId,
+          category: 'expenses',
+          input_key: 'feasibility_costs',
+          input_value: { value: expense.feasibility_costs },
+          year: expense.year,
+        },
+        {
+          model_id: modelId,
+          category: 'expenses',
+          input_key: 'pdd_costs',
+          input_value: { value: expense.pdd_costs },
+          year: expense.year,
+        },
+        {
+          model_id: modelId,
+          category: 'expenses',
+          input_key: 'mrv_costs',
+          input_value: { value: expense.mrv_costs },
+          year: expense.year,
+        },
+        {
+          model_id: modelId,
+          category: 'expenses',
+          input_key: 'staff_costs',
+          input_value: { value: expense.staff_costs },
+          year: expense.year,
+        },
+        {
+          model_id: modelId,
+          category: 'expenses',
+          input_key: 'capex',
+          input_value: { value: expense.capex },
+          year: expense.year,
+        },
+        {
+          model_id: modelId,
+          category: 'expenses',
+          input_key: 'depreciation',
+          input_value: { value: expense.depreciation },
+          year: expense.year,
+        },
+      ]);
 
-      const allInputs = [...expenseInputs, ...capexInputs];
+      const allInputs = [...expenseInputs, ...yearlyInputs];
 
       // Delete existing expense inputs
       const { error: deleteError } = await supabase
@@ -182,8 +207,12 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
     }
   };
 
-  const totalCapex = yearlyCapex.reduce((sum, expense) => sum + expense.capex, 0);
-  const totalDevelopmentCosts = feasibilityStudyCost + pddDevelopmentCost + initialMrvCost;
+  // Calculate totals
+  const totalCapex = yearlyExpenses.reduce((sum, expense) => sum + Math.abs(expense.capex), 0);
+  const totalFeasibility = Math.abs(yearlyExpenses.find(e => e.feasibility_costs < 0)?.feasibility_costs || 0);
+  const totalPDD = Math.abs(yearlyExpenses.find(e => e.pdd_costs < 0)?.pdd_costs || 0);
+  const totalInitialMRV = Math.abs(yearlyExpenses.find(e => e.year === model.start_year)?.mrv_costs || 0);
+  const totalDevelopmentCosts = totalFeasibility + totalPDD + totalInitialMRV;
 
   return (
     <div className="space-y-6">
@@ -204,225 +233,121 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>COGS Rate</CardDescription>
-            <CardTitle className="text-2xl">{cogsPercentage}%</CardTitle>
+            <CardTitle className="text-2xl">{(cogsRate * 100).toFixed(1)}%</CardTitle>
           </CardHeader>
         </Card>
       </div>
 
+      {/* Sign Convention Alert */}
+      <Card className="border-warning bg-warning/5">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 text-warning">
+            <AlertTriangle className="h-5 w-5" />
+            <p className="font-medium">Excel Sign Convention</p>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            All costs are entered as <strong>negative numbers</strong> to match Excel formulas. 
+            Enter -50000 for a $50,000 expense.
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Cost Structure */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Variable Costs */}
+        {/* Variable Costs & Working Capital */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calculator className="h-5 w-5" />
-              Variable Costs
+              Variable Costs & Working Capital
             </CardTitle>
             <CardDescription>
-              Costs that vary with revenue or credit volumes
+              Costs that vary with revenue and working capital assumptions
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="cogs">Cost of Goods Sold (%)</Label>
+              <Label htmlFor="cogs">Cost of Goods Sold (Rate)</Label>
               <Input
                 id="cogs"
                 type="number"
-                step="0.1"
-                value={cogsPercentage}
-                onChange={(e) => setCogsPercentage(Number(e.target.value))}
-                placeholder="15.0"
+                step="0.001"
+                value={cogsRate}
+                onChange={(e) => setCogsRate(Number(e.target.value))}
+                placeholder="0.15"
                 min="0"
-                max="100"
+                max="1"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Percentage of revenue (typically 10-20% for carbon projects)
+                Decimal (0.15 = 15% of revenue)
+              </p>
+            </div>
+            
+            <div>
+              <Label htmlFor="ar_rate">Accounts Receivable Rate</Label>
+              <Input
+                id="ar_rate"
+                type="number"
+                step="0.001"
+                value={arRate}
+                onChange={(e) => setArRate(Number(e.target.value))}
+                placeholder="0.05"
+                min="0"
+                max="1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Decimal (0.05 = 5% of revenue as A/R)
+              </p>
+            </div>
+            
+            <div>
+              <Label htmlFor="ap_rate">Accounts Payable Rate</Label>
+              <Input
+                id="ap_rate"
+                type="number"
+                step="0.001"
+                value={apRate}
+                onChange={(e) => setApRate(Number(e.target.value))}
+                placeholder="0.10"
+                min="0"
+                max="1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Decimal (0.10 = 10% of OPEX as A/P)
               </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Tax Settings */}
+        {/* Tax & Depreciation Settings */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5" />
-              Tax Settings
+              Tax & Depreciation Settings
             </CardTitle>
             <CardDescription>
-              Corporate income tax rates
+              Corporate tax and asset depreciation policies
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="tax-rate">Income Tax Rate (%)</Label>
+              <Label htmlFor="tax-rate">Income Tax Rate</Label>
               <Input
                 id="tax-rate"
                 type="number"
-                step="0.1"
+                step="0.001"
                 value={incomeTaxRate}
                 onChange={(e) => setIncomeTaxRate(Number(e.target.value))}
-                placeholder="25.0"
+                placeholder="0.25"
                 min="0"
-                max="100"
+                max="1"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Corporate tax rate in project country
+                Decimal (0.25 = 25% corporate tax rate)
               </p>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Development Costs */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            One-time Development Costs
-          </CardTitle>
-          <CardDescription>
-            Upfront costs for project development and validation
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <Label htmlFor="feasibility">Feasibility Study Cost</Label>
-              <Input
-                id="feasibility"
-                type="number"
-                value={feasibilityStudyCost}
-                onChange={(e) => setFeasibilityStudyCost(Number(e.target.value))}
-                placeholder="50000"
-                min="0"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Initial project assessment and design
-              </p>
-            </div>
-            <div>
-              <Label htmlFor="pdd">PDD Development Cost</Label>
-              <Input
-                id="pdd"
-                type="number"
-                value={pddDevelopmentCost}
-                onChange={(e) => setPddDevelopmentCost(Number(e.target.value))}
-                placeholder="75000"
-                min="0"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Project Design Document preparation
-              </p>
-            </div>
-            <div>
-              <Label htmlFor="initial-mrv">Initial MRV Setup</Label>
-              <Input
-                id="initial-mrv"
-                type="number"
-                value={initialMrvCost}
-                onChange={(e) => setInitialMrvCost(Number(e.target.value))}
-                placeholder="25000"
-                min="0"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Monitoring, Reporting & Verification setup
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Annual Operating Costs */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Annual Operating Costs</CardTitle>
-          <CardDescription>
-            Recurring annual expenses for project operations
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <Label htmlFor="annual-mrv">Annual MRV Cost</Label>
-              <Input
-                id="annual-mrv"
-                type="number"
-                value={annualMrvCost}
-                onChange={(e) => setAnnualMrvCost(Number(e.target.value))}
-                placeholder="15000"
-                min="0"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Yearly monitoring and verification
-              </p>
-            </div>
-            <div>
-              <Label htmlFor="staff">Annual Staff Costs</Label>
-              <Input
-                id="staff"
-                type="number"
-                value={staffCosts}
-                onChange={(e) => setStaffCosts(Number(e.target.value))}
-                placeholder="100000"
-                min="0"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Project management and operations team
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* CAPEX Schedule */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="h-5 w-5" />
-            Capital Expenditure (CAPEX) Schedule
-          </CardTitle>
-          <CardDescription>
-            Major equipment, infrastructure, and capital investments by year
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {yearlyCapex.map((expense, index) => (
-              <div key={expense.year} className="grid gap-4 md:grid-cols-2 p-4 border rounded-lg">
-                <div>
-                  <Label>Year {expense.year}</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Project Year {index + 1}
-                  </p>
-                </div>
-                <div>
-                  <Label htmlFor={`capex-${expense.year}`}>CAPEX Investment</Label>
-                  <Input
-                    id={`capex-${expense.year}`}
-                    type="number"
-                    value={expense.capex}
-                    onChange={(e) => updateYearlyCapex(expense.year, Number(e.target.value))}
-                    placeholder="0"
-                    min="0"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Depreciation Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Depreciation Schedule</CardTitle>
-          <CardDescription>
-            How CAPEX will be depreciated for accounting purposes
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
+            
             <div>
               <Label htmlFor="depreciation-method">Depreciation Method</Label>
               <Select value={depreciationMethod} onValueChange={setDepreciationMethod}>
@@ -432,10 +357,10 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
                 <SelectContent>
                   <SelectItem value="straight_line">Straight Line</SelectItem>
                   <SelectItem value="declining_balance">Declining Balance</SelectItem>
-                  <SelectItem value="units_of_production">Units of Production</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            
             <div>
               <Label htmlFor="depreciation-years">Depreciation Period (Years)</Label>
               <Input
@@ -448,6 +373,105 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
                 max="50"
               />
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Yearly Expense Schedule */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="h-5 w-5" />
+            Yearly Expense Schedule
+          </CardTitle>
+          <CardDescription>
+            All expenses by year (enter as negative numbers per Excel convention)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {yearlyExpenses.map((expense, index) => (
+              <div key={expense.year} className="grid gap-4 md:grid-cols-7 p-4 border rounded-lg">
+                <div>
+                  <Label>Year {expense.year}</Label>
+                  <Badge variant="outline" className="mt-1">
+                    Project Year {index + 1}
+                  </Badge>
+                </div>
+                
+                <div>
+                  <Label htmlFor={`feasibility-${expense.year}`}>Feasibility Study</Label>
+                  <Input
+                    id={`feasibility-${expense.year}`}
+                    type="number"
+                    value={expense.feasibility_costs}
+                    onChange={(e) => updateYearlyExpense(expense.year, 'feasibility_costs', Number(e.target.value))}
+                    placeholder="0"
+                  />
+                  <p className="text-xs text-muted-foreground">e.g., -50000</p>
+                </div>
+                
+                <div>
+                  <Label htmlFor={`pdd-${expense.year}`}>PDD Development</Label>
+                  <Input
+                    id={`pdd-${expense.year}`}
+                    type="number"
+                    value={expense.pdd_costs}
+                    onChange={(e) => updateYearlyExpense(expense.year, 'pdd_costs', Number(e.target.value))}
+                    placeholder="0"
+                  />
+                  <p className="text-xs text-muted-foreground">e.g., -75000</p>
+                </div>
+                
+                <div>
+                  <Label htmlFor={`mrv-${expense.year}`}>MRV Costs</Label>
+                  <Input
+                    id={`mrv-${expense.year}`}
+                    type="number"
+                    value={expense.mrv_costs}
+                    onChange={(e) => updateYearlyExpense(expense.year, 'mrv_costs', Number(e.target.value))}
+                    placeholder="0"
+                  />
+                  <p className="text-xs text-muted-foreground">e.g., -15000</p>
+                </div>
+                
+                <div>
+                  <Label htmlFor={`staff-${expense.year}`}>Staff Costs</Label>
+                  <Input
+                    id={`staff-${expense.year}`}
+                    type="number"
+                    value={expense.staff_costs}
+                    onChange={(e) => updateYearlyExpense(expense.year, 'staff_costs', Number(e.target.value))}
+                    placeholder="0"
+                  />
+                  <p className="text-xs text-muted-foreground">e.g., -100000</p>
+                </div>
+                
+                <div>
+                  <Label htmlFor={`capex-${expense.year}`}>CAPEX</Label>
+                  <Input
+                    id={`capex-${expense.year}`}
+                    type="number"
+                    value={expense.capex}
+                    onChange={(e) => updateYearlyExpense(expense.year, 'capex', Number(e.target.value))}
+                    placeholder="0"
+                  />
+                  <p className="text-xs text-muted-foreground">e.g., -200000</p>
+                </div>
+                
+                <div>
+                  <Label htmlFor={`depreciation-${expense.year}`}>Depreciation</Label>
+                  <Input
+                    id={`depreciation-${expense.year}`}
+                    type="number"
+                    value={expense.depreciation}
+                    onChange={(e) => updateYearlyExpense(expense.year, 'depreciation', Number(e.target.value))}
+                    placeholder="0"
+                  />
+                  <p className="text-xs text-muted-foreground">e.g., -20000</p>
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
