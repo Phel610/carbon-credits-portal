@@ -121,6 +121,17 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
 
   const generateAICommentary = async (data: any) => {
     try {
+      // Validate that all required financial data exists
+      if (!data.metrics || !data.incomeStatements || !data.cashFlowStatements) {
+        throw new Error('Missing required financial data for AI commentary');
+      }
+
+      console.log('Sending financial data to AI:', {
+        npv: data.metrics.npv,
+        irr: data.metrics.irr,
+        paybackPeriod: data.metrics.payback_period
+      });
+
       const { data: commentary, error } = await supabase.functions.invoke('generate-ai-report-commentary', {
         body: {
           financialData: {
@@ -128,13 +139,13 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
             country: modelData.country || 'Unknown',
             startYear: modelData.start_year,
             endYear: modelData.end_year,
-            totalNPV: data.metrics.npv,
-            projectIRR: data.metrics.project_irr,
-            paybackPeriod: data.metrics.payback_period,
-            totalRevenue: data.incomeStatements.reduce((sum: number, stmt: any) => sum + stmt.total_revenue, 0),
-            totalCosts: data.incomeStatements.reduce((sum: number, stmt: any) => sum + stmt.total_expenses, 0),
-            netIncome: data.incomeStatements.reduce((sum: number, stmt: any) => sum + stmt.net_income, 0),
-            peakFunding: Math.abs(Math.min(...data.cashFlowStatements.map((stmt: any) => stmt.ending_cash_balance))),
+            totalNPV: data.metrics.npv || 0,
+            projectIRR: data.metrics.irr || 0,
+            paybackPeriod: data.metrics.payback_period || 0,
+            totalRevenue: data.incomeStatements.reduce((sum: number, stmt: any) => sum + (stmt.total_revenue || 0), 0),
+            totalCosts: data.incomeStatements.reduce((sum: number, stmt: any) => sum + (stmt.total_expenses || 0), 0),
+            netIncome: data.incomeStatements.reduce((sum: number, stmt: any) => sum + (stmt.net_income || 0), 0),
+            peakFunding: Math.abs(Math.min(...data.cashFlowStatements.map((stmt: any) => stmt.ending_cash_balance || 0))),
             scenarios: [],
             sensitivities: []
           }

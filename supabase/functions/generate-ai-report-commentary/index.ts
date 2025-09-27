@@ -73,15 +73,22 @@ serve(async (req) => {
 });
 
 async function generateExecutiveSummary(apiKey: string, data: FinancialData): Promise<string> {
+  // Add validation and fallbacks for undefined values
+  const npv = data.totalNPV || 0;
+  const irr = data.projectIRR || 0;
+  const payback = data.paybackPeriod || 0;
+  const revenue = data.totalRevenue || 0;
+  const netIncome = data.netIncome || 0;
+  
   const prompt = `Generate a concise executive summary for a carbon credit project with the following details:
   
-Project: ${data.projectName} in ${data.country}
-Period: ${data.startYear}-${data.endYear}
-NPV: $${data.totalNPV.toLocaleString()}
-IRR: ${data.projectIRR.toFixed(1)}%
-Payback: ${data.paybackPeriod.toFixed(1)} years
-Total Revenue: $${data.totalRevenue.toLocaleString()}
-Net Income: $${data.netIncome.toLocaleString()}
+Project: ${data.projectName || 'Unknown Project'} in ${data.country || 'Unknown Location'}
+Period: ${data.startYear || 2024}-${data.endYear || 2030}
+NPV: $${npv.toLocaleString()}
+IRR: ${irr.toFixed(1)}%
+Payback: ${payback.toFixed(1)} years
+Total Revenue: $${revenue.toLocaleString()}
+Net Income: $${netIncome.toLocaleString()}
 
 Write in plain English, highlighting financial viability and key results. Keep it under 200 words.`;
 
@@ -89,13 +96,20 @@ Write in plain English, highlighting financial viability and key results. Keep i
 }
 
 async function generateRiskAssessment(apiKey: string, data: FinancialData): Promise<string> {
+  // Add validation and fallbacks for undefined values
+  const npv = data.totalNPV || 0;
+  const irr = data.projectIRR || 0;
+  const peakFunding = data.peakFunding || 0;
+  const revenue = data.totalRevenue || 0;
+  const costs = data.totalCosts || 0;
+  
   const prompt = `Analyze potential risks for this carbon credit project:
 
-Project: ${data.projectName}
-NPV: $${data.totalNPV.toLocaleString()}
-IRR: ${data.projectIRR.toFixed(1)}%
-Peak Funding: $${data.peakFunding.toLocaleString()}
-Revenue vs Costs: $${data.totalRevenue.toLocaleString()} vs $${data.totalCosts.toLocaleString()}
+Project: ${data.projectName || 'Unknown Project'}
+NPV: $${npv.toLocaleString()}
+IRR: ${irr.toFixed(1)}%
+Peak Funding: $${peakFunding.toLocaleString()}
+Revenue vs Costs: $${revenue.toLocaleString()} vs $${costs.toLocaleString()}
 
 Identify key financial risks such as:
 - Cash flow challenges
@@ -123,12 +137,17 @@ Provide clear, practical explanations of what drives the differences. Use specif
 }
 
 async function generateInvestorHighlights(apiKey: string, data: FinancialData): Promise<string> {
+  // Add validation and fallbacks for undefined values
+  const npv = data.totalNPV || 0;
+  const irr = data.projectIRR || 0;
+  const payback = data.paybackPeriod || 0;
+  
   const prompt = `Create investor-focused highlights for this carbon credit project:
 
-Project: ${data.projectName} (${data.country})
-NPV: $${data.totalNPV.toLocaleString()}
-IRR: ${data.projectIRR.toFixed(1)}%
-Payback: ${data.paybackPeriod.toFixed(1)} years
+Project: ${data.projectName || 'Unknown Project'} (${data.country || 'Unknown Location'})
+NPV: $${npv.toLocaleString()}
+IRR: ${irr.toFixed(1)}%
+Payback: ${payback.toFixed(1)} years
 
 Focus on:
 1. Why this project is attractive to investors
