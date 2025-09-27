@@ -148,7 +148,7 @@ export interface FinancialMetrics {
   min_dscr: number;
   ending_cash: number;
   npv_equity: number;
-  irr_equity: number;
+  irr_equity: number | null;
 }
 
 export class FinancialCalculationEngine {
@@ -166,6 +166,7 @@ export class FinancialCalculationEngine {
     // Validate inputs
     this.inputs = InputSchema.parse(inputs);
     this.validateInputs();
+    this.validateArrayLengths();
     this.years = inputs.years;
     
     // Precompute values once for consistency (Fix 9)
@@ -241,6 +242,27 @@ export class FinancialCalculationEngine {
     const hasPurchaseAmount = this.inputs.purchase_amount.some(amount => (amount || 0) > 0);
     if (this.inputs.purchase_share === 0 && hasPurchaseAmount) {
       throw new Error('purchase_share is 0 but purchase_amount provided; set share > 0 or zero out purchase_amount.');
+    }
+  }
+
+  private validateArrayLengths() {
+    const arrays = [
+      "credits_generated","price_per_credit","issuance_flag",
+      "feasibility_costs","pdd_costs","mrv_costs","staff_costs",
+      "depreciation","capex","equity_injection","debt_draw","purchase_amount"
+    ] as const;
+
+    const L = this.inputs.years.length;
+    for (const k of arrays) {
+      if (!Array.isArray(this.inputs[k]) || this.inputs[k].length !== L) {
+        throw new Error(`Length of ${k} must equal years.length (${L}).`);
+      }
+    }
+
+    // Enforce single debt draw with current PPMT model
+    const debtDrawYears = this.inputs.debt_draw.filter((draw, index) => (draw || 0) > 0);
+    if (debtDrawYears.length > 1) {
+      throw new Error('Only one debt draw year is supported with the current single-facility PPMT model.');
     }
   }
 
@@ -748,6 +770,11 @@ export class FinancialCalculationEngine {
       if (Math.abs(derivative) < tolerance) break;
       
       rate = rate - npv / derivative;
+    }
+    
+    // Handle edge cases where IRR cannot be calculated
+    if (isNaN(rate) || !isFinite(rate)) {
+      return null;
     }
     
     return rate * 100; // Return as percentage

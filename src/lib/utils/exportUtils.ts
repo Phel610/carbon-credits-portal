@@ -33,7 +33,7 @@ export function exportToCSV(data: any[], headers: string[], filename: string) {
     ...data.map(row => 
       headers.map(header => {
         const value = row[header];
-        return typeof value === 'number' ? value.toString() : `"${value || ''}"`
+        return typeof value === 'number' ? value.toFixed(2) : `"${(value || '').toString().replace(/"/g, '""')}"`
       }).join(',')
     )
   ].join('\n');
@@ -62,7 +62,7 @@ export function exportToExcel(data: any[], headers: string[], filename: string, 
     ...data.map(row => 
       headers.map(header => {
         const value = row[header];
-        return typeof value === 'number' ? value.toString() : `"${value || ''}"`
+        return typeof value === 'number' ? value.toFixed(2) : `"${(value || '').toString().replace(/"/g, '""')}"`
       }).join(',')
     )
   ].join('\n');

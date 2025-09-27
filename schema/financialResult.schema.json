@@ -170,7 +170,7 @@
         "min_dscr": { "type": "number" },
         "ending_cash": { "type": "number" },
         "npv_equity": { "type": "number" },
-        "irr_equity": { "type": "number" }
+        "irr_equity": { "type": ["number", "null"] }
       },
       "additionalProperties": false
     }

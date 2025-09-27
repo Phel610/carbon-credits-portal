@@ -1,22 +1,8 @@
 import Ajv from "ajv";
 import { FinancialCalculationEngine } from "../calculationEngine";
 
-// Inline schema for now - can be extracted to separate file later
-const schema = {
-  type: "object",
-  required: ["schema_version", "inputs", "incomeStatements", "balanceSheets", "cashFlowStatements", "debtSchedule", "carbonStream", "freeCashFlow", "metrics"],
-  properties: {
-    schema_version: { type: "string" },
-    inputs: { type: "object" },
-    incomeStatements: { type: "array" },
-    balanceSheets: { type: "array" },
-    cashFlowStatements: { type: "array" },
-    debtSchedule: { type: "array" },
-    carbonStream: { type: "array" },
-    freeCashFlow: { type: "array" },
-    metrics: { type: "object" }
-  }
-};
+// Import schema from JSON file
+const schema = require("../../../schema/financialResult.schema.json");
 
 const ajv = new Ajv({ allErrors: true, strict: true });
 
@@ -56,7 +42,7 @@ test("response matches JSON schema", () => {
   const validate = ajv.compile(schema);
   const ok = validate(r);
   if (!ok) {
-    console.log("Schema validation errors:", validate.errors);
+    throw new Error(JSON.stringify(validate.errors, null, 2));
   }
   expect(ok).toBe(true);
 });
@@ -136,4 +122,29 @@ test("Unearned revenue carry and release is consistent", () => {
     balance -= r.carbonStream[t].purchased_credits * impliedPrice; // release
     expect(r.balanceSheets[t].unearned_revenue).toBeCloseTo(balance, 6);
   }
+});
+
+test("all array lengths equal years.length", () => {
+  const bad = { ...base, pdd_costs: [...base.pdd_costs, -1] };
+  expect(() => run(bad)).toThrow(/Length of pdd_costs must equal years\.length/);
+});
+
+test("reject multi-year debt draws with single-facility PPMT model", () => {
+  const bad = { ...base, debt_draw: [10000, 5000, 0] };
+  expect(() => run(bad)).toThrow(/Only one debt draw year is supported/);
+});
+
+test("accounts receivable equals rate * revenue", () => {
+  const r = run();
+  r.incomeStatements.forEach((y:any,i:number) => {
+    expect(r.balanceSheets[i].accounts_receivable)
+      .toBeCloseTo(r.inputs.ar_rate * y.total_revenue, 6);
+  });
+});
+
+test("implied purchase price is constant across years (if present)", () => {
+  const r = run();
+  const vals = r.incomeStatements.map((y:any) => y.implied_purchase_price);
+  const uniq = [...new Set(vals.map((v: number) => v.toFixed(6)))];
+  expect(uniq.length <= 1).toBe(true);
 });
