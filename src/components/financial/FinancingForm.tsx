@@ -34,9 +34,10 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
   // Pre-purchase parameters (NEW per Excel spec)
   const [purchaseShare, setPurchaseShare] = useState(0.30); // 30% of credits pre-purchased
   
-  // Returns calculation
+  // Returns parameters
   const [discountRate, setDiscountRate] = useState(0.12); // 12% as decimal
   const [initialEquityT0, setInitialEquityT0] = useState(100000); // Initial founder equity
+  const [openingCashY1, setOpeningCashY1] = useState(0); // Opening cash at start of Year 1
   
   // Yearly financing schedule
   const [yearlyFinancing, setYearlyFinancing] = useState<YearlyFinancing[]>(() => {
@@ -101,6 +102,12 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           category: 'financing',
           input_key: 'initial_equity_t0',
           input_value: { value: initialEquityT0 },
+        },
+        {
+          model_id: modelId,
+          category: 'financing',
+          input_key: 'opening_cash_y1',
+          input_value: { value: openingCashY1 },
         },
         // Notes
         {
@@ -282,13 +289,14 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
               </p>
             </div>
             
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm font-medium">Revenue Split Logic</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                When purchase amount &gt; 0: Spot Revenue = Credits × Price × (1 - Purchase Share)
+            <div className="mt-4 p-4 bg-muted rounded-lg">
+              <h4 className="font-medium mb-2">Pre-purchase Logic (Excel Implementation)</h4>
+              <p className="text-sm text-muted-foreground">
+                Pre-purchase uses a single implied purchase price computed from the first year with a purchase. 
+                Unearned revenue increases with purchase cash and decreases when purchased credits are delivered.
               </p>
-              <p className="text-xs text-muted-foreground">
-                Pre-purchase Revenue = Purchased Credits × Implied Purchase Price
+              <p className="text-xs text-muted-foreground mt-2">
+                This matches Excel Rows 123 (purchase amount), 124 (purchase share), 126 (purchased credits), and 128 (implied price).
               </p>
             </div>
           </CardContent>
@@ -307,7 +315,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <div>
               <Label htmlFor="discount-rate">Discount Rate</Label>
               <Input
@@ -337,6 +345,21 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Initial founder investment for IRR calculation
+              </p>
+            </div>
+            
+            <div>
+              <Label htmlFor="opening-cash">Opening Cash Y1 (G93)</Label>
+              <Input
+                id="opening-cash"
+                type="number"
+                value={openingCashY1}
+                onChange={(e) => setOpeningCashY1(Number(e.target.value))}
+                placeholder="0"
+                min="0"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Cash at start of Year 1 (Excel Row 93)
               </p>
             </div>
           </div>

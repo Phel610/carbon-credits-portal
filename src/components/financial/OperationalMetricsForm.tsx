@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Plus, Trash2, Calendar, Target, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -24,7 +23,7 @@ interface YearlyMetrics {
   year: number;
   credits_generated: number;
   price_per_credit: number;
-  issuance_flag: boolean; // NEW: 0/1 flag for when credits are issued
+  issuance_flag: number; // 0/1 flag for when credits are issued (not boolean)
 }
 
 const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps) => {
@@ -40,13 +39,13 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
         year,
         credits_generated: 0,
         price_per_credit: 10, // Default $10 per credit
-        issuance_flag: year > model.start_year, // Default: issue starting year 2
+        issuance_flag: year > model.start_year ? 1 : 0, // Default: issue starting year 2 (0/1)
       });
     }
     setYearlyMetrics(years);
   }, [model]);
 
-  const updateYearlyMetric = (year: number, field: keyof YearlyMetrics, value: number | boolean) => {
+  const updateYearlyMetric = (year: number, field: keyof YearlyMetrics, value: number) => {
     setYearlyMetrics(prev => 
       prev.map(metric => 
         metric.year === year 
@@ -79,7 +78,7 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
           model_id: modelId,
           category: 'operational_metrics',
           input_key: 'issuance_flag',
-          input_value: { value: metric.issuance_flag ? 1 : 0 },
+          input_value: { value: metric.issuance_flag },
           year: metric.year,
         }
       ]);
@@ -132,7 +131,7 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
     for (let i = 0; i < yearlyMetrics.length; i++) {
       const cumGenerated = yearlyMetrics.slice(0, i + 1).reduce((sum, m) => sum + m.credits_generated, 0);
       const cumIssuedPrev = issued.reduce((sum, val) => sum + val, 0);
-      const issuanceFlag = yearlyMetrics[i].issuance_flag ? 1 : 0;
+      const issuanceFlag = yearlyMetrics[i].issuance_flag;
       issued[i] = (cumGenerated - cumIssuedPrev) * issuanceFlag;
     }
     return issued;
@@ -147,7 +146,7 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
 
   // Validation checks
   const hasGenerationBeforeIssuance = yearlyMetrics.some((metric, i) => 
-    metric.issuance_flag && metric.credits_generated === 0 && i === 0
+    metric.issuance_flag === 1 && metric.credits_generated === 0 && i === 0
   );
   const hasValidIssuanceSchedule = totalIssuance <= totalCredits;
 
@@ -256,15 +255,23 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
                   </div>
                   
                   <div>
-                    <Label className="flex items-center gap-2">
-                      <Switch
-                        checked={metric.issuance_flag}
-                        onCheckedChange={(checked) => updateYearlyMetric(metric.year, 'issuance_flag', checked)}
-                      />
-                      Issue Credits
-                    </Label>
+                    <Label htmlFor={`issuance-${metric.year}`}>Issue Credits (0/1)</Label>
+                    <Input
+                      id={`issuance-${metric.year}`}
+                      type="number"
+                      value={metric.issuance_flag}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        if (value === 0 || value === 1) {
+                          updateYearlyMetric(metric.year, 'issuance_flag', value);
+                        }
+                      }}
+                      placeholder="0"
+                      min="0"
+                      max="1"
+                    />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Registry issuance year
+                      Enter 0 or 1 (0 = no issuance, 1 = issue credits)
                     </p>
                   </div>
                   
@@ -285,10 +292,10 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
           <div className="mt-4 p-4 bg-muted rounded-lg">
             <h4 className="font-medium mb-2">Issuance Logic (Excel Formula)</h4>
             <p className="text-sm text-muted-foreground">
-              Credits Issued = (Cumulative Generated - Cumulative Previously Issued) × Issuance Flag
+              Credits Issued = (Cumulative Generated - Cumulative Previously Issued) × Issuance Flag (0/1)
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              This matches the Excel formula: <code>=(SUM($F5:G5)-SUM($F9:F9))*G8</code>
+              This matches the Excel formula: <code>=(SUM($F5:G5)-SUM($F9:F9))*G8</code> where G8 is 0 or 1
             </p>
           </div>
         </CardContent>

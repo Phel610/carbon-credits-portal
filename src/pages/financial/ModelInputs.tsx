@@ -21,7 +21,7 @@ import { toast } from '@/hooks/use-toast';
 import OperationalMetricsForm from '@/components/financial/OperationalMetricsForm';
 import ExpensesForm from '@/components/financial/ExpensesForm';
 import FinancingForm from '@/components/financial/FinancingForm';
-import InvestorAssumptionsForm from '@/components/financial/InvestorAssumptionsForm';
+
 
 interface FinancialModel {
   id: string;
@@ -42,7 +42,6 @@ const ModelInputs = () => {
     operational: false,
     expenses: false,
     financing: false,
-    investor: false,
   });
 
   useEffect(() => {
@@ -106,13 +105,6 @@ const ModelInputs = () => {
       icon: Building,
       completed: completionStatus.financing,
     },
-    {
-      id: 'investor',
-      name: 'Investor Assumptions',
-      description: 'Purchase amounts, discount rates, and returns',
-      icon: Users,
-      completed: completionStatus.investor,
-    },
   ];
 
   if (loading) {
@@ -166,7 +158,7 @@ const ModelInputs = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-3">
               {inputCategories.map((category) => {
                 const Icon = category.icon;
                 return (
@@ -200,7 +192,7 @@ const ModelInputs = () => {
 
         {/* Input Forms */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             {inputCategories.map((category) => (
               <TabsTrigger key={category.id} value={category.id} className="flex items-center gap-2">
                 {category.completed && <CheckCircle className="h-4 w-4 text-success" />}
@@ -220,10 +212,6 @@ const ModelInputs = () => {
 
           <TabsContent value="financing">
             <FinancingForm modelId={id!} model={model} />
-          </TabsContent>
-
-          <TabsContent value="investor">
-            <InvestorAssumptionsForm modelId={id!} model={model} />
           </TabsContent>
         </Tabs>
 

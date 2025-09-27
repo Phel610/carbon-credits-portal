@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, Calculator, Building, Receipt, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,10 +40,6 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
   // Tax rate
   const [incomeTaxRate, setIncomeTaxRate] = useState(0.25); // 25% as decimal
 
-  // Depreciation settings
-  const [depreciationMethod, setDepreciationMethod] = useState('straight_line');
-  const [depreciationYears, setDepreciationYears] = useState(10);
-
   // Yearly expenses (all as negative numbers per Excel convention)
   const [yearlyExpenses, setYearlyExpenses] = useState<YearlyExpenses[]>(() => {
     const years = [];
@@ -66,6 +61,16 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
   const [loading, setLoading] = useState(false);
 
   const updateYearlyExpense = (year: number, field: keyof Omit<YearlyExpenses, 'year'>, value: number) => {
+    // Validate that cost inputs are negative
+    if (['feasibility_costs', 'pdd_costs', 'mrv_costs', 'staff_costs', 'capex', 'depreciation'].includes(field) && value > 0) {
+      toast({
+        title: "Invalid input",
+        description: `${field.replace('_', ' ')} must be negative (e.g., -50000 for $50,000 expense)`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setYearlyExpenses(prev => 
       prev.map(expense => 
         expense.year === year 
@@ -76,6 +81,26 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
   };
 
   const saveExpenses = async () => {
+    // Validate all cost inputs are negative
+    const invalidInputs = [];
+    for (const expense of yearlyExpenses) {
+      if (expense.feasibility_costs > 0) invalidInputs.push('Feasibility costs must be negative');
+      if (expense.pdd_costs > 0) invalidInputs.push('PDD costs must be negative');
+      if (expense.mrv_costs > 0) invalidInputs.push('MRV costs must be negative');
+      if (expense.staff_costs > 0) invalidInputs.push('Staff costs must be negative');
+      if (expense.capex > 0) invalidInputs.push('CAPEX must be negative');
+      if (expense.depreciation > 0) invalidInputs.push('Depreciation must be negative');
+    }
+    
+    if (invalidInputs.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: `${invalidInputs[0]}. All cost values must be negative per Excel convention.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       // Prepare all expense inputs with Excel sign conventions
@@ -104,19 +129,6 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
           category: 'expenses',
           input_key: 'income_tax_rate',
           input_value: { value: incomeTaxRate },
-        },
-        // Depreciation settings
-        {
-          model_id: modelId,
-          category: 'expenses',
-          input_key: 'depreciation_method',
-          input_value: { value: depreciationMethod },
-        },
-        {
-          model_id: modelId,
-          category: 'expenses',
-          input_key: 'depreciation_years',
-          input_value: { value: depreciationYears },
         },
         // Notes
         {
@@ -319,15 +331,15 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
           </CardContent>
         </Card>
 
-        {/* Tax & Depreciation Settings */}
+        {/* Tax Settings */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5" />
-              Tax & Depreciation Settings
+              Tax Settings
             </CardTitle>
             <CardDescription>
-              Corporate tax and asset depreciation policies
+              Corporate tax settings
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -346,32 +358,6 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
               <p className="text-xs text-muted-foreground mt-1">
                 Decimal (0.25 = 25% corporate tax rate)
               </p>
-            </div>
-            
-            <div>
-              <Label htmlFor="depreciation-method">Depreciation Method</Label>
-              <Select value={depreciationMethod} onValueChange={setDepreciationMethod}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="straight_line">Straight Line</SelectItem>
-                  <SelectItem value="declining_balance">Declining Balance</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="depreciation-years">Depreciation Period (Years)</Label>
-              <Input
-                id="depreciation-years"
-                type="number"
-                value={depreciationYears}
-                onChange={(e) => setDepreciationYears(Number(e.target.value))}
-                placeholder="10"
-                min="1"
-                max="50"
-              />
             </div>
           </CardContent>
         </Card>
