@@ -48,7 +48,7 @@ try {
     console.log(`  Pre-Purchase Revenue: ${stmt.pre_purchase_revenue.toFixed(2)}`);
     console.log(`  Total Revenue: ${stmt.total_revenue.toFixed(2)}`);
     console.log(`  COGS: ${stmt.cogs.toFixed(2)}`);
-    console.log(`  Gross Profit: ${stmt.gross_profit.toFixed(2)}`);
+    console.log(`  Revenue-COGS: ${(stmt.total_revenue + stmt.cogs).toFixed(2)}`);
     console.log(`  EBITDA: ${stmt.ebitda.toFixed(2)}`);
     console.log(`  Depreciation: ${stmt.depreciation.toFixed(2)}`);
     console.log(`  Interest Expense: ${stmt.interest_expense.toFixed(2)}`);

@@ -11,8 +11,8 @@ const CashFlowStatementTable = ({ statements }: CashFlowStatementTableProps) => 
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -21,7 +21,7 @@ const CashFlowStatementTable = ({ statements }: CashFlowStatementTableProps) => 
       <CardHeader>
         <CardTitle>Cash Flow Statement</CardTitle>
         <CardDescription>
-          Operating, investing, and financing cash flows by year
+          Cash flow from operating, investing, and financing activities by year
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -39,229 +39,68 @@ const CashFlowStatementTable = ({ statements }: CashFlowStatementTableProps) => 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {/* OPERATING ACTIVITIES */}
-              <TableRow className="bg-trust/10">
-                <TableCell className="font-bold text-lg">OPERATING ACTIVITIES</TableCell>
-                {statements.map(() => (
-                  <TableCell key="operating-header"></TableCell>
-                ))}
-                <TableCell></TableCell>
-              </TableRow>
-
+              {/* Operating Activities */}
               <TableRow>
-                <TableCell className="pl-4">Net Income</TableCell>
+                <TableCell className="font-semibold">Operating Cash Flow</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.net_income)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.net_income, 0))}
-                </TableCell>
-              </TableRow>
-
-              <TableRow className="bg-muted/50">
-                <TableCell className="pl-4 font-medium">Adjustments for Non-Cash Items:</TableCell>
-                {statements.map(() => (
-                  <TableCell key="adjustments-header"></TableCell>
-                ))}
-                <TableCell></TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-8">Depreciation & Amortization</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.depreciation_addback)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.depreciation_addback, 0))}
-                </TableCell>
-              </TableRow>
-
-              <TableRow className="bg-muted/50">
-                <TableCell className="pl-4 font-medium">Changes in Working Capital:</TableCell>
-                {statements.map(() => (
-                  <TableCell key="working-capital-header"></TableCell>
-                ))}
-                <TableCell></TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-8">(Increase) / Decrease in Accounts Receivable</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(-stmt.change_ar)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + (-stmt.change_ar), 0))}
-                </TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-8">Increase / (Decrease) in Accounts Payable</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.change_ap)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.change_ap, 0))}
-                </TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-8">Unearned Revenue Flows</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.unearned_inflow + stmt.unearned_release)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.unearned_inflow + stmt.unearned_release, 0))}
-                </TableCell>
-              </TableRow>
-
-              <TableRow className="border-b-2 bg-trust/5">
-                <TableCell className="font-bold">Net Cash from Operating Activities</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right font-bold text-trust">
                     {formatCurrency(stmt.operating_cash_flow)}
                   </TableCell>
                 ))}
-                <TableCell className="text-right font-bold text-trust">
+                <TableCell className="text-right font-medium">
                   {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.operating_cash_flow, 0))}
                 </TableCell>
               </TableRow>
 
-              {/* INVESTING ACTIVITIES */}
-              <TableRow className="bg-trust/10">
-                <TableCell className="font-bold text-lg">INVESTING ACTIVITIES</TableCell>
-                {statements.map(() => (
-                  <TableCell key="investing-header"></TableCell>
-                ))}
-                <TableCell></TableCell>
-              </TableRow>
-
+              {/* Investing Activities */}
               <TableRow>
-                <TableCell className="pl-4">Capital Expenditures (CAPEX)</TableCell>
+                <TableCell className="font-semibold">Investing Cash Flow</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.capex)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.capex, 0))}
-                </TableCell>
-              </TableRow>
-
-              <TableRow className="border-b-2 bg-orange-50">
-                <TableCell className="font-bold">Net Cash from Investing Activities</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right font-bold text-orange-700">
                     {formatCurrency(stmt.investing_cash_flow)}
                   </TableCell>
                 ))}
-                <TableCell className="text-right font-bold text-orange-700">
+                <TableCell className="text-right font-medium">
                   {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.investing_cash_flow, 0))}
                 </TableCell>
               </TableRow>
 
-              {/* FINANCING ACTIVITIES */}
-              <TableRow className="bg-trust/10">
-                <TableCell className="font-bold text-lg">FINANCING ACTIVITIES</TableCell>
-                {statements.map(() => (
-                  <TableCell key="financing-header"></TableCell>
-                ))}
-                <TableCell></TableCell>
-              </TableRow>
-
+              {/* Financing Activities */}
               <TableRow>
-                <TableCell className="pl-4">Equity Injections</TableCell>
+                <TableCell className="font-semibold">Financing Cash Flow</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.equity_injection)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.equity_injection, 0))}
-                </TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-4">Debt Drawdowns</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.debt_draw)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.debt_draw, 0))}
-                </TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-4">Debt Repayments</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.debt_repayment)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.debt_repayment, 0))}
-                </TableCell>
-              </TableRow>
-
-              <TableRow className="border-b-2 bg-blue-50">
-                <TableCell className="font-bold">Net Cash from Financing Activities</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right font-bold text-blue-700">
                     {formatCurrency(stmt.financing_cash_flow)}
                   </TableCell>
                 ))}
-                <TableCell className="text-right font-bold text-blue-700">
+                <TableCell className="text-right font-medium">
                   {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.financing_cash_flow, 0))}
                 </TableCell>
               </TableRow>
 
-              {/* NET CHANGE IN CASH */}
-              <TableRow className="border-b-2 bg-muted/30">
-                <TableCell className="font-bold text-lg">Net Change in Cash</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right font-bold text-lg">
-                    {formatCurrency(stmt.net_change_cash)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-bold text-lg">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.net_change_cash, 0))}
-                </TableCell>
-              </TableRow>
-
-              {/* CASH RECONCILIATION */}
+              {/* Cash Position */}
               <TableRow className="bg-muted/50">
-                <TableCell className="font-bold">CASH RECONCILIATION</TableCell>
+                <TableCell className="font-semibold">CASH POSITION</TableCell>
                 {statements.map(() => (
-                  <TableCell key="reconciliation-header"></TableCell>
+                  <TableCell key="cash-header"></TableCell>
                 ))}
                 <TableCell></TableCell>
               </TableRow>
 
               <TableRow>
-                <TableCell className="pl-4">Cash at Beginning of Period</TableCell>
+                <TableCell className="pl-4">Cash Start</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.cash_start)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements[0]?.cash_start || 0)}
+                  -
                 </TableCell>
               </TableRow>
 
               <TableRow>
-                <TableCell className="pl-4">Net Change in Cash</TableCell>
+                <TableCell className="pl-4">Net Change Cash</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.net_change_cash)}
@@ -273,32 +112,14 @@ const CashFlowStatementTable = ({ statements }: CashFlowStatementTableProps) => 
               </TableRow>
 
               <TableRow className="border-b-2 bg-muted/30">
-                <TableCell className="font-bold text-lg">Cash at End of Period</TableCell>
+                <TableCell className="font-bold">Cash End</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right font-bold text-lg">
                     {formatCurrency(stmt.cash_end)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-bold text-lg">
-                  {formatCurrency(statements[statements.length - 1]?.cash_end || 0)}
-                </TableCell>
-              </TableRow>
-
-              {/* Free Cash Flow Analysis */}
-              <TableRow className="bg-success/10">
-                <TableCell className="font-bold">Free Cash Flow to Equity</TableCell>
-                {statements.map((stmt) => {
-                  const freeCashFlow = stmt.operating_cash_flow + stmt.capex;
-                  return (
-                    <TableCell key={stmt.year} className="text-right font-bold text-success">
-                      {formatCurrency(freeCashFlow)}
-                    </TableCell>
-                  );
-                })}
-                <TableCell className="text-right font-bold text-success">
-                  {formatCurrency(
-                    statements.reduce((sum, stmt) => sum + stmt.operating_cash_flow + stmt.capex, 0)
-                  )}
+                  -
                 </TableCell>
               </TableRow>
             </TableBody>

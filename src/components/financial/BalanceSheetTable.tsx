@@ -11,8 +11,8 @@ const BalanceSheetTable = ({ statements }: BalanceSheetTableProps) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -46,16 +46,8 @@ const BalanceSheetTable = ({ statements }: BalanceSheetTableProps) => {
                 ))}
               </TableRow>
 
-              {/* Current Assets */}
-              <TableRow className="bg-muted/50">
-                <TableCell className="font-semibold">Current Assets</TableCell>
-                {statements.map(() => (
-                  <TableCell key="current-assets-header"></TableCell>
-                ))}
-              </TableRow>
-
               <TableRow>
-                <TableCell className="pl-4">Cash and Cash Equivalents</TableCell>
+                <TableCell className="pl-4">Cash</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.cash)}
@@ -72,45 +64,10 @@ const BalanceSheetTable = ({ statements }: BalanceSheetTableProps) => {
                 ))}
               </TableRow>
 
-              <TableRow className="border-b">
-                <TableCell className="font-semibold">Total Current Assets</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right font-semibold">
-                    {formatCurrency(stmt.cash + stmt.accounts_receivable)}
-                  </TableCell>
-                ))}
-              </TableRow>
-
-              {/* Non-Current Assets */}
-              <TableRow className="bg-muted/50">
-                <TableCell className="font-semibold">Non-Current Assets</TableCell>
-                {statements.map(() => (
-                  <TableCell key="non-current-assets-header"></TableCell>
-                ))}
-              </TableRow>
-
               <TableRow>
-                <TableCell className="pl-4">Property, Plant & Equipment (Gross)</TableCell>
+                <TableCell className="pl-4">Property, Plant & Equipment, Net</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.ppe_gross)}
-                  </TableCell>
-                ))}
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-4">Less: Accumulated Depreciation</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    ({formatCurrency(stmt.accumulated_depreciation)})
-                  </TableCell>
-                ))}
-              </TableRow>
-
-              <TableRow className="border-b">
-                <TableCell className="pl-4 font-medium">PP&E, Net</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right font-medium">
                     {formatCurrency(stmt.ppe_net)}
                   </TableCell>
                 ))}
@@ -133,14 +90,6 @@ const BalanceSheetTable = ({ statements }: BalanceSheetTableProps) => {
                 ))}
               </TableRow>
 
-              {/* Current Liabilities */}
-              <TableRow className="bg-muted/50">
-                <TableCell className="font-semibold">Current Liabilities</TableCell>
-                {statements.map(() => (
-                  <TableCell key="current-liabilities-header"></TableCell>
-                ))}
-              </TableRow>
-
               <TableRow>
                 <TableCell className="pl-4">Accounts Payable</TableCell>
                 {statements.map((stmt) => (
@@ -160,33 +109,7 @@ const BalanceSheetTable = ({ statements }: BalanceSheetTableProps) => {
               </TableRow>
 
               <TableRow>
-                <TableCell className="pl-4">Short-term Debt</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(0)}
-                  </TableCell>
-                ))}
-              </TableRow>
-
-              <TableRow className="border-b">
-                <TableCell className="font-semibold">Total Current Liabilities</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right font-semibold">
-                    {formatCurrency(stmt.accounts_payable + stmt.unearned_revenue)}
-                  </TableCell>
-                ))}
-              </TableRow>
-
-              {/* Long-Term Liabilities */}
-              <TableRow className="bg-muted/50">
-                <TableCell className="font-semibold">Long-Term Liabilities</TableCell>
-                {statements.map(() => (
-                  <TableCell key="long-term-liabilities-header"></TableCell>
-                ))}
-              </TableRow>
-
-              <TableRow className="border-b">
-                <TableCell className="pl-4">Long-Term Debt</TableCell>
+                <TableCell className="pl-4">Debt Balance</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.debt_balance)}
@@ -208,24 +131,6 @@ const BalanceSheetTable = ({ statements }: BalanceSheetTableProps) => {
                 <TableCell className="font-bold text-lg">EQUITY</TableCell>
                 {statements.map(() => (
                   <TableCell key="equity-header"></TableCell>
-                ))}
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-4">Retained Earnings</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.retained_earnings)}
-                  </TableCell>
-                ))}
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-4">Shareholder Equity</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.shareholder_equity)}
-                  </TableCell>
                 ))}
               </TableRow>
 
@@ -251,8 +156,8 @@ const BalanceSheetTable = ({ statements }: BalanceSheetTableProps) => {
               <TableRow className="bg-success/10">
                 <TableCell className="font-semibold text-sm">Balance Check (Assets - Liab & Equity)</TableCell>
                 {statements.map((stmt) => {
-                  const difference = stmt.total_assets - stmt.total_liabilities_equity;
-                  const isBalanced = Math.abs(difference) < 1;
+                  const difference = stmt.balance_check;
+                  const isBalanced = Math.abs(difference) < 0.01;
                   return (
                     <TableCell 
                       key={stmt.year} 

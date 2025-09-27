@@ -53,16 +53,18 @@ export interface IncomeStatement {
   year: number;
   credits_generated: number;
   credits_issued: number;
+  price_per_credit: number;
+  purchased_credits: number;
+  implied_purchase_price: number;
   spot_revenue: number;
   pre_purchase_revenue: number;
   total_revenue: number;
   cogs: number;
-  gross_profit: number;
   feasibility_costs: number;
   pdd_costs: number;
   mrv_costs: number;
   staff_costs: number;
-  total_opex: number;
+  opex_total: number;
   ebitda: number;
   depreciation: number;
   interest_expense: number;
@@ -73,25 +75,16 @@ export interface IncomeStatement {
 
 export interface BalanceSheet {
   year: number;
-  // Assets
   cash: number;
   accounts_receivable: number;
-  ppe_gross: number;
-  accumulated_depreciation: number;
   ppe_net: number;
   total_assets: number;
-  // Liabilities
   accounts_payable: number;
   unearned_revenue: number;
   debt_balance: number;
   total_liabilities: number;
-  // Equity
-  retained_earnings: number;
-  shareholder_equity: number;
-  equity_injection: number;
   total_equity: number;
   total_liabilities_equity: number;
-  // Check (must be 0)
   balance_check: number;
 }
 
@@ -148,25 +141,14 @@ export interface FreeCashFlow {
 }
 
 export interface FinancialMetrics {
-  // Operational
-  total_revenue: number;
-  total_ebitda: number;
-  total_net_income: number;
-  ebitda_margin: number;
-  net_margin: number;
-  
-  // Investment
-  total_capex: number;
-  peak_funding_required: number;
-  
-  // Returns
-  npv: number;
-  company_irr: number;
-  investor_irr: number;
-  payback_period: number;
-  
-  // Debt metrics
-  dscr_minimum: number;
+  total_equity: number;
+  total_debt: number;
+  prepurchase_advances: number;
+  total_development_costs_abs: number;
+  min_dscr: number;
+  ending_cash: number;
+  npv_equity: number;
+  irr_equity: number;
 }
 
 export class FinancialCalculationEngine {
@@ -327,16 +309,18 @@ export class FinancialCalculationEngine {
         year,
         credits_generated,
         credits_issued,
+        price_per_credit: this.inputs.price_per_credit[t] || 0,
+        purchased_credits: this.purchasedCreditsDelivered[t],
+        implied_purchase_price: this.impliedPurchasePrice,
         spot_revenue,
         pre_purchase_revenue,
         total_revenue,
         cogs,
-        gross_profit,
         feasibility_costs,
         pdd_costs,
         mrv_costs,
         staff_costs,
-        total_opex,
+        opex_total: total_opex,
         ebitda,
         depreciation,
         interest_expense,
@@ -481,7 +465,7 @@ export class FinancialCalculationEngine {
       const accounts_receivable = income.total_revenue * this.inputs.ar_rate;
       
       // Fix 5: AP must be based on total OPEX
-      const total_opex = income.total_opex; // Already calculated in income statement
+      const total_opex = income.opex_total; // Already calculated in income statement
       const accounts_payable = -this.inputs.ap_rate * total_opex; // opex is negative, so AP positive
       
       // Fix 4: Unearned revenue balance must match Excel Row 57
@@ -516,17 +500,12 @@ export class FinancialCalculationEngine {
         year,
         cash,
         accounts_receivable,
-        ppe_gross,
-        accumulated_depreciation,
         ppe_net,
         total_assets,
         accounts_payable,
         unearned_revenue,
         debt_balance,
         total_liabilities,
-        retained_earnings,
-        shareholder_equity,
-        equity_injection,
         total_equity,
         total_liabilities_equity,
         balance_check,
@@ -704,18 +683,17 @@ export class FinancialCalculationEngine {
     const dscr_minimum = dscrValues.length > 0 ? Math.min(...dscrValues) : 0;
     
     return {
-      total_revenue,
-      total_ebitda,
-      total_net_income,
-      ebitda_margin,
-      net_margin,
-      total_capex,
-      peak_funding_required: Math.abs(peak_funding_required),
-      npv,
-      company_irr,
-      investor_irr,
-      payback_period,
-      dscr_minimum,
+      total_equity: this.inputs.initial_equity_t0 + this.inputs.equity_injection.reduce((sum, val) => sum + (val || 0), 0),
+      total_debt: this.inputs.debt_draw.reduce((sum, val) => sum + (val || 0), 0),
+      prepurchase_advances: this.inputs.purchase_amount.reduce((sum, val) => sum + (val || 0), 0),
+      total_development_costs_abs: Math.abs(this.inputs.feasibility_costs.reduce((sum, val) => sum + (val || 0), 0)) +
+                                   Math.abs(this.inputs.pdd_costs.reduce((sum, val) => sum + (val || 0), 0)) +
+                                   Math.abs(this.inputs.mrv_costs.reduce((sum, val) => sum + (val || 0), 0)) +
+                                   Math.abs(this.inputs.staff_costs.reduce((sum, val) => sum + (val || 0), 0)),
+      min_dscr: dscr_minimum,
+      ending_cash: cashFlowStatements[cashFlowStatements.length - 1]?.cash_end || 0,
+      npv_equity: npv,
+      irr_equity: company_irr,
     };
   }
 

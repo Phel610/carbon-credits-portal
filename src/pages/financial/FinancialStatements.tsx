@@ -401,37 +401,73 @@ const FinancialStatements = () => {
 
         {statements && !calculating && (
           <>
-            {/* Key Metrics Summary */}
+            {/* Summary Badges - Updated to match spec */}
             <div className="grid gap-4 md:grid-cols-4">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription>Total Revenue</CardDescription>
+                  <CardDescription>Total Equity</CardDescription>
                   <CardTitle className="text-2xl">
-                    ${statements.metrics.total_revenue.toLocaleString()}
+                    ${statements.metrics.total_equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </CardTitle>
                 </CardHeader>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription>Total EBITDA</CardDescription>
+                  <CardDescription>Total Debt</CardDescription>
                   <CardTitle className="text-2xl">
-                    ${statements.metrics.total_ebitda.toLocaleString()}
+                    ${statements.metrics.total_debt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </CardTitle>
                 </CardHeader>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription>Net Present Value</CardDescription>
+                  <CardDescription>Pre-Purchase Advances</CardDescription>
                   <CardTitle className="text-2xl">
-                    ${statements.metrics.npv.toLocaleString()}
+                    ${statements.metrics.prepurchase_advances.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </CardTitle>
                 </CardHeader>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription>Company IRR</CardDescription>
+                  <CardDescription>Total Development Costs</CardDescription>
                   <CardTitle className="text-2xl">
-                    {statements.metrics.company_irr.toFixed(1)}%
+                    ${statements.metrics.total_development_costs_abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </CardTitle>
+                </CardHeader>
+              </Card>
+            </div>
+
+            {/* Additional Metrics */}
+            <div className="grid gap-4 md:grid-cols-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Minimum DSCR</CardDescription>
+                  <CardTitle className="text-2xl">
+                    {statements.metrics.min_dscr.toFixed(2)}x
+                  </CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Ending Cash</CardDescription>
+                  <CardTitle className="text-2xl">
+                    ${statements.metrics.ending_cash.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>NPV to Equity</CardDescription>
+                  <CardTitle className="text-2xl">
+                    ${statements.metrics.npv_equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>IRR to Equity</CardDescription>
+                  <CardTitle className="text-2xl">
+                    {statements.metrics.irr_equity.toFixed(1)}%
                   </CardTitle>
                 </CardHeader>
               </Card>
@@ -467,7 +503,7 @@ const FinancialStatements = () => {
               <TabsContent value="carbon">
                 <CarbonStreamTable 
                   statements={statements.carbonStream} 
-                  investorIRR={statements.metrics.investor_irr}
+                  investorIRR={statements.metrics.irr_equity}
                 />
               </TabsContent>
 

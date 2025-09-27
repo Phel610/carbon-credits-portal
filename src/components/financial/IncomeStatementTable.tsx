@@ -11,14 +11,16 @@ const IncomeStatementTable = ({ statements }: IncomeStatementTableProps) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
-  const formatPercentage = (value: number, total: number) => {
-    if (total === 0) return '0.0%';
-    return `${((value / total) * 100).toFixed(1)}%`;
+  const formatNumber = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
   };
 
   return (
@@ -44,6 +46,75 @@ const IncomeStatementTable = ({ statements }: IncomeStatementTableProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {/* Input Data Section */}
+              <TableRow className="bg-muted/50">
+                <TableCell className="font-semibold">INPUT DATA</TableCell>
+                {statements.map(() => (
+                  <TableCell key="input-header"></TableCell>
+                ))}
+                <TableCell></TableCell>
+              </TableRow>
+              
+              <TableRow>
+                <TableCell className="pl-4">Credits Generated</TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={stmt.year} className="text-right">
+                    {formatNumber(stmt.credits_generated)}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right font-medium">
+                  {formatNumber(statements.reduce((sum, stmt) => sum + stmt.credits_generated, 0))}
+                </TableCell>
+              </TableRow>
+
+              <TableRow>
+                <TableCell className="pl-4">Credits Issued</TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={stmt.year} className="text-right">
+                    {formatNumber(stmt.credits_issued)}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right font-medium">
+                  {formatNumber(statements.reduce((sum, stmt) => sum + stmt.credits_issued, 0))}
+                </TableCell>
+              </TableRow>
+
+              <TableRow>
+                <TableCell className="pl-4">Price per Credit</TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={stmt.year} className="text-right">
+                    {formatCurrency(stmt.price_per_credit)}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right font-medium">
+                  -
+                </TableCell>
+              </TableRow>
+
+              <TableRow>
+                <TableCell className="pl-4">Purchased Credits</TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={stmt.year} className="text-right">
+                    {formatNumber(stmt.purchased_credits)}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right font-medium">
+                  {formatNumber(statements.reduce((sum, stmt) => sum + stmt.purchased_credits, 0))}
+                </TableCell>
+              </TableRow>
+
+              <TableRow>
+                <TableCell className="pl-4">Implied Purchase Price</TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={stmt.year} className="text-right">
+                    {formatCurrency(stmt.implied_purchase_price)}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right font-medium">
+                  -
+                </TableCell>
+              </TableRow>
+
               {/* Revenue Section */}
               <TableRow className="bg-muted/50">
                 <TableCell className="font-semibold">REVENUE</TableCell>
@@ -54,7 +125,7 @@ const IncomeStatementTable = ({ statements }: IncomeStatementTableProps) => {
               </TableRow>
               
               <TableRow>
-                <TableCell className="pl-4">Spot Credit Sales</TableCell>
+                <TableCell className="pl-4">Spot Revenue</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.spot_revenue)}
@@ -90,7 +161,7 @@ const IncomeStatementTable = ({ statements }: IncomeStatementTableProps) => {
               </TableRow>
 
               {/* COGS Section */}
-              <TableRow>
+              <TableRow className="border-b-2">
                 <TableCell className="font-semibold">Cost of Goods Sold</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
@@ -99,18 +170,6 @@ const IncomeStatementTable = ({ statements }: IncomeStatementTableProps) => {
                 ))}
                 <TableCell className="text-right font-medium">
                   {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.cogs, 0))}
-                </TableCell>
-              </TableRow>
-
-              <TableRow className="border-b-2">
-                <TableCell className="font-semibold">Gross Profit</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right font-semibold">
-                    {formatCurrency(stmt.gross_profit)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-bold">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.gross_profit, 0))}
                 </TableCell>
               </TableRow>
 
@@ -124,7 +183,7 @@ const IncomeStatementTable = ({ statements }: IncomeStatementTableProps) => {
               </TableRow>
 
               <TableRow>
-                <TableCell className="pl-4">Feasibility Study</TableCell>
+                <TableCell className="pl-4">Feasibility Costs</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.feasibility_costs)}
@@ -136,7 +195,7 @@ const IncomeStatementTable = ({ statements }: IncomeStatementTableProps) => {
               </TableRow>
 
               <TableRow>
-                <TableCell className="pl-4">PDD Development</TableCell>
+                <TableCell className="pl-4">PDD Costs</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.pdd_costs)}
@@ -172,14 +231,14 @@ const IncomeStatementTable = ({ statements }: IncomeStatementTableProps) => {
               </TableRow>
 
               <TableRow className="border-b">
-                <TableCell className="font-semibold">Total Operating Expenses</TableCell>
+                <TableCell className="font-semibold">OPEX Total</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right font-semibold">
-                    {formatCurrency(stmt.total_opex)}
+                    {formatCurrency(stmt.opex_total)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-bold">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.total_opex, 0))}
+                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.opex_total, 0))}
                 </TableCell>
               </TableRow>
 
@@ -253,60 +312,6 @@ const IncomeStatementTable = ({ statements }: IncomeStatementTableProps) => {
                 ))}
                 <TableCell className="text-right font-bold text-lg">
                   {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.net_income, 0))}
-                </TableCell>
-              </TableRow>
-
-              {/* Margin Analysis */}
-              <TableRow className="bg-muted/50">
-                <TableCell className="font-semibold">MARGIN ANALYSIS</TableCell>
-                {statements.map(() => (
-                  <TableCell key="margin-header"></TableCell>
-                ))}
-                <TableCell></TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-4">Gross Margin</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatPercentage(stmt.gross_profit, stmt.total_revenue)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatPercentage(
-                    statements.reduce((sum, stmt) => sum + stmt.gross_profit, 0),
-                    statements.reduce((sum, stmt) => sum + stmt.total_revenue, 0)
-                  )}
-                </TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-4">EBITDA Margin</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatPercentage(stmt.ebitda, stmt.total_revenue)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatPercentage(
-                    statements.reduce((sum, stmt) => sum + stmt.ebitda, 0),
-                    statements.reduce((sum, stmt) => sum + stmt.total_revenue, 0)
-                  )}
-                </TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-4">Net Margin</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatPercentage(stmt.net_income, stmt.total_revenue)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatPercentage(
-                    statements.reduce((sum, stmt) => sum + stmt.net_income, 0),
-                    statements.reduce((sum, stmt) => sum + stmt.total_revenue, 0)
-                  )}
                 </TableCell>
               </TableRow>
             </TableBody>

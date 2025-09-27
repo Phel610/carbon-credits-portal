@@ -69,7 +69,7 @@ const CarbonStreamTable = ({ statements, investorIRR }: CarbonStreamTableProps) 
               </TableRow>
               
               <TableRow>
-                <TableCell className="font-medium">Credits Purchased</TableCell>
+                <TableCell className="font-medium">Purchased Credits</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={`${stmt.year}-credits`} className="text-right">
                     {formatCredits(stmt.purchased_credits)}
@@ -88,7 +88,7 @@ const CarbonStreamTable = ({ statements, investorIRR }: CarbonStreamTableProps) 
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-semibold">
-                  {totalCredits > 0 ? formatCurrency(totalPurchaseAmount / totalCredits) : 'N/A'}
+                  -
                 </TableCell>
               </TableRow>
               
