@@ -199,6 +199,12 @@ export class FinancialCalculationEngine {
     if (purchaseYears.length > 1) {
       throw new Error('Only one year can have a purchase amount greater than 0. Excel logic uses only the first purchase year.');
     }
+
+    // Block inconsistent pre-purchase inputs
+    const hasPurchaseAmount = this.inputs.purchase_amount.some(amount => (amount || 0) > 0);
+    if (this.inputs.purchase_share === 0 && hasPurchaseAmount) {
+      throw new Error('purchase_share is 0 but purchase_amount provided; set share > 0 or zero out purchase_amount.');
+    }
   }
 
   calculateFinancialStatements() {

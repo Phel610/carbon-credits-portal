@@ -464,4 +464,18 @@ describe('FinancialCalculationEngine', () => {
     expect(delivered.reduce((a, b) => a + b, 0)).toBeCloseTo(500, 6); // never exceeds total purchased
   });
 
+  it('throws if purchase_share = 0 but purchase_amount > 0', () => {
+    const bad = { ...testInputs, purchase_share: 0, purchase_amount: [1000, 0, 0] };
+    expect(() => new FinancialCalculationEngine(bad).calculateFinancialStatements())
+      .toThrow('purchase_share is 0 but purchase_amount provided; set share > 0 or zero out purchase_amount.');
+  });
+
+  it('income statement interest equals negative of schedule interest', () => {
+    const results = new FinancialCalculationEngine(testInputs).calculateFinancialStatements();
+    const t = 1;
+    const isInterest = results.incomeStatements[t].interest_expense;      // negative
+    const schedInterest = results.debtSchedule[t].interest_expense;       // positive
+    expect(isInterest).toBeCloseTo(-schedInterest, 6);
+  });
+
 });
