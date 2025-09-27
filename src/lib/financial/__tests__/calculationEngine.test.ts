@@ -230,6 +230,79 @@ describe('FinancialCalculationEngine', () => {
     });
   });
 
+  describe('Additional Required Tests', () => {
+    const testInputs = {
+      years: [2025, 2026, 2027],
+      credits_generated: [1000, 0, 0],
+      price_per_credit: [10, 10, 10],
+      issuance_flag: [0, 1, 0],
+      cogs_rate: 0.10,
+      income_tax_rate: 0.20,
+      ar_rate: 0.05,
+      ap_rate: 0.10,
+      feasibility_costs: [-5000, 0, 0],
+      pdd_costs: [-2000, 0, 0],
+      mrv_costs: [0, -1000, 0],
+      staff_costs: [-10000, -10000, -10000],
+      depreciation: [-3000, -3000, -3000],
+      capex: [-20000, 0, 0],
+      interest_rate: 0.10,
+      debt_duration_years: 2,
+      debt_draw: [10000, 0, 0],
+      equity_injection: [0, 0, 0],
+      initial_equity_t0: 5000,
+      opening_cash_y1: 0,
+      purchase_amount: [0, 2000, 0],
+      purchase_share: 0.20,
+      discount_rate: 0.12
+    };
+
+    let results: any;
+
+    beforeAll(() => {
+      const engine = new FinancialCalculationEngine(testInputs);
+      results = engine.calculateFinancialStatements();
+    });
+
+    it('DSCR computes from EBITDA / (abs(principal) + interest)', () => {
+      const t = 1; // 2026 in your 3-year case
+      const ebitda = results.incomeStatements[t].ebitda;
+      const principalAbs = -results.debtSchedule[t].principal_payment; // principal is negative
+      const interestPos = results.debtSchedule[t].interest_expense;    // positive cash interest
+      const dscr = ebitda / (principalAbs + interestPos);
+      expect(Number(results.debtSchedule[t].dscr.toFixed(4))).toBeCloseTo(Number(dscr.toFixed(4)), 4);
+    });
+
+    it('Unearned revenue carries if purchase and delivery in different years', () => {
+      const inputs = {
+        years: [2025, 2026, 2027],
+        credits_generated: [1000, 1000, 0],
+        price_per_credit: [10,10,10],
+        issuance_flag: [0, 0, 1],
+        cogs_rate: 0, income_tax_rate: 0, ar_rate: 0, ap_rate: 0,
+        feasibility_costs:[0,0,0], pdd_costs:[0,0,0], mrv_costs:[0,0,0], staff_costs:[0,0,0],
+        depreciation:[0,0,0], capex:[0,0,0],
+        interest_rate:0, debt_duration_years:1, debt_draw:[0,0,0], equity_injection:[0,0,0],
+        initial_equity_t0:0, opening_cash_y1:0,
+        purchase_amount:[2000,0,0], purchase_share:0.2,
+        discount_rate:0.1
+      };
+      const e = new FinancialCalculationEngine(inputs).calculateFinancialStatements();
+      const unearned = e.balanceSheets.map(s => s.unearned_revenue);
+      // Year 1 inflow 2000, no delivery -> balance 2000
+      expect(unearned[0]).toBeCloseTo(2000, 2);
+      // Year 3 delivers 200 credits at implied 10 -> release -2000, balance back to 0
+      expect(unearned[2]).toBeCloseTo(0, 2);
+    });
+
+    it('Accounts payable is -ap_rate * OPEX total', () => {
+      const t = 0;
+      const opexTotal = -5000 + -2000 + 0 + -10000; // from the 3-year case Y1
+      const expectedAP = -0.10 * opexTotal;
+      expect(results.balanceSheets[t].accounts_payable).toBeCloseTo(expectedAP, 2);
+    });
+  });
+
   describe('Edge Case Tests', () => {
     it('should handle zero purchase amount correctly', () => {
       const inputs = {

@@ -170,22 +170,41 @@ export interface FinancialMetrics {
 export class FinancialCalculationEngine {
   private inputs: ModelInputData;
   private years: number[];
+  
+  // Precomputed values for consistency
+  private issuedCredits: number[];
+  private purchasedCredits: number[];
+  private impliedPurchasePrice: number;
+  private spotRevenue: number[];
+  private prepRevenue: number[];
 
   constructor(inputs: ModelInputData) {
     // Validate inputs
     this.inputs = InputSchema.parse(inputs);
     this.years = inputs.years;
+    
+    // Precompute values once for consistency (Fix 9)
+    this.issuedCredits = this.calculateIssuedCredits();
+    const revenueData = this.calculateRevenue(this.issuedCredits);
+    this.purchasedCredits = revenueData.purchasedCredits;
+    this.impliedPurchasePrice = revenueData.impliedPurchasePrice;
+    this.spotRevenue = revenueData.spotRev;
+    this.prepRevenue = revenueData.prepRev;
   }
 
   calculateFinancialStatements() {
     // Calculate in order of dependencies
-    const incomeStatements = this.calculateIncomeStatements();
     const debtSchedule = this.calculateDebtSchedule();
+    const incomeStatements = this.calculateIncomeStatements(debtSchedule);
+    
+    // Update DSCR in debt schedule after income statements are calculated (Fix 7)
+    this.updateDSCR(debtSchedule, incomeStatements);
+    
     const balanceSheets = this.calculateBalanceSheets(incomeStatements, debtSchedule);
     const cashFlowStatements = this.calculateCashFlowStatements(incomeStatements, balanceSheets, debtSchedule);
     const carbonStream = this.calculateCarbonStream();
     const freeCashFlow = this.calculateFreeCashFlow(incomeStatements, balanceSheets, debtSchedule);
-    const metrics = this.calculateFinancialMetrics(incomeStatements, cashFlowStatements, freeCashFlow, carbonStream);
+    const metrics = this.calculateFinancialMetrics(incomeStatements, cashFlowStatements, freeCashFlow, carbonStream, debtSchedule);
 
     return {
       incomeStatements,
@@ -198,19 +217,17 @@ export class FinancialCalculationEngine {
     };
   }
 
-  private calculateIncomeStatements(): IncomeStatement[] {
+  private calculateIncomeStatements(debtSchedule: DebtSchedule[]): IncomeStatement[] {
     const statements: IncomeStatement[] = [];
-    const issued = this.calculateIssuedCredits();
-    const { spotRev, prepRev, purchasedCredits, impliedPurchasePrice } = this.calculateRevenue(issued);
 
     for (let t = 0; t < this.years.length; t++) {
       const year = this.years[t];
       
       const credits_generated = this.inputs.credits_generated[t] || 0;
-      const credits_issued = issued[t];
+      const credits_issued = this.issuedCredits[t];
       
-      const spot_revenue = spotRev[t];
-      const pre_purchase_revenue = prepRev[t];
+      const spot_revenue = this.spotRevenue[t];
+      const pre_purchase_revenue = this.prepRevenue[t];
       const total_revenue = spot_revenue + pre_purchase_revenue;
       
       // COGS
@@ -228,7 +245,8 @@ export class FinancialCalculationEngine {
       
       // Depreciation and interest (negative values)
       const depreciation = this.inputs.depreciation[t] || 0;
-      const interest_expense = this.calculateInterestExpense(t);
+      // Fix 1 & 2: Use debt schedule interest, negative on IS
+      const interest_expense = -debtSchedule[t].interest_expense;
       
       const earnings_before_tax = ebitda + depreciation + interest_expense;
       const income_tax = Math.max(0, earnings_before_tax * this.inputs.income_tax_rate);
@@ -266,9 +284,13 @@ export class FinancialCalculationEngine {
     for (let t = 0; t < this.years.length; t++) {
       const cumGenerated = this.inputs.credits_generated.slice(0, t + 1).reduce((sum, val) => sum + (val || 0), 0);
       const cumIssuedPrev = issued.slice(0, t).reduce((sum, val) => sum + val, 0);
+      const remainingInventory = cumGenerated - cumIssuedPrev;
       const issuanceFlag = this.inputs.issuance_flag[t] || 0;
       
-      issued[t] = (cumGenerated - cumIssuedPrev) * issuanceFlag;
+      let issuedAmount = remainingInventory * issuanceFlag;
+      
+      // Fix 10: Credits issued clamping
+      issued[t] = Math.max(0, Math.min(issuedAmount, remainingInventory));
     }
     
     return issued;
@@ -278,11 +300,11 @@ export class FinancialCalculationEngine {
     const hasPurchase = this.inputs.purchase_amount.map(v => (v || 0) > 0);
     const purchasedCredits = issued.map((q, t) => hasPurchase[t] ? q * this.inputs.purchase_share : 0);
     
-    // Calculate implied purchase price from first purchase year
+    // Fix 8: Calculate implied purchase price as single scalar from first purchase year
     const totalPurchased = purchasedCredits.reduce((sum, val) => sum + val, 0);
-    const firstPurchaseIdx = hasPurchase.findIndex(v => v);
-    const impliedPurchasePrice = totalPurchased > 0 && firstPurchaseIdx >= 0
-      ? (this.inputs.purchase_amount[firstPurchaseIdx] || 0) / totalPurchased
+    const firstPurchaseYear = this.inputs.purchase_amount.findIndex(amount => (amount || 0) > 0);
+    const impliedPurchasePrice = totalPurchased > 0 && firstPurchaseYear >= 0
+      ? (this.inputs.purchase_amount[firstPurchaseYear] || 0) / totalPurchased
       : 0;
     
     const spotRev = issued.map((q, t) => 
@@ -311,12 +333,12 @@ export class FinancialCalculationEngine {
         : 0;
       
       const ending_balance = begBalance + draw + principal_payment; // principal_payment is negative
+      
+      // Fix 1 & 2: Interest from beginning balance only
       const interest_expense = begBalance * this.inputs.interest_rate;
       
-      // DSCR calculation
-      const dscr = interest_expense + Math.abs(principal_payment) > 0 
-        ? (t < this.years.length ? 0 : 0) // Will be calculated after EBITDA is available
-        : 0;
+      // DSCR placeholder - will be updated after income statements
+      const dscr = 0;
 
       schedule.push({
         year,
@@ -331,11 +353,20 @@ export class FinancialCalculationEngine {
     
     return schedule;
   }
+  
+  private updateDSCR(debtSchedule: DebtSchedule[], incomeStatements: IncomeStatement[]): void {
+    for (let t = 0; t < this.years.length; t++) {
+      const ebitda = incomeStatements[t].ebitda;
+      const principalAbs = Math.abs(debtSchedule[t].principal_payment);
+      const interestPos = debtSchedule[t].interest_expense;
+      const debtService = principalAbs + interestPos;
+      
+      debtSchedule[t].dscr = debtService > 0 ? ebitda / debtService : 0;
+    }
+  }
 
   private calculateBalanceSheets(incomeStatements: IncomeStatement[], debtSchedule: DebtSchedule[]): BalanceSheet[] {
     const sheets: BalanceSheet[] = [];
-    let cumulativePPE = 0;
-    let cumulativeDepreciation = 0;
     let cumulativeRetainedEarnings = 0;
     let cumulativeUnearned = 0;
 
@@ -343,23 +374,25 @@ export class FinancialCalculationEngine {
       const year = this.years[t];
       const income = incomeStatements[t];
       
-      // PPE calculation
+      // Fix 6: PPE roll exactly as Excel
       const capex = this.inputs.capex[t] || 0; // negative
-      cumulativePPE += -capex; // Convert to positive for PPE
-      cumulativeDepreciation += -income.depreciation; // Convert to positive for accumulated dep
+      const depreciation = this.inputs.depreciation[t] || 0; // negative
+      const prevPPE = t === 0 ? 0 : sheets[t - 1].ppe_net;
+      const ppe_net = prevPPE - capex + depreciation; // capex and depreciation are negative
       
-      const ppe_gross = cumulativePPE;
-      const accumulated_depreciation = cumulativeDepreciation;
-      const ppe_net = ppe_gross - accumulated_depreciation;
+      const ppe_gross = ppe_net + (-depreciation * (t + 1)); // Simplified - accumulated depreciation
+      const accumulated_depreciation = ppe_gross - ppe_net;
       
       // Working capital
       const accounts_receivable = income.total_revenue * this.inputs.ar_rate;
-      const accounts_payable = -this.inputs.ap_rate * income.total_opex; // opex is negative, so AP positive
       
-      // Unearned revenue
+      // Fix 5: AP must be based on total OPEX
+      const total_opex = income.total_opex; // Already calculated in income statement
+      const accounts_payable = -this.inputs.ap_rate * total_opex; // opex is negative, so AP positive
+      
+      // Fix 4: Unearned revenue balance must match Excel Row 57
       const purchaseInflow = this.inputs.purchase_amount[t] || 0;
-      const { purchasedCredits, impliedPurchasePrice } = this.calculateRevenue(this.calculateIssuedCredits());
-      const unearnedRelease = -purchasedCredits[t] * impliedPurchasePrice;
+      const unearnedRelease = -this.purchasedCredits[t] * this.impliedPurchasePrice;
       cumulativeUnearned += purchaseInflow + unearnedRelease;
       const unearned_revenue = Math.max(0, cumulativeUnearned);
       
@@ -375,7 +408,6 @@ export class FinancialCalculationEngine {
       
       // Assets and liabilities
       const total_liabilities = accounts_payable + unearned_revenue + debt_balance;
-      const total_assets_without_cash = accounts_receivable + ppe_net;
       
       // Cash balances the balance sheet - get from cash flow calculation
       const cash = t === 0 
@@ -432,15 +464,15 @@ export class FinancialCalculationEngine {
       
       const operating_cash_flow = net_income + depreciation_addback + change_ap - change_ar;
       
-      // Financing cash flow
+      // Financing cash flow (Fix 2: Use debt schedule interest)
       const unearned_inflow = this.inputs.purchase_amount[t] || 0;
-      const { purchasedCredits, impliedPurchasePrice } = this.calculateRevenue(this.calculateIssuedCredits());
-      const unearned_release = -purchasedCredits[t] * impliedPurchasePrice;
+      const unearnedRelease = -this.purchasedCredits[t] * this.impliedPurchasePrice;
       const debt_draw = debt.draw;
       const debt_repayment = debt.principal_payment; // Already negative
+      const interest_cash = debt.interest_expense; // Positive cash outflow
       const equity_injection = this.inputs.equity_injection[t] || 0;
       
-      const financing_cash_flow = unearned_inflow + unearned_release + debt_draw + debt_repayment + equity_injection;
+      const financing_cash_flow = unearned_inflow + unearnedRelease + debt_draw + debt_repayment - interest_cash + equity_injection;
       
       // Investing cash flow
       const capex = this.inputs.capex[t] || 0; // Already negative
@@ -465,7 +497,7 @@ export class FinancialCalculationEngine {
         change_ap,
         operating_cash_flow,
         unearned_inflow,
-        unearned_release,
+        unearned_release: unearnedRelease,
         debt_draw,
         debt_repayment,
         equity_injection,
@@ -483,20 +515,18 @@ export class FinancialCalculationEngine {
 
   private calculateCarbonStream(): CarbonStream[] {
     const stream: CarbonStream[] = [];
-    const issued = this.calculateIssuedCredits();
-    const { purchasedCredits, impliedPurchasePrice } = this.calculateRevenue(issued);
 
     for (let t = 0; t < this.years.length; t++) {
       const year = this.years[t];
       const purchase_amount = this.inputs.purchase_amount[t] || 0;
-      const purchased_credits = purchasedCredits[t];
+      const purchased_credits = this.purchasedCredits[t];
       const investor_cash_flow = -purchase_amount + purchased_credits * (this.inputs.price_per_credit[t] || 0);
 
       stream.push({
         year,
         purchase_amount,
         purchased_credits,
-        implied_purchase_price: impliedPurchasePrice,
+        implied_purchase_price: this.impliedPurchasePrice, // Fix 8: Single scalar
         investor_cash_flow,
       });
     }
@@ -527,6 +557,8 @@ export class FinancialCalculationEngine {
       const change_working_capital = wc - prevWc;
       
       const capex = this.inputs.capex[t] || 0; // Negative
+      
+      // Fix 7: FCF to equity uses net borrowing only (no equity or unearned in FCF)
       const net_borrowing = debt.draw + debt.principal_payment; // principal_payment is negative
       
       const fcf_to_equity = net_income + depreciation_addback - change_working_capital + capex + net_borrowing;
@@ -549,7 +581,8 @@ export class FinancialCalculationEngine {
     incomeStatements: IncomeStatement[],
     cashFlowStatements: CashFlowStatement[],
     freeCashFlow: FreeCashFlow[],
-    carbonStream: CarbonStream[]
+    carbonStream: CarbonStream[],
+    debtSchedule: DebtSchedule[]
   ): FinancialMetrics {
     // Operational metrics
     const total_revenue = incomeStatements.reduce((sum, stmt) => sum + stmt.total_revenue, 0);
@@ -573,7 +606,8 @@ export class FinancialCalculationEngine {
     const payback_period = this.calculatePaybackPeriod(fcfSeries);
     
     // Debt metrics
-    const dscr_minimum = 1.0; // Placeholder - would need EBITDA vs debt service calculation
+    const dscrValues = debtSchedule.map(d => d.dscr).filter(d => d > 0);
+    const dscr_minimum = dscrValues.length > 0 ? Math.min(...dscrValues) : 0;
     
     return {
       total_revenue,
@@ -592,20 +626,7 @@ export class FinancialCalculationEngine {
   }
 
   // Helper methods
-  private calculateInterestExpense(t: number): number {
-    // Interest expense based on beginning debt balance each year
-    if (t === 0) return 0; // No interest in first year
-    
-    // Calculate debt balance at beginning of year t
-    let beginningBalance = 0;
-    for (let i = 0; i < t; i++) {
-      const draw = this.inputs.debt_draw[i] || 0;
-      const payment = i > 0 ? this.calculatePrincipalPayment(i) : 0;
-      beginningBalance += draw + payment; // payment is negative
-    }
-    
-    return -beginningBalance * this.inputs.interest_rate; // Negative for expense
-  }
+  // Fix 1: Deleted old calculateInterestExpense helper - using debt schedule only
 
   private calculatePrincipalPayment(period: number): number {
     // PPMT calculation for first draw only (Excel parity)
