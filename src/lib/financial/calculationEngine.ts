@@ -259,14 +259,15 @@ export class FinancialCalculationEngine {
     const metrics = this.calculateFinancialMetrics(incomeStatements, cashFlowStatements, freeCashFlow, carbonStream, debtSchedule);
 
     return {
-      schemaVersion: ENGINE_SCHEMA_VERSION,
+      schema_version: ENGINE_SCHEMA_VERSION,
+      inputs: this.inputs,
       incomeStatements,
       balanceSheets,
       cashFlowStatements,
       debtSchedule,
       carbonStream,
       freeCashFlow,
-      financialMetrics: metrics,
+      metrics,
     };
   }
 

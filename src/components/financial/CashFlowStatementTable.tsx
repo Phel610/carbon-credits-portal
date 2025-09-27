@@ -1,12 +1,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 import { CashFlowStatement } from '@/lib/financial/calculationEngine';
+import { exportToCSV, exportToExcel, HEADERS } from '@/lib/utils/exportUtils';
 
 interface CashFlowStatementTableProps {
   statements: CashFlowStatement[];
+  metadata?: any;
 }
 
-const CashFlowStatementTable = ({ statements }: CashFlowStatementTableProps) => {
+const CashFlowStatementTable = ({ statements, metadata }: CashFlowStatementTableProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -16,13 +20,33 @@ const CashFlowStatementTable = ({ statements }: CashFlowStatementTableProps) => 
     }).format(amount);
   };
 
+  const handleExportCSV = () => {
+    exportToCSV(statements, HEADERS.cashFlow, 'cash-flow-statement');
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel(statements, HEADERS.cashFlow, 'cash-flow-statement', metadata);
+  };
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Cash Flow Statement</CardTitle>
-        <CardDescription>
-          Cash flow from operating, investing, and financing activities by year
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Cash Flow Statement</CardTitle>
+          <CardDescription>
+            Cash flow from operating, investing, and financing activities by year
+          </CardDescription>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportCSV}>
+            <Download className="w-4 h-4 mr-2" />
+            CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportExcel}>
+            <Download className="w-4 h-4 mr-2" />
+            Excel
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

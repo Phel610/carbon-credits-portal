@@ -485,15 +485,15 @@ const FinancialStatements = () => {
               </TabsList>
 
               <TabsContent value="income">
-                <IncomeStatementTable statements={statements.incomeStatements} />
+                <IncomeStatementTable statements={statements.incomeStatements} metadata={statements} />
               </TabsContent>
 
               <TabsContent value="balance">
-                <BalanceSheetTable statements={statements.balanceSheets} />
+                <BalanceSheetTable statements={statements.balanceSheets} metadata={statements} />
               </TabsContent>
 
               <TabsContent value="cashflow">
-                <CashFlowStatementTable statements={statements.cashFlowStatements} />
+                <CashFlowStatementTable statements={statements.cashFlowStatements} metadata={statements} />
               </TabsContent>
 
               <TabsContent value="debt">

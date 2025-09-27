@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yourdomain/schemas/financialResult.schema.json",
+  "type": "object",
+  "required": ["schema_version", "inputs", "incomeStatements", "balanceSheets", "cashFlowStatements", "debtSchedule", "carbonStream", "freeCashFlow", "metrics"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "inputs": { "type": "object", "additionalProperties": false,
+      "required": ["years","cogs_rate","income_tax_rate","ar_rate","ap_rate","interest_rate","debt_duration_years","purchase_share","discount_rate","initial_equity_t0","opening_cash_y1","credits_generated","price_per_credit","issuance_flag","feasibility_costs","pdd_costs","mrv_costs","staff_costs","depreciation","capex","equity_injection","debt_draw","purchase_amount"],
+      "properties": {
+        "years": { "type": "array", "items": { "type": "integer" }, "minItems": 1 },
+        "cogs_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "income_tax_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "ar_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "ap_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "interest_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "debt_duration_years": { "type": "integer", "minimum": 1 },
+        "purchase_share": { "type": "number", "minimum": 0, "maximum": 1 },
+        "discount_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "initial_equity_t0": { "type": "number" },
+        "opening_cash_y1": { "type": "number" },
+
+        "credits_generated":   { "type": "array", "items": { "type": "number" } },
+        "price_per_credit":    { "type": "array", "items": { "type": "number" } },
+        "issuance_flag":       { "type": "array", "items": { "type": "integer", "enum": [0,1] } },
+        "feasibility_costs":   { "type": "array", "items": { "type": "number" } },
+        "pdd_costs":           { "type": "array", "items": { "type": "number" } },
+        "mrv_costs":           { "type": "array", "items": { "type": "number" } },
+        "staff_costs":         { "type": "array", "items": { "type": "number" } },
+        "depreciation":        { "type": "array", "items": { "type": "number" } },
+        "capex":               { "type": "array", "items": { "type": "number" } },
+        "equity_injection":    { "type": "array", "items": { "type": "number" } },
+        "debt_draw":           { "type": "array", "items": { "type": "number" } },
+        "purchase_amount":     { "type": "array", "items": { "type": "number" } }
+      }
+    },
+
+    "incomeStatements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["year","credits_generated","credits_issued","price_per_credit","purchased_credits","implied_purchase_price","spot_revenue","pre_purchase_revenue","total_revenue","cogs","feasibility_costs","pdd_costs","mrv_costs","staff_costs","opex_total","ebitda","depreciation","interest_expense","earnings_before_tax","income_tax","net_income"],
+        "properties": {
+          "year": { "type": "integer" },
+          "credits_generated": { "type": "number" },
+          "credits_issued": { "type": "number" },
+          "price_per_credit": { "type": "number" },
+          "purchased_credits": { "type": "number" },
+          "implied_purchase_price": { "type": "number" },
+          "spot_revenue": { "type": "number" },
+          "pre_purchase_revenue": { "type": "number" },
+          "total_revenue": { "type": "number" },
+          "cogs": { "type": "number" },
+          "feasibility_costs": { "type": "number" },
+          "pdd_costs": { "type": "number" },
+          "mrv_costs": { "type": "number" },
+          "staff_costs": { "type": "number" },
+          "opex_total": { "type": "number" },
+          "ebitda": { "type": "number" },
+          "depreciation": { "type": "number" },
+          "interest_expense": { "type": "number" },
+          "earnings_before_tax": { "type": "number" },
+          "income_tax": { "type": "number" },
+          "net_income": { "type": "number" }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "balanceSheets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["year","cash","accounts_receivable","ppe_net","total_assets","accounts_payable","unearned_revenue","debt_balance","total_liabilities","total_equity","total_liabilities_equity","balance_check"],
+        "properties": {
+          "year": { "type": "integer" },
+          "cash": { "type": "number" },
+          "accounts_receivable": { "type": "number" },
+          "ppe_net": { "type": "number" },
+          "total_assets": { "type": "number" },
+          "accounts_payable": { "type": "number" },
+          "unearned_revenue": { "type": "number" },
+          "debt_balance": { "type": "number" },
+          "total_liabilities": { "type": "number" },
+          "total_equity": { "type": "number" },
+          "total_liabilities_equity": { "type": "number" },
+          "balance_check": { "type": "number" }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "cashFlowStatements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["year","operating_cash_flow","investing_cash_flow","financing_cash_flow","cash_start","net_change_cash","cash_end"],
+        "properties": {
+          "year": { "type": "integer" },
+          "operating_cash_flow": { "type": "number" },
+          "investing_cash_flow": { "type": "number" },
+          "financing_cash_flow": { "type": "number" },
+          "cash_start": { "type": "number" },
+          "net_change_cash": { "type": "number" },
+          "cash_end": { "type": "number" }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "debtSchedule": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["year","beginning_balance","draw","principal_payment","ending_balance","interest_expense","dscr"],
+        "properties": {
+          "year": { "type": "integer" },
+          "beginning_balance": { "type": "number" },
+          "draw": { "type": "number" },
+          "principal_payment": { "type": "number" },
+          "ending_balance": { "type": "number" },
+          "interest_expense": { "type": "number" },
+          "dscr": { "type": "number" }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "carbonStream": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["year","purchase_amount","purchased_credits","implied_purchase_price"],
+        "properties": {
+          "year": { "type": "integer" },
+          "purchase_amount": { "type": "number" },
+          "purchased_credits": { "type": "number" },
+          "implied_purchase_price": { "type": "number" }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "freeCashFlow": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["year","net_income","depreciation_addback","change_working_capital","capex","net_borrowing","fcf_to_equity"],
+        "properties": {
+          "year": { "type": "integer" },
+          "net_income": { "type": "number" },
+          "depreciation_addback": { "type": "number" },
+          "change_working_capital": { "type": "number" },
+          "capex": { "type": "number" },
+          "net_borrowing": { "type": "number" },
+          "fcf_to_equity": { "type": "number" }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "metrics": {
+      "type": "object",
+      "required": ["total_equity","total_debt","prepurchase_advances","total_development_costs_abs","min_dscr","ending_cash","npv_equity","irr_equity"],
+      "properties": {
+        "total_equity": { "type": "number" },
+        "total_debt": { "type": "number" },
+        "prepurchase_advances": { "type": "number" },
+        "total_development_costs_abs": { "type": "number" },
+        "min_dscr": { "type": "number" },
+        "ending_cash": { "type": "number" },
+        "npv_equity": { "type": "number" },
+        "irr_equity": { "type": "number" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

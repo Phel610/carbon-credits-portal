@@ -1,12 +1,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 import { BalanceSheet } from '@/lib/financial/calculationEngine';
+import { exportToCSV, exportToExcel, HEADERS } from '@/lib/utils/exportUtils';
 
 interface BalanceSheetTableProps {
   statements: BalanceSheet[];
+  metadata?: any;
 }
 
-const BalanceSheetTable = ({ statements }: BalanceSheetTableProps) => {
+const BalanceSheetTable = ({ statements, metadata }: BalanceSheetTableProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -16,13 +20,33 @@ const BalanceSheetTable = ({ statements }: BalanceSheetTableProps) => {
     }).format(amount);
   };
 
+  const handleExportCSV = () => {
+    exportToCSV(statements, HEADERS.balanceSheet, 'balance-sheet');
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel(statements, HEADERS.balanceSheet, 'balance-sheet', metadata);
+  };
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Balance Sheet</CardTitle>
-        <CardDescription>
-          Assets, liabilities, and equity position by year-end
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Balance Sheet</CardTitle>
+          <CardDescription>
+            Assets, liabilities, and equity position by year-end
+          </CardDescription>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportCSV}>
+            <Download className="w-4 h-4 mr-2" />
+            CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportExcel}>
+            <Download className="w-4 h-4 mr-2" />
+            Excel
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

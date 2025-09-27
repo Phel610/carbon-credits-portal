@@ -1,12 +1,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 import { IncomeStatement } from '@/lib/financial/calculationEngine';
+import { exportToCSV, exportToExcel, HEADERS } from '@/lib/utils/exportUtils';
 
 interface IncomeStatementTableProps {
   statements: IncomeStatement[];
+  metadata?: any;
 }
 
-const IncomeStatementTable = ({ statements }: IncomeStatementTableProps) => {
+const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -23,13 +27,33 @@ const IncomeStatementTable = ({ statements }: IncomeStatementTableProps) => {
     }).format(value);
   };
 
+  const handleExportCSV = () => {
+    exportToCSV(statements, HEADERS.incomeStatement, 'income-statement');
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel(statements, HEADERS.incomeStatement, 'income-statement', metadata);
+  };
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Income Statement</CardTitle>
-        <CardDescription>
-          Revenue, expenses, and profitability projections by year
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Income Statement</CardTitle>
+          <CardDescription>
+            Revenue, expenses, and profitability projections by year
+          </CardDescription>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportCSV}>
+            <Download className="w-4 h-4 mr-2" />
+            CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportExcel}>
+            <Download className="w-4 h-4 mr-2" />
+            Excel
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
