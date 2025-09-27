@@ -152,6 +152,7 @@ const FinancialStatements = () => {
       // Returns
       discount_rate: 0.12,
       initial_equity_t0: 0,
+      opening_cash_y1: 0,
     };
 
     // Organize inputs by category and key
@@ -232,6 +233,9 @@ const FinancialStatements = () => {
 
     const initialEquity = inputsByCategory.financing?.initial_equity_t0?.[0];
     if (initialEquity) transformed.initial_equity_t0 = initialEquity.input_value.value;
+
+    const openingCash = inputsByCategory.financing?.opening_cash_y1?.[0];
+    if (openingCash) transformed.opening_cash_y1 = openingCash.input_value.value;
 
     console.log('Transformed inputs for new calculation engine:', transformed);
     return transformed;

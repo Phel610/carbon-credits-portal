@@ -42,6 +42,7 @@ export const InputSchema = z.object({
   // Returns
   discount_rate: z.number().min(0).max(1),
   initial_equity_t0: z.number().default(0),
+  opening_cash_y1: z.number().default(0),
 });
 
 export type ModelInputData = z.infer<typeof InputSchema>;
@@ -306,7 +307,7 @@ export class FinancialCalculationEngine {
       const per = t + 1;
       const firstDraw = this.inputs.debt_draw[0] || 0;
       const principal_payment = (firstDraw > 0 && per <= this.inputs.debt_duration_years)
-        ? -this.ppmt(this.inputs.interest_rate, per, this.inputs.debt_duration_years, firstDraw)
+        ? this.calculatePrincipalPayment(per)
         : 0;
       
       const ending_balance = begBalance + draw + principal_payment; // principal_payment is negative
@@ -375,7 +376,11 @@ export class FinancialCalculationEngine {
       // Assets and liabilities
       const total_liabilities = accounts_payable + unearned_revenue + debt_balance;
       const total_assets_without_cash = accounts_receivable + ppe_net;
-      const cash = total_liabilities + total_equity - total_assets_without_cash; // Balancing item
+      
+      // Cash balances the balance sheet - get from cash flow calculation
+      const cash = t === 0 
+        ? this.inputs.opening_cash_y1 
+        : sheets[t - 1].cash; // Will be updated by cash flow later
       
       const total_assets = cash + accounts_receivable + ppe_net;
       const total_liabilities_equity = total_liabilities + total_equity;
@@ -442,9 +447,15 @@ export class FinancialCalculationEngine {
       const investing_cash_flow = capex;
       
       // Cash roll
-      const cash_start = prevBalance ? prevBalance.cash : 0;
+      const cash_start = prevBalance ? prevBalance.cash : (t === 0 ? this.inputs.opening_cash_y1 : 0);
       const net_change_cash = operating_cash_flow + financing_cash_flow + investing_cash_flow;
       const cash_end = cash_start + net_change_cash;
+
+      // Update balance sheet with calculated cash
+      balanceSheets[t].cash = cash_end;
+      balanceSheets[t].total_assets = cash_end + balanceSheets[t].accounts_receivable + balanceSheets[t].ppe_net;
+      balanceSheets[t].total_liabilities_equity = balanceSheets[t].total_liabilities + balanceSheets[t].total_equity;
+      balanceSheets[t].balance_check = balanceSheets[t].total_assets - balanceSheets[t].total_liabilities_equity;
 
       statements.push({
         year,
@@ -582,17 +593,37 @@ export class FinancialCalculationEngine {
 
   // Helper methods
   private calculateInterestExpense(t: number): number {
-    // Simplified - using beginning balance from debt schedule
-    const prevBalance = t > 0 ? this.inputs.debt_draw.slice(0, t).reduce((sum, val) => sum + (val || 0), 0) : 0;
-    return -prevBalance * this.inputs.interest_rate; // Negative for expense
+    // Interest expense based on beginning debt balance each year
+    if (t === 0) return 0; // No interest in first year
+    
+    // Calculate debt balance at beginning of year t
+    let beginningBalance = 0;
+    for (let i = 0; i < t; i++) {
+      const draw = this.inputs.debt_draw[i] || 0;
+      const payment = i > 0 ? this.calculatePrincipalPayment(i) : 0;
+      beginningBalance += draw + payment; // payment is negative
+    }
+    
+    return -beginningBalance * this.inputs.interest_rate; // Negative for expense
+  }
+
+  private calculatePrincipalPayment(period: number): number {
+    // PPMT calculation for first draw only (Excel parity)
+    const firstDraw = this.inputs.debt_draw[0] || 0;
+    if (firstDraw <= 0 || period > this.inputs.debt_duration_years) return 0;
+    
+    return -this.ppmt(this.inputs.interest_rate, period, this.inputs.debt_duration_years, firstDraw);
   }
 
   private ppmt(rate: number, per: number, nper: number, pv: number): number {
     if (rate === 0) return -pv / nper;
     
-    const pmtValue = pv * (rate * Math.pow(1 + rate, nper)) / (Math.pow(1 + rate, nper) - 1);
-    const ipmt = -pv * rate * (Math.pow(1 + rate, per - 1) - Math.pow(1 + rate, per - 1)) / (Math.pow(1 + rate, nper) - 1);
-    return pmtValue - ipmt;
+    // Excel PPMT formula
+    const pmt = pv * (rate * Math.pow(1 + rate, nper)) / (Math.pow(1 + rate, nper) - 1);
+    const fv = 0;
+    const ipmt = (pv * rate) - (pmt - pv * rate) * ((Math.pow(1 + rate, per - 1) - 1) / rate);
+    
+    return pmt - ipmt;
   }
 
   private calculateNPV(cashFlows: number[], discountRate: number, initialInvestment: number): number {
