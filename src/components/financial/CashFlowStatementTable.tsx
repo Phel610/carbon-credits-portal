@@ -72,11 +72,11 @@ const CashFlowStatementTable = ({ statements }: CashFlowStatementTableProps) => 
                 <TableCell className="pl-8">Depreciation & Amortization</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.depreciation)}
+                    {formatCurrency(stmt.depreciation_addback)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.depreciation, 0))}
+                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.depreciation_addback, 0))}
                 </TableCell>
               </TableRow>
 
@@ -92,11 +92,11 @@ const CashFlowStatementTable = ({ statements }: CashFlowStatementTableProps) => 
                 <TableCell className="pl-8">(Increase) / Decrease in Accounts Receivable</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.change_accounts_receivable)}
+                    {formatCurrency(-stmt.change_ar)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.change_accounts_receivable, 0))}
+                  {formatCurrency(statements.reduce((sum, stmt) => sum + (-stmt.change_ar), 0))}
                 </TableCell>
               </TableRow>
 
@@ -104,23 +104,23 @@ const CashFlowStatementTable = ({ statements }: CashFlowStatementTableProps) => 
                 <TableCell className="pl-8">Increase / (Decrease) in Accounts Payable</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.change_accounts_payable)}
+                    {formatCurrency(stmt.change_ap)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.change_accounts_payable, 0))}
+                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.change_ap, 0))}
                 </TableCell>
               </TableRow>
 
               <TableRow>
-                <TableCell className="pl-8">Increase / (Decrease) in Unearned Revenue</TableCell>
+                <TableCell className="pl-8">Unearned Revenue Flows</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.change_unearned_revenue)}
+                    {formatCurrency(stmt.unearned_inflow + stmt.unearned_release)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.change_unearned_revenue, 0))}
+                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.unearned_inflow + stmt.unearned_release, 0))}
                 </TableCell>
               </TableRow>
 
@@ -194,11 +194,11 @@ const CashFlowStatementTable = ({ statements }: CashFlowStatementTableProps) => 
                 <TableCell className="pl-4">Debt Drawdowns</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.debt_drawdown)}
+                    {formatCurrency(stmt.debt_draw)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.debt_drawdown, 0))}
+                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.debt_draw, 0))}
                 </TableCell>
               </TableRow>
 
@@ -252,11 +252,11 @@ const CashFlowStatementTable = ({ statements }: CashFlowStatementTableProps) => 
                 <TableCell className="pl-4">Cash at Beginning of Period</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.cash_beginning)}
+                    {formatCurrency(stmt.cash_start)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements[0]?.cash_beginning || 0)}
+                  {formatCurrency(statements[0]?.cash_start || 0)}
                 </TableCell>
               </TableRow>
 
@@ -276,11 +276,11 @@ const CashFlowStatementTable = ({ statements }: CashFlowStatementTableProps) => 
                 <TableCell className="font-bold text-lg">Cash at End of Period</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right font-bold text-lg">
-                    {formatCurrency(stmt.cash_ending)}
+                    {formatCurrency(stmt.cash_end)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-bold text-lg">
-                  {formatCurrency(statements[statements.length - 1]?.cash_ending || 0)}
+                  {formatCurrency(statements[statements.length - 1]?.cash_end || 0)}
                 </TableCell>
               </TableRow>
 

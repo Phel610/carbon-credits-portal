@@ -76,7 +76,7 @@ const BalanceSheetTable = ({ statements }: BalanceSheetTableProps) => {
                 <TableCell className="font-semibold">Total Current Assets</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right font-semibold">
-                    {formatCurrency(stmt.total_current_assets)}
+                    {formatCurrency(stmt.cash + stmt.accounts_receivable)}
                   </TableCell>
                 ))}
               </TableRow>
@@ -160,10 +160,10 @@ const BalanceSheetTable = ({ statements }: BalanceSheetTableProps) => {
               </TableRow>
 
               <TableRow>
-                <TableCell className="pl-4">Current Portion of Long-Term Debt</TableCell>
+                <TableCell className="pl-4">Short-term Debt</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.current_portion_debt)}
+                    {formatCurrency(0)}
                   </TableCell>
                 ))}
               </TableRow>
@@ -172,7 +172,7 @@ const BalanceSheetTable = ({ statements }: BalanceSheetTableProps) => {
                 <TableCell className="font-semibold">Total Current Liabilities</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right font-semibold">
-                    {formatCurrency(stmt.total_current_liabilities)}
+                    {formatCurrency(stmt.accounts_payable + stmt.unearned_revenue)}
                   </TableCell>
                 ))}
               </TableRow>
@@ -189,7 +189,7 @@ const BalanceSheetTable = ({ statements }: BalanceSheetTableProps) => {
                 <TableCell className="pl-4">Long-Term Debt</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.long_term_debt)}
+                    {formatCurrency(stmt.debt_balance)}
                   </TableCell>
                 ))}
               </TableRow>

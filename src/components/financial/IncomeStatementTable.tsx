@@ -175,11 +175,11 @@ const IncomeStatementTable = ({ statements }: IncomeStatementTableProps) => {
                 <TableCell className="font-semibold">Total Operating Expenses</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right font-semibold">
-                    {formatCurrency(stmt.total_operating_expenses)}
+                    {formatCurrency(stmt.total_opex)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-bold">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.total_operating_expenses, 0))}
+                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.total_opex, 0))}
                 </TableCell>
               </TableRow>
 

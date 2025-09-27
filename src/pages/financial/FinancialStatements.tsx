@@ -85,10 +85,10 @@ const FinancialStatements = () => {
       if (inputsError) throw inputsError;
 
       // Transform inputs into calculation format
-      const inputs = transformInputsForCalculation(inputsData, modelData);
+      const inputs = transformInputsForCalculation(inputsData);
 
       // Calculate financial statements
-      const engine = new FinancialCalculationEngine(inputs, modelData.start_year, modelData.end_year);
+      const engine = new FinancialCalculationEngine(inputs);
       const calculatedStatements = engine.calculateFinancialStatements();
 
       // Save calculated statements to database
@@ -107,78 +107,131 @@ const FinancialStatements = () => {
     }
   };
 
-  const transformInputsForCalculation = (inputsData: any[], modelData: FinancialModel): ModelInputData => {
-    const inputs: ModelInputData = {
-      operational_metrics: {
-        credits_generated: {},
-        price_per_credit: {},
-        credits_issued: {},
-      },
-      expenses: {
-        cogs_percentage: 15,
-        feasibility_study_cost: 0,
-        pdd_development_cost: 0,
-        initial_mrv_cost: 0,
-        annual_mrv_cost: 0,
-        staff_costs: 0,
-        capex: {},
-        depreciation_method: 'straight_line',
-        depreciation_years: 10,
-        income_tax_rate: 25,
-      },
-      financing: {
-        equity_investments: [],
-        debt_facilities: [],
-        pre_purchase_agreements: [],
-      },
-      investor_assumptions: {
-        discount_rate: 15,
-        target_irr: 20,
-      },
+  // Transform inputs for new calculation engine (matches Excel specification)
+  const transformInputsForCalculation = (inputs: any[]): any => {
+    const years = Array.from({ length: model.end_year - model.start_year + 1 }, (_, i) => model.start_year + i);
+    
+    // Initialize arrays for each year
+    const initializeYearArray = (defaultValue = 0) => 
+      years.reduce((acc, year) => ({ ...acc, [year]: defaultValue }), {});
+    
+    const transformed = {
+      years,
+      // Operational metrics
+      credits_generated: [],
+      price_per_credit: [],
+      issuance_flag: [],
+      
+      // Expenses (negative per Excel convention)
+      cogs_rate: 0.15,
+      feasibility_costs: [],
+      pdd_costs: [],
+      mrv_costs: [],
+      staff_costs: [],
+      depreciation: [],
+      income_tax_rate: 0.25,
+      
+      // Working capital rates (NEW)
+      ar_rate: 0.05,
+      ap_rate: 0.10,
+      
+      // CAPEX and financing
+      capex: [],
+      equity_injection: [],
+      interest_rate: 0.08,
+      debt_duration_years: 5,
+      debt_draw: [],
+      
+      // Pre-purchase agreements (NEW)
+      purchase_amount: [],
+      purchase_share: 0.30,
+      
+      // Returns
+      discount_rate: 0.12,
+      initial_equity_t0: 0,
     };
 
-    // Process inputs by category
-    inputsData.forEach(input => {
-      const value = input.input_value?.value || input.input_value;
-
-      switch (input.category) {
-        case 'operational_metrics':
-          if (input.input_key === 'credits_generated' && input.year) {
-            inputs.operational_metrics.credits_generated[input.year] = value;
-          } else if (input.input_key === 'price_per_credit' && input.year) {
-            inputs.operational_metrics.price_per_credit[input.year] = value;
-          } else if (input.input_key === 'credits_issued' && input.year) {
-            inputs.operational_metrics.credits_issued[input.year] = value;
-          }
-          break;
-
-        case 'expenses':
-          if (input.input_key === 'capex' && input.year) {
-            inputs.expenses.capex[input.year] = value;
-          } else if (input.input_key in inputs.expenses) {
-            (inputs.expenses as any)[input.input_key] = value;
-          }
-          break;
-
-        case 'financing':
-          if (input.input_key === 'equity_investment') {
-            inputs.financing.equity_investments.push(input.input_value);
-          } else if (input.input_key === 'debt_facility') {
-            inputs.financing.debt_facilities.push(input.input_value);
-          } else if (input.input_key === 'pre_purchase_agreement') {
-            inputs.financing.pre_purchase_agreements.push(input.input_value);
-          }
-          break;
-
-        case 'investor_assumptions':
-          if (input.input_key in inputs.investor_assumptions) {
-            (inputs.investor_assumptions as any)[input.input_key] = value;
-          }
-          break;
+    // Organize inputs by category and key
+    const inputsByCategory: { [key: string]: { [key: string]: any[] } } = {};
+    inputs.forEach(input => {
+      if (!inputsByCategory[input.category]) {
+        inputsByCategory[input.category] = {};
       }
+      if (!inputsByCategory[input.category][input.input_key]) {
+        inputsByCategory[input.category][input.input_key] = [];
+      }
+      inputsByCategory[input.category][input.input_key].push(input);
     });
 
-    return inputs;
+    // Transform operational metrics
+    years.forEach(year => {
+      const creditsGenerated = inputsByCategory.operational_metrics?.credits_generated?.find(i => i.year === year);
+      const pricePerCredit = inputsByCategory.operational_metrics?.price_per_credit?.find(i => i.year === year);
+      const issuanceFlag = inputsByCategory.operational_metrics?.issuance_flag?.find(i => i.year === year);
+      
+      transformed.credits_generated.push(creditsGenerated?.input_value?.value || 0);
+      transformed.price_per_credit.push(pricePerCredit?.input_value?.value || 10);
+      transformed.issuance_flag.push(issuanceFlag?.input_value?.value || 0);
+    });
+
+    // Transform expenses (with year arrays)
+    years.forEach(year => {
+      const feasibility = inputsByCategory.expenses?.feasibility_costs?.find(i => i.year === year);
+      const pdd = inputsByCategory.expenses?.pdd_costs?.find(i => i.year === year);
+      const mrv = inputsByCategory.expenses?.mrv_costs?.find(i => i.year === year);
+      const staff = inputsByCategory.expenses?.staff_costs?.find(i => i.year === year);
+      const capex = inputsByCategory.expenses?.capex?.find(i => i.year === year);
+      const depreciation = inputsByCategory.expenses?.depreciation?.find(i => i.year === year);
+      
+      transformed.feasibility_costs.push(feasibility?.input_value?.value || 0);
+      transformed.pdd_costs.push(pdd?.input_value?.value || 0);  
+      transformed.mrv_costs.push(mrv?.input_value?.value || 0);
+      transformed.staff_costs.push(staff?.input_value?.value || 0);
+      transformed.capex.push(capex?.input_value?.value || 0);
+      transformed.depreciation.push(depreciation?.input_value?.value || 0);
+    });
+
+    // Transform rates and scalar values
+    const cogsRate = inputsByCategory.expenses?.cogs_rate?.[0];
+    if (cogsRate) transformed.cogs_rate = cogsRate.input_value.value;
+
+    const arRate = inputsByCategory.expenses?.ar_rate?.[0];
+    if (arRate) transformed.ar_rate = arRate.input_value.value;
+
+    const apRate = inputsByCategory.expenses?.ap_rate?.[0];
+    if (apRate) transformed.ap_rate = apRate.input_value.value;
+
+    const taxRate = inputsByCategory.expenses?.income_tax_rate?.[0];
+    if (taxRate) transformed.income_tax_rate = taxRate.input_value.value;
+
+    // Transform financing
+    years.forEach(year => {
+      const equity = inputsByCategory.financing?.equity_injection?.find(i => i.year === year);
+      const debt = inputsByCategory.financing?.debt_draw?.find(i => i.year === year);
+      const purchase = inputsByCategory.financing?.purchase_amount?.find(i => i.year === year);
+      
+      transformed.equity_injection.push(equity?.input_value?.value || 0);
+      transformed.debt_draw.push(debt?.input_value?.value || 0);
+      transformed.purchase_amount.push(purchase?.input_value?.value || 0);
+    });
+
+    const interestRate = inputsByCategory.financing?.interest_rate?.[0];
+    if (interestRate) transformed.interest_rate = interestRate.input_value.value;
+
+    const debtDuration = inputsByCategory.financing?.debt_duration_years?.[0];
+    if (debtDuration) transformed.debt_duration_years = debtDuration.input_value.value;
+
+    const purchaseShare = inputsByCategory.financing?.purchase_share?.[0];
+    if (purchaseShare) transformed.purchase_share = purchaseShare.input_value.value;
+
+    const discountRate = inputsByCategory.financing?.discount_rate?.[0];
+    if (discountRate) transformed.discount_rate = discountRate.input_value.value;
+
+    const initialEquity = inputsByCategory.financing?.initial_equity_t0?.[0];
+    if (initialEquity) transformed.initial_equity_t0 = initialEquity.input_value.value;
+
+    console.log('Transformed inputs for new calculation engine:', transformed);
+    return transformed;
   };
 
   const saveStatementsToDatabase = async (modelId: string, statements: any) => {
@@ -369,9 +422,9 @@ const FinancialStatements = () => {
               </Card>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription>Project IRR</CardDescription>
+                  <CardDescription>Company IRR</CardDescription>
                   <CardTitle className="text-2xl">
-                    {statements.metrics.irr.toFixed(1)}%
+                    {statements.metrics.company_irr.toFixed(1)}%
                   </CardTitle>
                 </CardHeader>
               </Card>

@@ -93,12 +93,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
       setModelInputs(transformedInputs);
 
       // Calculate financial statements
-      const engine = new FinancialCalculationEngine(
-        transformedInputs,
-        modelData.start_year,
-        modelData.end_year
-      );
-
+      const engine = new FinancialCalculationEngine(transformedInputs);
       const results = engine.calculateFinancialStatements();
       setFinancialData(results);
 
@@ -140,12 +135,12 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
             startYear: modelData.start_year,
             endYear: modelData.end_year,
             totalNPV: data.metrics.npv || 0,
-            projectIRR: data.metrics.irr || 0,
+            projectIRR: data.metrics.company_irr || 0,
             paybackPeriod: data.metrics.payback_period || 0,
             totalRevenue: data.incomeStatements.reduce((sum: number, stmt: any) => sum + (stmt.total_revenue || 0), 0),
-            totalCosts: data.incomeStatements.reduce((sum: number, stmt: any) => sum + (stmt.total_expenses || 0), 0),
+            totalCosts: data.incomeStatements.reduce((sum: number, stmt: any) => sum + Math.abs(stmt.total_opex || 0), 0),
             netIncome: data.incomeStatements.reduce((sum: number, stmt: any) => sum + (stmt.net_income || 0), 0),
-            peakFunding: Math.abs(Math.min(...data.cashFlowStatements.map((stmt: any) => stmt.ending_cash_balance || 0))),
+            peakFunding: Math.abs(Math.min(...data.cashFlowStatements.map((stmt: any) => stmt.cash_end || 0))),
             scenarios: [],
             sensitivities: []
           }
@@ -164,39 +159,48 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
     }
   };
 
-  const transformInputsToModelData = (inputs: any[]): ModelInputData => {
-    // This is a simplified transformation - in practice, you'd need more robust parsing
-    const defaultData: ModelInputData = {
-      operational_metrics: {
-        credits_generated: { 2024: 10000, 2025: 12000, 2026: 15000 },
-        price_per_credit: { 2024: 15, 2025: 16, 2026: 17 },
-        credits_issued: { 2024: 10000, 2025: 12000, 2026: 15000 }
-      },
-      expenses: {
-        cogs_percentage: 0.3,
-        feasibility_study_cost: 50000,
-        pdd_development_cost: 75000,
-        initial_mrv_cost: 25000,
-        annual_mrv_cost: 10000,
-        staff_costs: 100000,
-        capex: { 2024: 200000, 2025: 100000 },
-        depreciation_method: 'straight_line',
-        depreciation_years: 5,
-        income_tax_rate: 0.25
-      },
-      financing: {
-        equity_investments: [{ year: 2024, amount: 500000, investor_type: 'founder' }],
-        debt_facilities: [],
-        pre_purchase_agreements: []
-      },
-      investor_assumptions: {
-        discount_rate: 0.12,
-        target_irr: 0.15
-      }
+  const transformInputsToModelData = (inputs: any[]): any => {
+    const years = Array.from({ length: modelData.end_year - modelData.start_year + 1 }, (_, i) => modelData.start_year + i);
+    
+    const transformed = {
+      years,
+      // Operational metrics
+      credits_generated: [10000, 12000, 15000, 18000, 20000].slice(0, years.length),
+      price_per_credit: [15, 16, 17, 18, 19].slice(0, years.length),
+      issuance_flag: [0, 1, 1, 1, 1].slice(0, years.length),
+      
+      // Expenses (negative per Excel convention)
+      cogs_rate: 0.15,
+      feasibility_costs: [-50000, 0, 0, 0, 0].slice(0, years.length),
+      pdd_costs: [-75000, 0, 0, 0, 0].slice(0, years.length),
+      mrv_costs: [-40000, -15000, -15000, -15000, -15000].slice(0, years.length),
+      staff_costs: [-100000, -100000, -100000, -100000, -100000].slice(0, years.length),
+      depreciation: [-10000, -10000, -10000, -10000, -10000].slice(0, years.length),
+      income_tax_rate: 0.25,
+      
+      // Working capital rates
+      ar_rate: 0.05,
+      ap_rate: 0.10,
+      
+      // CAPEX and financing
+      capex: [-200000, -100000, 0, 0, 0].slice(0, years.length),
+      equity_injection: [500000, 0, 0, 0, 0].slice(0, years.length),
+      interest_rate: 0.08,
+      debt_duration_years: 5,
+      debt_draw: [300000, 0, 0, 0, 0].slice(0, years.length),
+      
+      // Pre-purchase agreements
+      purchase_amount: [0, 50000, 0, 0, 0].slice(0, years.length),
+      purchase_share: 0.30,
+      
+      // Returns
+      discount_rate: 0.12,
+      initial_equity_t0: 100000,
     };
 
-    // TODO: Parse actual inputs from database
-    return defaultData;
+    // TODO: Parse actual inputs from database to override defaults
+    console.log('Using default financial data for report preview:', transformed);
+    return transformed;
   };
 
   const handleDownloadPDF = async () => {
@@ -346,7 +350,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                   </div>
                   <div className="text-center p-4 border rounded-lg">
                     <p className="text-2xl font-bold text-primary">
-                      {(financialData.metrics.project_irr * 100).toFixed(1)}%
+                      {(financialData.metrics.company_irr * 100).toFixed(1)}%
                     </p>
                     <p className="text-sm text-muted-foreground">Project IRR</p>
                   </div>
@@ -358,7 +362,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                   </div>
                   <div className="text-center p-4 border rounded-lg">
                     <p className="text-2xl font-bold text-primary">
-                      {(financialData.metrics.ebitda_margin * 100).toFixed(1)}%
+                      {financialData.metrics.ebitda_margin.toFixed(1)}%
                     </p>
                     <p className="text-sm text-muted-foreground">EBITDA Margin</p>
                   </div>
