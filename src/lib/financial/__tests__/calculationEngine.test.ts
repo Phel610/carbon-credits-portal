@@ -301,6 +301,15 @@ describe('FinancialCalculationEngine', () => {
       const expectedAP = -0.10 * opexTotal;
       expect(results.balanceSheets[t].accounts_payable).toBeCloseTo(expectedAP, 2);
     });
+
+    it('DSCR computes from EBITDA / (abs(principal) + interest)', () => {
+      const t = 1; // 2026 in your 3-year case
+      const ebitda = results.incomeStatements[t].ebitda;
+      const principalAbs = -results.debtSchedule[t].principal_payment; // principal is negative
+      const interestPos = results.debtSchedule[t].interest_expense;    // positive cash interest
+      const dscr = ebitda / (principalAbs + interestPos);
+      expect(Number(results.debtSchedule[t].dscr.toFixed(4))).toBeCloseTo(Number(dscr.toFixed(4)), 4);
+    });
   });
 
   describe('Edge Case Tests', () => {
@@ -417,4 +426,5 @@ describe('FinancialCalculationEngine', () => {
       expect(creditsIssued.every((credits: number) => credits === 0)).toBe(true);
     });
   });
+
 });

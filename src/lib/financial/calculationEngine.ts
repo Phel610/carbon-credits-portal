@@ -173,7 +173,7 @@ export class FinancialCalculationEngine {
   
   // Precomputed values for consistency
   private issuedCredits: number[];
-  private purchasedCredits: number[];
+  private purchasedCreditsDelivered: number[];
   private impliedPurchasePrice: number;
   private spotRevenue: number[];
   private prepRevenue: number[];
@@ -186,7 +186,7 @@ export class FinancialCalculationEngine {
     // Precompute values once for consistency (Fix 9)
     this.issuedCredits = this.calculateIssuedCredits();
     const revenueData = this.calculateRevenue(this.issuedCredits);
-    this.purchasedCredits = revenueData.purchasedCredits;
+    this.purchasedCreditsDelivered = revenueData.purchasedCreditsDelivered;
     this.impliedPurchasePrice = revenueData.impliedPurchasePrice;
     this.spotRevenue = revenueData.spotRev;
     this.prepRevenue = revenueData.prepRev;
@@ -297,24 +297,47 @@ export class FinancialCalculationEngine {
   }
 
   private calculateRevenue(issued: number[]) {
-    const hasPurchase = this.inputs.purchase_amount.map(v => (v || 0) > 0);
-    const purchasedCredits = issued.map((q, t) => hasPurchase[t] ? q * this.inputs.purchase_share : 0);
-    
-    // Fix 8: Calculate implied purchase price as single scalar from first purchase year
-    const totalPurchased = purchasedCredits.reduce((sum, val) => sum + val, 0);
-    const firstPurchaseYear = this.inputs.purchase_amount.findIndex(amount => (amount || 0) > 0);
-    const impliedPurchasePrice = totalPurchased > 0 && firstPurchaseYear >= 0
-      ? (this.inputs.purchase_amount[firstPurchaseYear] || 0) / totalPurchased
-      : 0;
-    
-    const spotRev = issued.map((q, t) => 
-      hasPurchase[t] ? q * (this.inputs.price_per_credit[t] || 0) * (1 - this.inputs.purchase_share) 
-                     : q * (this.inputs.price_per_credit[t] || 0)
+    // 1) Identify first purchase year and total cash paid that year
+    const firstIdx = this.inputs.purchase_amount.findIndex(a => (a || 0) > 0);
+    const hasAnyPurchase = firstIdx >= 0;
+    const firstPurchaseCash = hasAnyPurchase ? (this.inputs.purchase_amount[firstIdx] || 0) : 0;
+
+    // 2) If no purchase, everything is spot
+    if (!hasAnyPurchase || firstPurchaseCash <= 0 || (this.inputs.purchase_share || 0) <= 0) {
+      const spotRev = issued.map((q, t) => q * (this.inputs.price_per_credit[t] || 0));
+      const prepRev = issued.map(() => 0);
+      return {
+        spotRev,
+        prepRev,
+        purchasedCreditsDelivered: issued.map(() => 0),
+        impliedPurchasePrice: 0
+      };
+    }
+
+    // 3) Tentative purchased credits by share across the whole horizon
+    const byShare = issued.map(q => q * this.inputs.purchase_share);
+
+    // 4) Implied purchase price from the FIRST purchase year
+    //    Note: denominator is total purchased credits by share across the horizon.
+    const totalPurchasedByShare = byShare.reduce((s, v) => s + v, 0);
+    const impliedPurchasePrice =
+      totalPurchasedByShare > 0 ? firstPurchaseCash / totalPurchasedByShare : 0;
+
+    // 5) Constrain deliveries to remaining purchased credits (carry-forward)
+    let remaining = totalPurchasedByShare;
+    const purchasedCreditsDelivered = byShare.map(qShare => {
+      const deliver = Math.min(Math.max(qShare, 0), Math.max(remaining, 0));
+      remaining -= deliver;
+      return deliver;
+    });
+
+    // 6) Revenue split
+    const spotRev = issued.map((q, t) =>
+      (q - purchasedCreditsDelivered[t]) * (this.inputs.price_per_credit[t] || 0)
     );
-    
-    const prepRev = purchasedCredits.map(q => q * impliedPurchasePrice);
-    
-    return { spotRev, prepRev, purchasedCredits, impliedPurchasePrice };
+    const prepRev = purchasedCreditsDelivered.map(q => q * impliedPurchasePrice);
+
+    return { spotRev, prepRev, purchasedCreditsDelivered, impliedPurchasePrice };
   }
 
   private calculateDebtSchedule(): DebtSchedule[] {
@@ -392,7 +415,7 @@ export class FinancialCalculationEngine {
       
       // Fix 4: Unearned revenue balance must match Excel Row 57
       const purchaseInflow = this.inputs.purchase_amount[t] || 0;
-      const unearnedRelease = -this.purchasedCredits[t] * this.impliedPurchasePrice;
+      const unearnedRelease = -this.purchasedCreditsDelivered[t] * this.impliedPurchasePrice;
       cumulativeUnearned += purchaseInflow + unearnedRelease;
       const unearned_revenue = Math.max(0, cumulativeUnearned);
       
@@ -466,7 +489,7 @@ export class FinancialCalculationEngine {
       
       // Financing cash flow (Fix 2: Use debt schedule interest)
       const unearned_inflow = this.inputs.purchase_amount[t] || 0;
-      const unearnedRelease = -this.purchasedCredits[t] * this.impliedPurchasePrice;
+      const unearnedRelease = -this.purchasedCreditsDelivered[t] * this.impliedPurchasePrice;
       const debt_draw = debt.draw;
       const debt_repayment = debt.principal_payment; // Already negative
       const interest_cash = debt.interest_expense; // Positive cash outflow
@@ -519,7 +542,7 @@ export class FinancialCalculationEngine {
     for (let t = 0; t < this.years.length; t++) {
       const year = this.years[t];
       const purchase_amount = this.inputs.purchase_amount[t] || 0;
-      const purchased_credits = this.purchasedCredits[t];
+      const purchased_credits = this.purchasedCreditsDelivered[t];
       const investor_cash_flow = -purchase_amount + purchased_credits * (this.inputs.price_per_credit[t] || 0);
 
       stream.push({
