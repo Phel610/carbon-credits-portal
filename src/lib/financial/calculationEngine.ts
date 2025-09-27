@@ -181,6 +181,7 @@ export class FinancialCalculationEngine {
   constructor(inputs: ModelInputData) {
     // Validate inputs
     this.inputs = InputSchema.parse(inputs);
+    this.validateInputs();
     this.years = inputs.years;
     
     // Precompute values once for consistency (Fix 9)
@@ -190,6 +191,14 @@ export class FinancialCalculationEngine {
     this.impliedPurchasePrice = revenueData.impliedPurchasePrice;
     this.spotRevenue = revenueData.spotRev;
     this.prepRevenue = revenueData.prepRev;
+  }
+
+  private validateInputs() {
+    // Enforce single purchase year only
+    const purchaseYears = this.inputs.purchase_amount.filter(amount => (amount || 0) > 0);
+    if (purchaseYears.length > 1) {
+      throw new Error('Only one year can have a purchase amount greater than 0. Excel logic uses only the first purchase year.');
+    }
   }
 
   calculateFinancialStatements() {

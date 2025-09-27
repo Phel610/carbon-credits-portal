@@ -1,9 +1,8 @@
 import { FinancialCalculationEngine } from '../calculationEngine';
 
 describe('FinancialCalculationEngine', () => {
-  describe('ChatGPT 3-Year Acceptance Test', () => {
-    const testInputs = {
-      years: [2025, 2026, 2027],
+  const testInputs = {
+    years: [2025, 2026, 2027],
       credits_generated: [1000, 0, 0],          // Row 5
       price_per_credit: [10, 10, 10],           // Row 6
       issuance_flag: [0, 1, 0],                 // Row 8 (strict 0/1)
@@ -33,6 +32,7 @@ describe('FinancialCalculationEngine', () => {
       discount_rate: 0.12                       // C149
     };
 
+  describe('ChatGPT 3-Year Acceptance Test', () => {
     let results: any;
 
     beforeAll(() => {
@@ -425,6 +425,43 @@ describe('FinancialCalculationEngine', () => {
       const creditsIssued = results.incomeStatements.map((stmt: any) => stmt.credits_issued);
       expect(creditsIssued.every((credits: number) => credits === 0)).toBe(true);
     });
+  });
+
+  it('rejects multiple purchase years', () => {
+    const bad = { ...testInputs, purchase_amount: [1000, 500, 0] };
+    expect(() => new FinancialCalculationEngine(bad).calculateFinancialStatements())
+      .toThrow('Only one year can have a purchase amount greater than 0');
+  });
+
+  it('carry-forward stops after purchased credits are fully delivered', () => {
+    const inputs = {
+      years: [2025, 2026, 2027, 2028],
+      credits_generated: [500, 500, 500, 500],
+      price_per_credit: [10, 10, 10, 10],
+      issuance_flag: [1, 1, 1, 1],
+      cogs_rate: 0, 
+      income_tax_rate: 0, 
+      ar_rate: 0, 
+      ap_rate: 0,
+      feasibility_costs: [0, 0, 0, 0], 
+      pdd_costs: [0, 0, 0, 0], 
+      mrv_costs: [0, 0, 0, 0], 
+      staff_costs: [0, 0, 0, 0],
+      depreciation: [0, 0, 0, 0], 
+      capex: [0, 0, 0, 0],
+      interest_rate: 0, 
+      debt_duration_years: 1, 
+      debt_draw: [0, 0, 0, 0], 
+      equity_injection: [0, 0, 0, 0],
+      initial_equity_t0: 0, 
+      opening_cash_y1: 0,
+      purchase_amount: [2000, 0, 0, 0], 
+      purchase_share: 0.25, // implies 500 purchased credits total
+      discount_rate: 0.1
+    };
+    const e = new FinancialCalculationEngine(inputs).calculateFinancialStatements();
+    const delivered = e.carbonStream.map(s => s.purchased_credits);
+    expect(delivered.reduce((a, b) => a + b, 0)).toBeCloseTo(500, 6); // never exceeds total purchased
   });
 
 });
