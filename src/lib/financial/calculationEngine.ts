@@ -3,6 +3,8 @@
 
 import { z } from 'zod';
 
+const ENGINE_SCHEMA_VERSION = "1.0.0";
+
 // Zod schema for input validation
 const YearArray = z.array(z.number());
 
@@ -194,6 +196,59 @@ export class FinancialCalculationEngine {
   }
 
   private validateInputs() {
+    // Validate known input keys only
+    const allowedKeys = new Set([
+      'years', 'cogs_rate', 'income_tax_rate', 'ar_rate', 'ap_rate', 'interest_rate', 
+      'debt_duration_years', 'purchase_share', 'discount_rate', 'initial_equity_t0', 
+      'opening_cash_y1', 'credits_generated', 'price_per_credit', 'issuance_flag', 
+      'feasibility_costs', 'pdd_costs', 'mrv_costs', 'staff_costs', 'depreciation', 
+      'capex', 'equity_injection', 'debt_draw', 'purchase_amount'
+    ]);
+    
+    for (const key of Object.keys(this.inputs)) {
+      if (!allowedKeys.has(key)) {
+        throw new Error(`Unrecognized input key: ${key}.`);
+      }
+    }
+
+    // Validate rates are in [0, 1] range
+    const rates = ['cogs_rate', 'income_tax_rate', 'ar_rate', 'ap_rate', 'interest_rate'] as const;
+    for (const rateKey of rates) {
+      const rate = this.inputs[rateKey];
+      if (rate < 0 || rate > 1) {
+        throw new Error('Rate must be between 0 and 1.');
+      }
+    }
+
+    // Validate purchase_share is in [0, 1] range
+    if (this.inputs.purchase_share < 0 || this.inputs.purchase_share > 1) {
+      throw new Error('Rate must be between 0 and 1.');
+    }
+
+    // Validate debt duration is positive integer
+    if (this.inputs.debt_duration_years <= 0 || !Number.isInteger(this.inputs.debt_duration_years)) {
+      throw new Error('Debt duration must be a positive integer.');
+    }
+
+    // Validate issuance flags are 0 or 1
+    for (let i = 0; i < this.inputs.issuance_flag.length; i++) {
+      const flag = this.inputs.issuance_flag[i];
+      if (flag !== 0 && flag !== 1) {
+        throw new Error('Issuance flag must be 0 or 1.');
+      }
+    }
+
+    // Validate expense lines are negative
+    const expenseArrays = ['feasibility_costs', 'pdd_costs', 'mrv_costs', 'staff_costs', 'depreciation', 'capex'] as const;
+    for (const expenseKey of expenseArrays) {
+      const expenses = this.inputs[expenseKey];
+      for (let i = 0; i < expenses.length; i++) {
+        if ((expenses[i] || 0) > 0) {
+          throw new Error('This line must be negative per model convention.');
+        }
+      }
+    }
+
     // Enforce single purchase year only
     const purchaseYears = this.inputs.purchase_amount.filter(amount => (amount || 0) > 0);
     if (purchaseYears.length > 1) {
@@ -222,13 +277,14 @@ export class FinancialCalculationEngine {
     const metrics = this.calculateFinancialMetrics(incomeStatements, cashFlowStatements, freeCashFlow, carbonStream, debtSchedule);
 
     return {
+      schemaVersion: ENGINE_SCHEMA_VERSION,
       incomeStatements,
       balanceSheets,
       cashFlowStatements,
       debtSchedule,
       carbonStream,
       freeCashFlow,
-      metrics,
+      financialMetrics: metrics,
     };
   }
 

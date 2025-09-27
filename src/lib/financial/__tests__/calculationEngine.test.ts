@@ -478,4 +478,44 @@ describe('FinancialCalculationEngine', () => {
     expect(isInterest).toBeCloseTo(-schedInterest, 6);
   });
 
+  it('leaves unearned balance if deliveries < purchased credits', () => {
+    const inputs = {
+      years: [2025, 2026, 2027],
+      credits_generated: [100, 100, 0],
+      price_per_credit: [10, 10, 10],
+      issuance_flag: [1, 0, 0],
+      cogs_rate: 0, income_tax_rate: 0, ar_rate: 0, ap_rate: 0,
+      feasibility_costs: [0, 0, 0], pdd_costs: [0, 0, 0], mrv_costs: [0, 0, 0], staff_costs: [0, 0, 0],
+      depreciation: [0, 0, 0], capex: [0, 0, 0],
+      interest_rate: 0, debt_duration_years: 1, debt_draw: [0, 0, 0], equity_injection: [0, 0, 0],
+      initial_equity_t0: 0, opening_cash_y1: 0,
+      purchase_amount: [2000, 0, 0], purchase_share: 0.5, // intends 100 purchased credits total
+      discount_rate: 0.1
+    };
+    const r = new FinancialCalculationEngine(inputs).calculateFinancialStatements();
+    // Issued = 100 in Y1 -> purchased delivered = 50, implied price = 2000/100 = 20
+    // Unearned end = 2000 - 50*20 = 1000
+    expect(r.balanceSheets[2].unearned_revenue).toBeCloseTo(1000, 2);
+  });
+
+  it('rejects rates outside 0..1', () => {
+    const bad = { ...testInputs, cogs_rate: 1.2 };
+    expect(() => new FinancialCalculationEngine(bad).calculateFinancialStatements()).toThrow('Rate must be between 0 and 1.');
+  });
+
+  it('rejects positive expense inputs', () => {
+    const bad = { ...testInputs, feasibility_costs: [100, 0, 0] };
+    expect(() => new FinancialCalculationEngine(bad).calculateFinancialStatements()).toThrow('This line must be negative per model convention.');
+  });
+
+  it('rejects invalid issuance flags', () => {
+    const bad = { ...testInputs, issuance_flag: [2, 0, 0] };
+    expect(() => new FinancialCalculationEngine(bad).calculateFinancialStatements()).toThrow('Issuance flag must be 0 or 1.');
+  });
+
+  it('rejects unknown input keys', () => {
+    const bad = { ...testInputs, unknown_key: 123 };
+    expect(() => new FinancialCalculationEngine(bad).calculateFinancialStatements()).toThrow('Unrecognized input key: unknown_key.');
+  });
+
 });
