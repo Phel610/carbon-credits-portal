@@ -1,0 +1,83 @@
+name: Model Parity Check
+
+on:
+  pull_request:
+    branches: [ main, development ]
+  push:
+    branches: [ main, development ]
+
+jobs:
+  parity-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build project
+      run: npm run build
+      
+    - name: Run tests
+      run: npm test
+      
+    - name: Run type check
+      run: npm run typecheck
+      
+    - name: Run parity checks
+      run: npm run parity:all
+      
+    - name: Upload parity reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: parity-reports
+        path: parity/out/
+        retention-days: 30
+        
+    - name: Comment PR with results
+      if: failure() && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          try {
+            const outDir = 'parity/out';
+            const files = fs.readdirSync(outDir);
+            const reports = files.filter(f => f.endsWith('.md'));
+            
+            let comment = '## 🔍 Model Parity Check Results\n\n';
+            
+            if (reports.length === 0) {
+              comment += '❌ No parity reports found. Check the workflow logs.\n';
+            } else {
+              comment += '❌ Parity checks failed. See details below:\n\n';
+              
+              for (const report of reports) {
+                const content = fs.readFileSync(path.join(outDir, report), 'utf8');
+                const lines = content.split('\n').slice(0, 20); // First 20 lines
+                comment += `### ${report}\n\`\`\`\n${lines.join('\n')}\n\`\`\`\n\n`;
+              }
+            }
+            
+            comment += '\n📋 Full reports are available in the workflow artifacts.';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          } catch (error) {
+            console.log('Error creating comment:', error);
+          }

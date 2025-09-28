@@ -1,0 +1,35 @@
+{
+  "years": [2024, 2025, 2026, 2027, 2028],
+  "revenues": {
+    "spot_price": [45, 50, 55, 60, 65],
+    "credits_sold": [5000, 10000, 15000, 20000, 25000],
+    "pre_purchase_share": [0, 0, 0, 0, 0],
+    "pre_purchase_price": [0, 0, 0, 0, 0]
+  },
+  "costs": {
+    "cogs_rate": 0.12,
+    "feasibility": [100000, 0, 0, 0, 0],
+    "pdd": [150000, 0, 0, 0, 0],
+    "mrv": [20000, 25000, 30000, 35000, 40000],
+    "staff": [150000, 165000, 180000, 195000, 210000]
+  },
+  "working_capital": {
+    "ar_rate": 0.05,
+    "ap_rate": 0.1
+  },
+  "capex": [200000, 50000, 25000, 25000, 25000],
+  "depreciation_rate": 0.15,
+  "debt": {
+    "facility_size": 0,
+    "draw_years": [],
+    "interest_rate": 0,
+    "term_years": 0,
+    "payment_type": "IO"
+  },
+  "equity_discount_rate": 0.15,
+  "purchase": {
+    "purchase_years": [],
+    "purchase_amounts": [],
+    "purchase_share": 0
+  }
+}

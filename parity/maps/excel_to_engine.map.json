@@ -1,0 +1,93 @@
+{
+  "income_statement": {
+    "year_col": "Year",
+    "columns": {
+      "Total Revenue": "incomeStatements[*].total_revenue",
+      "Spot Revenue": "incomeStatements[*].spot_revenue",
+      "Pre-purchase Revenue": "incomeStatements[*].pre_purchase_revenue",
+      "COGS": "incomeStatements[*].cogs",
+      "OPEX Total": "incomeStatements[*].opex_total",
+      "Feasibility": "incomeStatements[*].feasibility",
+      "PDD": "incomeStatements[*].pdd",
+      "MRV": "incomeStatements[*].mrv",
+      "Staff": "incomeStatements[*].staff",
+      "EBITDA": "incomeStatements[*].ebitda",
+      "Depreciation": "incomeStatements[*].depreciation",
+      "Interest Expense": "incomeStatements[*].interest_expense",
+      "Net Income": "incomeStatements[*].net_income"
+    }
+  },
+  "balance_sheet": {
+    "year_col": "Year",
+    "columns": {
+      "Cash": "balanceSheets[*].cash",
+      "Accounts Receivable": "balanceSheets[*].accounts_receivable",
+      "Property Plant Equipment": "balanceSheets[*].property_plant_equipment",
+      "Total Assets": "balanceSheets[*].total_assets",
+      "Accounts Payable": "balanceSheets[*].accounts_payable",
+      "Unearned Revenue": "balanceSheets[*].unearned_revenue",
+      "Debt": "balanceSheets[*].debt",
+      "Total Liabilities": "balanceSheets[*].total_liabilities",
+      "Equity": "balanceSheets[*].equity",
+      "Total Liabilities + Equity": "balanceSheets[*].total_liabilities_equity",
+      "Balance Check": "balanceSheets[*].balance_check"
+    }
+  },
+  "cash_flow": {
+    "year_col": "Year",
+    "columns": {
+      "Net Income": "cashFlowStatements[*].net_income",
+      "Depreciation": "cashFlowStatements[*].depreciation",
+      "Change in AR": "cashFlowStatements[*].change_in_ar",
+      "Change in AP": "cashFlowStatements[*].change_in_ap",
+      "Change in Unearned Revenue": "cashFlowStatements[*].change_in_unearned_revenue",
+      "Operating CF": "cashFlowStatements[*].operating_cash_flow",
+      "CAPEX": "cashFlowStatements[*].capex",
+      "Investing CF": "cashFlowStatements[*].investing_cash_flow",
+      "Net Borrowing": "cashFlowStatements[*].net_borrowing",
+      "Financing CF": "cashFlowStatements[*].financing_cash_flow",
+      "Net Change in Cash": "cashFlowStatements[*].net_change_cash",
+      "Cash at Start": "cashFlowStatements[*].cash_start",
+      "Cash at End": "cashFlowStatements[*].cash_end"
+    }
+  },
+  "debt_schedule": {
+    "year_col": "Year",
+    "columns": {
+      "Beginning Balance": "debtSchedule[*].beginning_balance",
+      "Draw": "debtSchedule[*].draw",
+      "Principal Payment": "debtSchedule[*].principal_payment",
+      "Ending Balance": "debtSchedule[*].ending_balance",
+      "Interest": "debtSchedule[*].interest_expense",
+      "DSCR": "debtSchedule[*].dscr"
+    }
+  },
+  "carbon_stream": {
+    "year_col": "Year",
+    "columns": {
+      "Purchase Amount": "carbonStream[*].purchase_amount",
+      "Purchased Credits": "carbonStream[*].purchased_credits",
+      "Implied Purchase Price": "carbonStream[*].implied_purchase_price",
+      "Investor Cash Flow": "carbonStream[*].investor_cash_flow"
+    }
+  },
+  "free_cash_flow": {
+    "year_col": "Year",
+    "columns": {
+      "Net Income": "freeCashFlow[*].net_income",
+      "Depreciation": "freeCashFlow[*].depreciation",
+      "Change in Working Capital": "freeCashFlow[*].change_in_working_capital",
+      "CAPEX": "freeCashFlow[*].capex",
+      "Net Borrowing": "freeCashFlow[*].net_borrowing",
+      "FCF to Equity": "freeCashFlow[*].fcf_to_equity"
+    }
+  },
+  "metrics": {
+    "scalar": {
+      "IRR to Equity": "metrics.irr_equity",
+      "NPV at Discount Rate": "metrics.npv_equity",
+      "Min DSCR": "metrics.min_dscr",
+      "Investor IRR": "metrics.investor_irr"
+    }
+  }
+}
