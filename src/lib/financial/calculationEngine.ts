@@ -327,7 +327,7 @@ export class FinancialCalculationEngine {
       // Fix 1 & 2: Use debt schedule interest, negative on IS
       const interest_expense = -debtSchedule[t].interest_expense;
       
-      const earnings_before_tax = ebitda + depreciation + interest_expense;
+      const earnings_before_tax = ebitda - Math.abs(depreciation) - Math.abs(interest_expense);
       const income_tax = Math.max(0, earnings_before_tax * this.inputs.income_tax_rate);
       const net_income = earnings_before_tax - income_tax;
 

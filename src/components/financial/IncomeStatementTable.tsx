@@ -258,11 +258,11 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
                 <TableCell className="font-semibold">EBIT</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right font-semibold text-trust">
-                    {formatCurrency(stmt.ebitda - stmt.depreciation)}
+                    {formatCurrency(stmt.ebitda - Math.abs(stmt.depreciation))}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-bold text-trust">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + (stmt.ebitda - stmt.depreciation), 0))}
+                  {formatCurrency(statements.reduce((sum, stmt) => sum + (stmt.ebitda - Math.abs(stmt.depreciation)), 0))}
                 </TableCell>
               </TableRow>
 
