@@ -173,6 +173,7 @@ export class FinancialCalculationEngine {
     this.inputs = InputSchema.parse(inputs);
     this.validateInputs();
     this.validateArrayLengths();
+    this.validateOpeningBalance();
     this.years = inputs.years;
     
     // Precompute values once for consistency (Fix 9)
@@ -269,6 +270,35 @@ export class FinancialCalculationEngine {
     const debtDrawYears = this.inputs.debt_draw.filter((draw, index) => (draw || 0) > 0);
     if (debtDrawYears.length > 1) {
       throw new Error('Only one debt draw year is supported with the current single-facility PPMT model.');
+    }
+  }
+
+  private validateOpeningBalance() {
+    // Calculate required opening cash to balance t₀
+    const initial_liabilities = 0; // typically 0 at start
+    const initial_ar = 0; // typically 0 at start
+    const initial_ap = 0; // typically 0 at start
+    const initial_ppe = this.inputs.initial_ppe || 0;
+    
+    const required_opening_cash = 
+      this.inputs.initial_equity_t0 + 
+      initial_liabilities - 
+      initial_ppe - 
+      initial_ar + 
+      initial_ap;
+    
+    const cash_gap = this.inputs.opening_cash_y1 - required_opening_cash;
+    
+    if (Math.abs(cash_gap) > 1) { // Allow for rounding
+      console.warn(`⚠️ Opening Balance Misalignment Detected:
+        Initial Equity (t₀): ${this.inputs.initial_equity_t0?.toLocaleString()}
+        Initial PPE (t₀): ${initial_ppe?.toLocaleString()}
+        Required Opening Cash: ${required_opening_cash?.toLocaleString()}
+        Actual Opening Cash: ${this.inputs.opening_cash_y1?.toLocaleString()}
+        Gap: ${cash_gap?.toLocaleString()}
+        
+        This gap will propagate through all years as a Balance Check error.
+        Consider setting opening_cash_y1 = ${required_opening_cash}`);
     }
   }
 

@@ -33,7 +33,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
   const [purchaseShare, setPurchaseShare] = useState(30);
   const [discountRate, setDiscountRate] = useState(12);
   const [initialEquityT0, setInitialEquityT0] = useState(100000);
-  const [openingCashY1, setOpeningCashY1] = useState(0);
+  const [openingCashY1, setOpeningCashY1] = useState(150000); // Better default that typically balances with equity
   const [initialPpe, setInitialPpe] = useState(0);
   const [yearlyFinancing, setYearlyFinancing] = useState<YearlyFinancing[]>([]);
   const [notes, setNotes] = useState('');
