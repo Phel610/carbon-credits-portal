@@ -7,7 +7,7 @@ export const HEADERS = {
   balanceSheet: [
     "year","cash","accounts_receivable","ppe_net","total_assets",
     "accounts_payable","unearned_revenue","debt_balance","total_liabilities",
-    "retained_earnings","shareholder_equity","equity_injection","total_equity","total_liabilities_equity","balance_check"
+    "retained_earnings","contributed_capital","total_equity","total_liabilities_equity","balance_check"
   ],
   cashFlow: [
     "year","net_income","depreciation","decrease_in_ar","increase_in_ap","operating_cash_flow",
@@ -51,15 +51,16 @@ function addCalculatedFields(data: any[], metadata?: any): any[] {
       derivedFields.gross_profit = row.total_revenue - row.cogs;
     }
 
-    // Balance sheet equity breakdown
-    if (incomeStatements.length > 0) {
+    // Balance sheet equity breakdown - now handled by engine
+    if (row.retained_earnings === undefined && incomeStatements.length > 0) {
       derivedFields.retained_earnings = cumulativeSum(
         incomeStatements.map(is => is.net_income || 0), 
         index
       );
     }
-    derivedFields.shareholder_equity = initialEquity + cumulativeSum(equityInjections, index);
-    derivedFields.equity_injection = equityInjections[index] || 0;
+    if (row.contributed_capital === undefined) {
+      derivedFields.contributed_capital = initialEquity + cumulativeSum(equityInjections, index);
+    }
 
     // Cash flow working capital changes and depreciation
     if (row.depreciation !== undefined) {
@@ -105,8 +106,8 @@ export function exportToCSV(data: any[], headers: string[], filename: string, me
           value = row.total_revenue - row.cogs;
         } else if (header === 'retained_earnings' && row.retained_earnings !== undefined) {
           value = row.retained_earnings;
-        } else if (header === 'shareholder_equity' && row.shareholder_equity !== undefined) {
-          value = row.shareholder_equity;
+        } else if (header === 'contributed_capital' && row.contributed_capital !== undefined) {
+          value = row.contributed_capital;
         } else if (header === 'decrease_in_ar' && row.change_ar !== undefined) {
           value = -row.change_ar;
         } else if (header === 'increase_in_ap' && row.change_ap !== undefined) {
@@ -158,8 +159,8 @@ export function exportToExcel(data: any[], headers: string[], filename: string, 
           value = row.total_revenue - row.cogs;
         } else if (header === 'retained_earnings' && row.retained_earnings !== undefined) {
           value = row.retained_earnings;
-        } else if (header === 'shareholder_equity' && row.shareholder_equity !== undefined) {
-          value = row.shareholder_equity;
+        } else if (header === 'contributed_capital' && row.contributed_capital !== undefined) {
+          value = row.contributed_capital;
         } else if (header === 'decrease_in_ar' && row.change_ar !== undefined) {
           value = -row.change_ar;
         } else if (header === 'increase_in_ap' && row.change_ap !== undefined) {

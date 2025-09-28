@@ -157,7 +157,7 @@ const BalanceSheetTable = ({
                 <TableCell className="pl-6">Accounts Payable</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(Math.abs(stmt.accounts_payable))}
+                    {formatCurrency(stmt.accounts_payable)}
                   </TableCell>
                 ))}
               </TableRow>
@@ -206,37 +206,18 @@ const BalanceSheetTable = ({
 
               <TableRow>
                 <TableCell className="pl-6">Retained earnings</TableCell>
-                {statements.map((stmt, index) => {
-                  // Calculate retained earnings as cumulative net income
-                  const retainedEarnings = incomeStatements.length > 0 
-                    ? cumulativeSum(incomeStatements.map(is => is.net_income || 0), index)
-                    : 0;
-                  return (
-                    <TableCell key={stmt.year} className="text-right">
-                      {formatCurrency(retainedEarnings)}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-6">Shareholder equity</TableCell>
-                {statements.map((stmt, index) => {
-                  // Calculate shareholder equity as initial equity + cumulative equity injections
-                  const contributedCapital = initialEquity + cumulativeSum(equityInjections, index);
-                  return (
-                    <TableCell key={stmt.year} className="text-right">
-                      {formatCurrency(contributedCapital)}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-6">Equity injection</TableCell>
-                {statements.map((stmt, index) => (
+                {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(equityInjections[index] || 0)}
+                    {formatCurrency(stmt.retained_earnings)}
+                  </TableCell>
+                ))}
+              </TableRow>
+
+              <TableRow>
+                <TableCell className="pl-6">Contributed capital</TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={stmt.year} className="text-right">
+                    {formatCurrency(stmt.contributed_capital)}
                   </TableCell>
                 ))}
               </TableRow>

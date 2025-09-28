@@ -83,6 +83,8 @@ export interface BalanceSheet {
   unearned_revenue: number;
   debt_balance: number;
   total_liabilities: number;
+  retained_earnings: number;
+  contributed_capital: number;
   total_equity: number;
   total_liabilities_equity: number;
   balance_check: number;
@@ -475,42 +477,44 @@ export class FinancialCalculationEngine {
     const sheets: BalanceSheet[] = [];
     let cumulativeRetainedEarnings = 0;
     let cumulativeUnearned = 0;
+    let cumulativeContributedCapital = this.inputs.initial_equity_t0 || 0;
 
     for (let t = 0; t < this.years.length; t++) {
       const year = this.years[t];
       const income = incomeStatements[t];
       
-      // Fix 6: PPE roll exactly as Excel
+      // PPE roll exactly as Excel
       const capex = this.inputs.capex[t] || 0; // negative
       const depreciation = this.inputs.depreciation[t] || 0; // negative
       const prevPPE = t === 0 ? 0 : sheets[t - 1].ppe_net;
       const ppe_net = prevPPE - capex + depreciation; // capex and depreciation are negative
       
-      const ppe_gross = ppe_net + (-depreciation * (t + 1)); // Simplified - accumulated depreciation
-      const accumulated_depreciation = ppe_gross - ppe_net;
-      
-      // Working capital
+      // Working capital - store as positive balances
       const accounts_receivable = income.total_revenue * this.inputs.ar_rate;
       
-      // Fix 5: AP must be based on total OPEX
-      const total_opex = income.opex_total; // Already calculated in income statement
-      const accounts_payable = -this.inputs.ap_rate * total_opex; // opex is negative, so AP positive
+      // AP based on total OPEX, stored as positive balance
+      const total_opex = Math.abs(income.opex_total); // Make positive for AP calculation
+      const accounts_payable = this.inputs.ap_rate * total_opex;
       
-      // Fix 4: Unearned revenue balance must match Excel Row 57
+      // Unearned revenue balance - stored as positive
       const purchaseInflow = this.inputs.purchase_amount[t] || 0;
       const unearnedRelease = -this.purchasedCreditsDelivered[t] * this.impliedPurchasePrice;
       cumulativeUnearned += purchaseInflow + unearnedRelease;
       const unearned_revenue = Math.max(0, cumulativeUnearned);
       
-      // Debt
-      const debt_balance = debtSchedule[t].ending_balance;
+      // Debt - store ending balance as positive
+      const debt_balance = Math.abs(debtSchedule[t].ending_balance);
       
-      // Equity
+      // Equity - fix the equity formula
       cumulativeRetainedEarnings += income.net_income;
       const retained_earnings = cumulativeRetainedEarnings;
+      
+      // Add equity injection to contributed capital
       const equity_injection = this.inputs.equity_injection[t] || 0;
-      const shareholder_equity = equity_injection; // Simplified
-      const total_equity = retained_earnings + shareholder_equity;
+      cumulativeContributedCapital += equity_injection;
+      const contributed_capital = cumulativeContributedCapital;
+      
+      const total_equity = retained_earnings + contributed_capital;
       
       // Assets and liabilities
       const total_liabilities = accounts_payable + unearned_revenue + debt_balance;
@@ -534,6 +538,8 @@ export class FinancialCalculationEngine {
         unearned_revenue,
         debt_balance,
         total_liabilities,
+        retained_earnings,
+        contributed_capital,
         total_equity,
         total_liabilities_equity,
         balance_check,

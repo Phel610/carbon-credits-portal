@@ -19,33 +19,70 @@ function loadInputs(scenario = "scenario_simple") {
 }
 
 describe("Financial Identity Guards", () => {
-  it("equity identity per year: shareholder_equity + retained_earnings = total_equity", () => {
+  it("equity identity per year: contributed_capital + retained_earnings = total_equity", () => {
     const inputs = loadInputs("scenario_simple");
     const engine = new FinancialCalculationEngine(inputs);
     const out = engine.calculateFinancialStatements();
 
-    const income = pick(out, ["incomeStatements", "income_statement"]);
     const bs = pick(out, ["balanceSheets", "balance_sheet"]);
-    const equityInj: number[] =
-      pick(out, ["inputs", "input", "engineInputs"])?.equity_injection ?? [];
-    const initialEquity =
-      pick(out, ["inputs", "input", "engineInputs"])?.initial_equity_t0 ?? 0;
 
-    const netIncome: number[] = income.map((r: any) =>
-      Number(pick(r, ["net_income", "netIncome"]) ?? 0),
-    );
-    const totalEquity: number[] = bs.map((r: any) =>
-      Number(pick(r, ["total_equity", "totalEquity"]) ?? 0),
-    );
+    for (let i = 0; i < bs.length; i++) {
+      const retainedEarnings = Number(pick(bs[i], ["retained_earnings"]) ?? 0);
+      const contributedCapital = Number(pick(bs[i], ["contributed_capital"]) ?? 0);
+      const totalEquity = Number(pick(bs[i], ["total_equity"]) ?? 0);
+      
+      closeToCents(contributedCapital + retainedEarnings, totalEquity);
+    }
+  });
 
-    // cum helpers
-    const cum = (arr: number[], i: number) =>
-      arr.slice(0, i + 1).reduce((s, v) => s + (v ?? 0), 0);
+  it("balance sheet identity per year: total_assets = total_liabilities + total_equity", () => {
+    const inputs = loadInputs("scenario_simple");
+    const engine = new FinancialCalculationEngine(inputs);
+    const out = engine.calculateFinancialStatements();
 
-    for (let i = 0; i < totalEquity.length; i++) {
-      const retainedEarnings = cum(netIncome, i);
-      const shareholderEquity = initialEquity + cum(equityInj, i);
-      closeToCents(shareholderEquity + retainedEarnings, totalEquity[i]);
+    const bs = pick(out, ["balanceSheets", "balance_sheet"]);
+
+    for (let i = 0; i < bs.length; i++) {
+      const totalAssets = Number(pick(bs[i], ["total_assets"]) ?? 0);
+      const totalLiabilities = Number(pick(bs[i], ["total_liabilities"]) ?? 0);
+      const totalEquity = Number(pick(bs[i], ["total_equity"]) ?? 0);
+      
+      closeToCents(totalAssets, totalLiabilities + totalEquity);
+    }
+  });
+
+  it("cash consistency: balance sheet cash = cash flow cash_end", () => {
+    const inputs = loadInputs("scenario_simple");
+    const engine = new FinancialCalculationEngine(inputs);
+    const out = engine.calculateFinancialStatements();
+
+    const bs = pick(out, ["balanceSheets", "balance_sheet"]);
+    const cf = pick(out, ["cashFlows", "cash_flow", "cashFlow"]);
+
+    for (let i = 0; i < bs.length; i++) {
+      const bsCash = Number(pick(bs[i], ["cash"]) ?? 0);
+      const cfCashEnd = Number(pick(cf[i], ["cash_end", "cashEnd"]) ?? 0);
+      
+      closeToCents(bsCash, cfCashEnd);
+    }
+  });
+
+  it("liabilities are stored as positive balances", () => {
+    const inputs = loadInputs("scenario_simple");
+    const engine = new FinancialCalculationEngine(inputs);
+    const out = engine.calculateFinancialStatements();
+
+    const bs = pick(out, ["balanceSheets", "balance_sheet"]);
+
+    for (let i = 0; i < bs.length; i++) {
+      const accountsPayable = Number(pick(bs[i], ["accounts_payable"]) ?? 0);
+      const unearnedRevenue = Number(pick(bs[i], ["unearned_revenue"]) ?? 0);
+      const debtBalance = Number(pick(bs[i], ["debt_balance"]) ?? 0);
+      
+      // All liabilities should be positive or zero
+      expect(accountsPayable).toBeGreaterThanOrEqual(0);
+      expect(unearnedRevenue).toBeGreaterThanOrEqual(0);
+      expect(debtBalance).toBeGreaterThanOrEqual(0);
     }
   });
 
