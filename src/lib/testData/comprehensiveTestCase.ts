@@ -33,8 +33,8 @@ export const comprehensiveTestData = {
     // Credit Issuance Strategy (delayed issuance pattern)
     creditsIssued: [0, 3000, 5000, 8000, 9500, 11000, 12000, 13000, 14000, 15000],
     
-    // Issuance Flag (true when credits are issued that year)
-    issuanceFlag: [false, true, true, true, true, true, true, true, true, true],
+    // Issuance Flag (0 = no issuance, 1 = issue credits that year)
+    issuanceFlag: [0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     
     // Revenue Components
     carbonRevenue: [0, 37500, 66000, 112000, 140600, 170500, 194400, 221000, 245000, 270000],
@@ -84,8 +84,8 @@ export const comprehensiveTestData = {
     interestRate: [0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07],
     loanTerm: 7, // years
     
-    // Purchase Agreements
-    purchaseAgreements: [0, 0, 350000, 350000, 0, 0, 0, 0, 0, 0],
+    // Purchase Agreements (only one year can have purchase amount > 0)
+    purchaseAgreements: [0, 0, 700000, 0, 0, 0, 0, 0, 0, 0],
     purchaseAgreementShare: [0, 0, 0.40, 0.40, 0, 0, 0, 0, 0, 0],
     
     // Working Capital
