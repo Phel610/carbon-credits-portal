@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { comprehensiveTestData, validateTestData, testYears } from "./comprehensiveTestCase";
 import { toast } from "@/hooks/use-toast";
+import { toEngineInputs } from "@/lib/financial/uiAdapter";
 
 export interface TestModelResult {
   success: boolean;
@@ -72,187 +73,226 @@ export const createComprehensiveTestModel = async (): Promise<TestModelResult> =
 
     console.log("Financial model created:", newModel.id);
 
-    // Step 3: Populate model inputs using the comprehensive test data
+    // Step 3: Convert test data through UI adapter to get proper engine format
+    const uiPayload = {
+      years: testYears,
+      
+      // Operational metrics (positive as user would enter)
+      issue: comprehensiveTestData.operationalMetrics.issuanceFlag,
+      credits_generated: comprehensiveTestData.operationalMetrics.creditsGenerated,
+      price_per_credit: comprehensiveTestData.operationalMetrics.creditPrice,
+      
+      // Expenses (positive as user would enter - adapter will convert to negative)
+      feasibility_costs: comprehensiveTestData.expenses.feasibilityStudies,
+      pdd_costs: comprehensiveTestData.expenses.pddPreparation,
+      mrv_costs: comprehensiveTestData.expenses.mrvCosts,
+      staff_costs: comprehensiveTestData.expenses.staffCosts,
+      capex: comprehensiveTestData.expenses.equipmentPurchases,
+      depreciation: comprehensiveTestData.expenses.depreciation,
+      
+      // Financing (positive as inflows)
+      equity_injection: comprehensiveTestData.financing.contributedCapital,
+      debt_draw: comprehensiveTestData.financing.debtDraws,
+      purchase_amount: comprehensiveTestData.financing.purchaseAgreements,
+      
+      // Rates (as percentages - adapter will convert to decimals)
+      ar_rate: 12, // 12%
+      ap_rate: 8, // 8%
+      cogs_rate: 15, // 15%
+      income_tax_rate: 25, // 25%
+      interest_rate: 7, // 7%
+      purchase_share: 40, // 40%
+      discount_rate: 12, // 12%
+      
+      // Other parameters
+      debt_duration_years: 7,
+      opening_cash_y1: 50000,
+      initial_equity_t0: 200000,
+      initial_ppe: 0
+    };
+
+    // Convert UI format to engine format (expenses become negative, rates become decimals)
+    const engineInputs = toEngineInputs(uiPayload);
+
+    // Step 4: Populate model inputs using converted engine format
     const model_inputs = [];
 
-    // Process each year's data
+    // Process each year's data using converted engine values
     for (let i = 0; i < testYears.length; i++) {
       const year = testYears[i];
       
-      // Operational metrics - accessing individual arrays at index i
+      // Operational metrics
       model_inputs.push(
         {
           model_id: newModel.id,
           category: 'operational_metrics',
           input_key: 'credits_generated',
-          input_value: { value: comprehensiveTestData.operationalMetrics.creditsGenerated[i] },
+          input_value: { value: engineInputs.credits_generated[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'operational_metrics', 
           input_key: 'price_per_credit',
-          input_value: { value: comprehensiveTestData.operationalMetrics.creditPrice[i] },
+          input_value: { value: engineInputs.price_per_credit[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'operational_metrics',
           input_key: 'credits_issued',
-          input_value: { value: comprehensiveTestData.operationalMetrics.creditsIssued[i] },
+          input_value: { value: engineInputs.credits_generated[i] * (engineInputs.issuance_flag[i] === 1 ? 1 : 0) },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'operational_metrics',
           input_key: 'issuance_flag',
-          input_value: { value: comprehensiveTestData.operationalMetrics.issuanceFlag[i] },
+          input_value: { value: engineInputs.issuance_flag[i] },
           year: year,
         }
       );
 
-      // Expenses - accessing individual arrays at index i
+      // Expenses (now properly negative from adapter)
       model_inputs.push(
         {
           model_id: newModel.id,
           category: 'expenses',
           input_key: 'feasibility_costs',
-          input_value: { value: comprehensiveTestData.expenses.feasibilityStudies[i] },
+          input_value: { value: engineInputs.feasibility_costs[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'expenses',
           input_key: 'pdd_costs',
-          input_value: { value: comprehensiveTestData.expenses.pddPreparation[i] },
+          input_value: { value: engineInputs.pdd_costs[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'expenses',
           input_key: 'mrv_costs',
-          input_value: { value: comprehensiveTestData.expenses.mrvCosts[i] },
+          input_value: { value: engineInputs.mrv_costs[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'expenses',
           input_key: 'staff_costs',
-          input_value: { value: comprehensiveTestData.expenses.staffCosts[i] },
+          input_value: { value: engineInputs.staff_costs[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'expenses',
           input_key: 'capex',
-          input_value: { value: comprehensiveTestData.expenses.equipmentPurchases[i] },
+          input_value: { value: engineInputs.capex[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'expenses',
           input_key: 'depreciation',
-          input_value: { value: comprehensiveTestData.expenses.depreciation[i] },
+          input_value: { value: engineInputs.depreciation[i] },
           year: year,
         }
       );
 
-      // Financing - accessing individual arrays at index i
+      // Financing
       model_inputs.push(
         {
           model_id: newModel.id,
           category: 'financing',
           input_key: 'equity_injection',
-          input_value: { value: comprehensiveTestData.financing.contributedCapital[i] },
+          input_value: { value: engineInputs.equity_injection[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'financing',
           input_key: 'debt_draw',
-          input_value: { value: comprehensiveTestData.financing.debtDraws[i] },
+          input_value: { value: engineInputs.debt_draw[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'financing',
           input_key: 'purchase_amount',
-          input_value: { value: comprehensiveTestData.financing.purchaseAgreements[i] },
+          input_value: { value: engineInputs.purchase_amount[i] },
           year: year,
         }
       );
     }
 
-    // Add non-yearly inputs (rates, parameters, etc.) using correct form keys and categories
+    // Add non-yearly inputs using converted engine format (now as decimals)
     model_inputs.push(
-      // Expense rates - store as decimals (0.01-1.00 range)
       {
         model_id: newModel.id,
         category: 'expenses',
         input_key: 'cogs_rate',
-        input_value: { value: 0.15 }, // 15% COGS rate
+        input_value: { value: engineInputs.cogs_rate },
       },
       {
         model_id: newModel.id,
         category: 'expenses',
         input_key: 'ar_rate', 
-        input_value: { value: 0.12 }, // 12% AR rate
+        input_value: { value: engineInputs.ar_rate },
       },
       {
         model_id: newModel.id,
         category: 'expenses',
         input_key: 'ap_rate',
-        input_value: { value: 0.08 }, // 8% AP rate
+        input_value: { value: engineInputs.ap_rate },
       },
       {
         model_id: newModel.id,
         category: 'expenses',
         input_key: 'income_tax_rate',
-        input_value: { value: 0.25 }, // 25% tax rate
+        input_value: { value: engineInputs.income_tax_rate },
       },
       
-      // Financing parameters - store as decimals (0.01-1.00 range)
       {
         model_id: newModel.id,
-        category: 'financing', // Fixed: was 'financing_strategy'
+        category: 'financing',
         input_key: 'interest_rate',
-        input_value: { value: 0.07 }, // 7% interest rate
+        input_value: { value: engineInputs.interest_rate },
       },
       {
         model_id: newModel.id,
-        category: 'financing', // Fixed: was 'financing_strategy'
+        category: 'financing',
         input_key: 'debt_duration_years',
-        input_value: { value: 7 }, // 7-year debt term (not a percentage)
+        input_value: { value: engineInputs.debt_duration_years },
       },
       {
         model_id: newModel.id,
-        category: 'financing', // Fixed: was 'financing_strategy'
+        category: 'financing',
         input_key: 'purchase_share',
-        input_value: { value: 0.40 }, // 40% pre-purchase share
+        input_value: { value: engineInputs.purchase_share },
       },
       {
         model_id: newModel.id,
-        category: 'financing', // Fixed: was 'financing_strategy'
+        category: 'financing',
         input_key: 'discount_rate',
-        input_value: { value: 0.12 }, // 12% discount rate
+        input_value: { value: engineInputs.discount_rate },
       },
       {
         model_id: newModel.id,
-        category: 'financing', // Fixed: was 'financing_strategy'
+        category: 'financing',
         input_key: 'opening_cash_y1',
-        input_value: { value: 50000 }, // $50k opening cash
+        input_value: { value: engineInputs.opening_cash_y1 },
       },
       {
         model_id: newModel.id,
-        category: 'financing', // Add missing parameters
+        category: 'financing',
         input_key: 'initial_equity_t0',
-        input_value: { value: 200000 }, // $200k initial equity
+        input_value: { value: engineInputs.initial_equity_t0 },
       },
       {
         model_id: newModel.id,
         category: 'financing',
         input_key: 'initial_ppe',
-        input_value: { value: 0 }, // $0 initial PPE
+        input_value: { value: engineInputs.initial_ppe },
       },
       
       // Add notes for each form
@@ -260,19 +300,19 @@ export const createComprehensiveTestModel = async (): Promise<TestModelResult> =
         model_id: newModel.id,
         category: 'operational_metrics',
         input_key: 'notes',
-        input_value: { value: 'Comprehensive test data for Ghana Solar Cookstoves project. Credits scale from 5,000 to 15,000 annually with strategic issuance pattern.' },
+        input_value: { value: 'Comprehensive test data for Kenya Cookstoves project. Credits scale from 8,000 annually with strategic issuance pattern.' },
       },
       {
         model_id: newModel.id,
         category: 'expenses',
         input_key: 'notes',
-        input_value: { value: 'Realistic expense profile including development costs, ongoing MRV, staff scaling, and major CAPEX investments.' },
+        input_value: { value: 'Realistic expense profile including development costs, ongoing MRV, staff scaling, and equipment purchases.' },
       },
       {
         model_id: newModel.id,
         category: 'financing',
         input_key: 'notes',
-        input_value: { value: 'Mixed financing with initial equity, 7-year debt facility, and strategic pre-purchase agreements in years 3-4.' },
+        input_value: { value: 'Mixed financing with initial equity, 5-year debt facility, and strategic pre-purchase agreements.' },
       }
     );
 
