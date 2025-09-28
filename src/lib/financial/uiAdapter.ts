@@ -130,22 +130,22 @@ export function fromEngineToUI(engine: Partial<ModelInputData> & { years: number
     depreciation:      ensureLen(engine.depreciation, L, 0).map(asPositive),
     capex:             ensureLen(engine.capex, L, 0).map(asPositive),
 
-    ar_rate:         num(engine.ar_rate, 0) * 100,
-    ap_rate:         num(engine.ap_rate, 0) * 100,
-    cogs_rate:       num(engine.cogs_rate, 0) * 100,
-    income_tax_rate: num(engine.income_tax_rate, 0) * 100,
+    ar_rate:         (typeof engine.ar_rate === "number" ? engine.ar_rate : 0) * 100,
+    ap_rate:         (typeof engine.ap_rate === "number" ? engine.ap_rate : 0) * 100,
+    cogs_rate:       (typeof engine.cogs_rate === "number" ? engine.cogs_rate : 0) * 100,
+    income_tax_rate: (typeof engine.income_tax_rate === "number" ? engine.income_tax_rate : 0) * 100,
 
-    interest_rate:       num(engine.interest_rate, 0) * 100,
-    debt_duration_years: num(engine.debt_duration_years, 0),
+    interest_rate:       (typeof engine.interest_rate === "number" ? engine.interest_rate : 0) * 100,
+    debt_duration_years: typeof engine.debt_duration_years === "number" ? engine.debt_duration_years : 0,
 
     equity_injection: ensureLen(engine.equity_injection, L, 0),
     debt_draw:        ensureLen(engine.debt_draw, L, 0),
 
     purchase_amount: ensureLen(engine.purchase_amount, L, 0),
-    purchase_share:  num(engine.purchase_share, 0) * 100,
+    purchase_share:  (typeof engine.purchase_share === "number" ? engine.purchase_share : 0) * 100,
 
-    opening_cash_y1: num(engine.opening_cash_y1, 0),
-    discount_rate:   num(engine.discount_rate, 0) * 100,
-    initial_equity_t0: num(engine.initial_equity_t0, 0),
+    opening_cash_y1: typeof engine.opening_cash_y1 === "number" ? engine.opening_cash_y1 : 0,
+    discount_rate:   (typeof engine.discount_rate === "number" ? engine.discount_rate : 0) * 100,
+    initial_equity_t0: typeof engine.initial_equity_t0 === "number" ? engine.initial_equity_t0 : 0,
   };
 }
