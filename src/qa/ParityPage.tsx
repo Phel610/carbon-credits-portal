@@ -202,6 +202,40 @@ export default function ParityPage() {
     }
   };
 
+  const loadLastReport = async () => {
+    if (!selectedScenario) return;
+    setLoading(true);
+    try {
+      const r = await fetch(`/api/parity/report/${encodeURIComponent(selectedScenario)}`);
+      if (r.status === 404) {
+        toast({
+          title: 'No previous report',
+          description: `No saved report for "${selectedScenario}". Run a new check first.`,
+        });
+        return;
+      }
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({}));
+        throw new Error(e.error || `HTTP ${r.status}`);
+      }
+      const data = await r.json();
+      setReport(data);
+      toast({
+        title: 'Loaded last run',
+        description: `Scenario: ${selectedScenario} (${data.overall})`,
+        variant: data.overall === 'PASS' ? 'default' : 'destructive',
+      });
+    } catch (err) {
+      toast({
+        title: 'Error loading report',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const exportReport = () => {
     if (!report) return;
     
@@ -301,6 +335,13 @@ ${report.invariants.map(i => `- ${i.name}: ${i.pass ? '✅' : '❌'} ${i.descrip
                   <CheckCircle className="h-4 w-4" />
                 )}
                 {loading ? 'Running...' : 'Run Check'}
+              </Button>
+              <Button
+                variant="outline"
+                disabled={loading || !selectedScenario}
+                onClick={loadLastReport}
+              >
+                View Last Run
               </Button>
               {report && (
                 <Button variant="outline" onClick={exportReport}>

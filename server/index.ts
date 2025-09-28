@@ -14,6 +14,10 @@ const FIXTURES_DIR = process.env.PARITY_FIXTURES_DIR
   ? path.resolve(process.env.PARITY_FIXTURES_DIR)
   : path.resolve(__dirname, '../parity/fixtures');
 
+const PARITY_DIR = process.env.PARITY_DIR
+  ? path.resolve(process.env.PARITY_DIR)
+  : path.resolve(__dirname, '../parity');
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -71,6 +75,46 @@ app.get('/api/parity/scenarios', (_req, res) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     res.status(500).json({ error: `Failed to list scenarios: ${message}` });
+  }
+});
+
+// Get saved report for a scenario
+app.get('/api/parity/report/:scenario', (req, res) => {
+  try {
+    const scenario = String(req.params.scenario || '');
+    if (!/^[\w-]+$/.test(scenario)) {
+      return res.status(400).json({ error: 'Invalid scenario name' });
+    }
+
+    const allowed = listScenarios();
+    if (!allowed.includes(scenario)) {
+      return res.status(404).json({ error: `Unknown scenario: ${scenario}` });
+    }
+
+    const reportPath = path.join(PARITY_DIR, 'out', `${scenario}.json`);
+    if (!fs.existsSync(reportPath)) {
+      return res.status(404).json({ error: `No report found for scenario: ${scenario}` });
+    }
+
+    // Lightweight caching headers
+    const stat = fs.statSync(reportPath);
+    const etag = `W/"${stat.size}-${Number(stat.mtimeMs).toString(16)}"`;
+    res.setHeader('ETag', etag);
+    res.setHeader('Last-Modified', stat.mtime.toUTCString());
+
+    if (req.headers['if-none-match'] === etag) {
+      return res.status(304).end();
+    }
+
+    const report = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
+    return res.json(report);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const isProd = process.env.NODE_ENV === 'production';
+    return res.status(500).json({
+      error: `Failed to load report: ${message}`,
+      ...(isProd ? {} : { stack: error instanceof Error ? error.stack : undefined }),
+    });
   }
 });
 
