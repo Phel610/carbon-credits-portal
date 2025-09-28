@@ -90,7 +90,7 @@ const FinancialStatements = () => {
       if (inputsError) throw inputsError;
 
       // Transform inputs into calculation format
-      const inputs = transformInputsForCalculation(inputsData);
+      const inputs = transformInputsForCalculation(inputsData, modelData);
 
       // Calculate financial statements
       const engine = new FinancialCalculationEngine(inputs);
@@ -113,8 +113,8 @@ const FinancialStatements = () => {
   };
 
   // Transform inputs for new calculation engine (matches Excel specification)
-  const transformInputsForCalculation = (inputs: any[]): any => {
-    const years = Array.from({ length: model.end_year - model.start_year + 1 }, (_, i) => model.start_year + i);
+  const transformInputsForCalculation = (inputs: any[], modelData: FinancialModel): any => {
+    const years = Array.from({ length: modelData.end_year - modelData.start_year + 1 }, (_, i) => modelData.start_year + i);
     
     // Initialize arrays for each year
     const initializeYearArray = (defaultValue = 0) => 
