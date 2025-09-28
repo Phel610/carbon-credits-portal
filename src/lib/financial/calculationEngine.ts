@@ -277,11 +277,13 @@ export class FinancialCalculationEngine {
     const debtSchedule = this.calculateDebtSchedule();
     const incomeStatements = this.calculateIncomeStatements(debtSchedule);
     
-    // Update DSCR in debt schedule after income statements are calculated (Fix 7)
+    // Update DSCR in debt schedule after income statements are calculated
     this.updateDSCR(debtSchedule, incomeStatements);
     
+    // PHASE 3: Calculate balance sheets first (without cash), then cash flows, then update balance sheets
     const balanceSheets = this.calculateBalanceSheets(incomeStatements, debtSchedule);
     const cashFlowStatements = this.calculateCashFlowStatements(incomeStatements, balanceSheets, debtSchedule);
+    
     const carbonStream = this.calculateCarbonStream();
     const freeCashFlow = this.calculateFreeCashFlow(incomeStatements, balanceSheets, debtSchedule);
     const metrics = this.calculateFinancialMetrics(incomeStatements, cashFlowStatements, freeCashFlow, carbonStream, debtSchedule);
@@ -445,11 +447,11 @@ export class FinancialCalculationEngine {
       // Only pay principal if: 1) there was an initial draw, 2) we're within loan term, 3) we have outstanding balance
       if (firstDraw > 0 && per <= this.inputs.debt_duration_years && begBalance > 0) {
         principal_payment = this.calculatePrincipalPayment(per);
-        // Ensure we don't pay more than the outstanding balance
-        principal_payment = Math.max(principal_payment, -begBalance);
+        // PHASE 2: Fix payment cap logic - ensure we don't pay more than the outstanding balance
+        principal_payment = Math.min(principal_payment, begBalance);
       }
       
-      const ending_balance = Math.max(0, begBalance + draw + principal_payment); // Ensure debt doesn't go negative
+      const ending_balance = Math.max(0, begBalance + draw - principal_payment); // principal_payment is positive, subtract it
       
       // Interest from beginning balance only
       const interest_expense = begBalance * this.inputs.interest_rate;
@@ -587,11 +589,12 @@ export class FinancialCalculationEngine {
       // Unearned revenue change (operating activity)
       const change_unearned = prevBalance ? balance.unearned_revenue - prevBalance.unearned_revenue : balance.unearned_revenue;
       
-      const operating_cash_flow = net_income + depreciation_addback + change_ap - change_ar + change_unearned;
+      // PHASE 4: Fix cash flow sign conventions
+      const operating_cash_flow = net_income + depreciation_addback - change_ar + change_ap + change_unearned;
       
       // Financing cash flow - debt and equity activities only
       const debt_draw = debt.draw; // Cash inflow (positive)
-      const debt_repayment = debt.principal_payment; // Already negative (cash outflow)  
+      const debt_repayment = -debt.principal_payment; // Principal payment is positive, so negate for cash outflow
       const interest_payment = debt.interest_expense > 0 ? -debt.interest_expense : 0; // Cash outflow (negative)
       const equity_injection = this.inputs.equity_injection[t] || 0; // Cash inflow (positive)
       
@@ -618,12 +621,19 @@ export class FinancialCalculationEngine {
       balanceSheets[t].total_liabilities_equity = balanceSheets[t].total_liabilities + balanceSheets[t].total_equity;
       balanceSheets[t].balance_check = balanceSheets[t].total_assets - balanceSheets[t].total_liabilities_equity;
       
-      // Validation: Ensure balance sheet balances within $0.01
+      // PHASE 5: Add comprehensive validation
       if (Math.abs(balanceSheets[t].balance_check) > 0.01) {
         console.error(`⚠️  Balance sheet does not balance in year ${year}: ${balanceSheets[t].balance_check.toFixed(2)}`);
         console.error(`   Assets: ${balanceSheets[t].total_assets.toFixed(2)}, Liab+Equity: ${balanceSheets[t].total_liabilities_equity.toFixed(2)}`);
+        throw new Error(`Balance sheet does not balance in year ${year}: difference of ${balanceSheets[t].balance_check.toFixed(2)}`);
       } else {
         console.log(`✅ Balance sheet balances in year ${year}`);
+      }
+      
+      // Validate cash consistency
+      if (Math.abs(cash_end - balanceSheets[t].cash) > 0.01) {
+        console.error(`⚠️  Cash consistency error in year ${year}: CF=${cash_end.toFixed(2)}, BS=${balanceSheets[t].cash.toFixed(2)}`);
+        throw new Error(`Cash flow and balance sheet cash mismatch in year ${year}`);
       }
 
       statements.push({
@@ -776,14 +786,20 @@ export class FinancialCalculationEngine {
   }
 
   private ppmt(rate: number, per: number, nper: number, pv: number): number {
+    // PHASE 1: Fix PPMT calculation with correct Excel formula
     if (rate === 0) return -pv / nper;
     
-    // Excel PPMT formula
-    const pmt = pv * (rate * Math.pow(1 + rate, nper)) / (Math.pow(1 + rate, nper) - 1);
-    const fv = 0;
-    const ipmt = (pv * rate) - (pmt - pv * rate) * ((Math.pow(1 + rate, per - 1) - 1) / rate);
+    // Calculate PMT (total payment per period)
+    const pmt = pv * rate * Math.pow(1 + rate, nper) / (Math.pow(1 + rate, nper) - 1);
     
-    return pmt - ipmt;
+    // Calculate future value at period (per - 1) 
+    const fv_per_minus_1 = pv * Math.pow(1 + rate, per - 1);
+    
+    // Interest portion for this period
+    const ipmt = fv_per_minus_1 * rate;
+    
+    // Principal portion = Total payment - Interest portion
+    return -(pmt - ipmt);
   }
 
   private calculateNPV(cashFlows: number[], discountRate: number, initialInvestment: number): number {
