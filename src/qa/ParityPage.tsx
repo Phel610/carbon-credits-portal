@@ -6,8 +6,9 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, XCircle, Download, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, Download, RefreshCw, Clock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 interface ComparisonResult {
   field: string;
@@ -341,6 +342,7 @@ ${report.invariants.map(i => `- ${i.name}: ${i.pass ? '✅' : '❌'} ${i.descrip
                 disabled={loading || !selectedScenario}
                 onClick={loadLastReport}
               >
+                <Clock className="h-4 w-4 mr-2" />
                 View Last Run
               </Button>
               {report && (
@@ -351,6 +353,12 @@ ${report.invariants.map(i => `- ${i.name}: ${i.pass ? '✅' : '❌'} ${i.descrip
               )}
             </div>
           </div>
+          {report?.timestamp && (
+            <div className="text-sm text-muted-foreground flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Last run: {format(new Date(report.timestamp), 'PPp')}
+            </div>
+          )}
         </CardContent>
       </Card>
 
