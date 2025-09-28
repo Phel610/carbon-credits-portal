@@ -606,16 +606,20 @@ export class FinancialCalculationEngine {
       const capex = this.inputs.capex[t] || 0; // Already negative
       const investing_cash_flow = capex;
       
-      // Cash roll
-      const cash_start = t === 0 ? (this.inputs.opening_cash_y1 || 0) : (prevBalance ? prevBalance.cash : 0);
-      const net_change_cash = operating_cash_flow + financing_cash_flow + investing_cash_flow;
+      // CRITICAL FIX: Ensure principal payment is negative (cash outflow)
+      let corrected_principal = debt_repayment;
+      if (corrected_principal > 0) {
+        corrected_principal = -corrected_principal;
+        console.log(`⚠️  Fixed principal payment sign: ${debt_repayment} → ${corrected_principal}`);
+      }
+      
+      // Rebuild financing CF with corrected principal
+      const corrected_financing_cf = debt_draw + corrected_principal + interest_payment + equity_injection + unearned_inflow + unearned_release;
+      
+      // Cash roll - CRITICAL FIX: Use previous cash_end for chain integrity  
+      const cash_start = t === 0 ? (this.inputs.opening_cash_y1 || 0) : statements[t-1]?.cash_end || 0;
+      const net_change_cash = operating_cash_flow + corrected_financing_cf + investing_cash_flow;
       const cash_end = cash_start + net_change_cash;
-
-      console.log(`Year ${year}:`);
-      console.log(`  OCF: NI=${net_income.toFixed(0)}, Depr=${depreciation_addback.toFixed(0)}, ΔAR=${(-change_ar).toFixed(0)}, ΔAP=${change_ap.toFixed(0)} = ${operating_cash_flow.toFixed(0)}`);
-      console.log(`  FCF: Draw=${debt_draw.toFixed(0)}, Repay=${debt_repayment.toFixed(0)}, Interest=${interest_payment.toFixed(0)}, Equity=${equity_injection.toFixed(0)}, Unearned=${unearned_inflow.toFixed(0)} = ${financing_cash_flow.toFixed(0)}`);
-      console.log(`  ICF: Capex=${capex.toFixed(0)} = ${investing_cash_flow.toFixed(0)}`);
-      console.log(`  Cash: Start=${cash_start.toFixed(0)}, Change=${net_change_cash.toFixed(0)}, End=${cash_end.toFixed(0)}`);
 
       // Update balance sheet with calculated cash and recalculate totals
       balanceSheets[t].cash = cash_end;
@@ -623,18 +627,21 @@ export class FinancialCalculationEngine {
       balanceSheets[t].total_liabilities_equity = balanceSheets[t].total_liabilities + balanceSheets[t].total_equity;
       balanceSheets[t].balance_check = balanceSheets[t].total_assets - balanceSheets[t].total_liabilities_equity;
       
-      // Debug: cash plug diagnostic (user's suggested diagnostic)
+      // USER'S EXACT DIAGNOSTIC FORMAT - this will show us the exact mismatch
       const cash_plug = balanceSheets[t].total_liabilities_equity - (balanceSheets[t].accounts_receivable + balanceSheets[t].ppe_net);
       const cash_gap = balanceSheets[t].cash - cash_plug;
-      
-      console.log(`Y${t+1} Diagnostic:`, { 
-        cash: balanceSheets[t].cash.toFixed(0), 
-        cash_plug: cash_plug.toFixed(0), 
-        cash_gap: cash_gap.toFixed(0), 
+
+      console.log(`Y${t+1}`, {
+        begDebt: debt.beginning_balance?.toFixed(0),
+        draw: debt.draw?.toFixed(0),
+        princ: corrected_principal?.toFixed(0),
+        intIS: income.interest_expense?.toFixed(0),
+        intCF: (-debt.interest_expense)?.toFixed(0),
+        ocf: operating_cash_flow?.toFixed(0),
+        icf: investing_cash_flow?.toFixed(0),
+        fcf: corrected_financing_cf?.toFixed(0),
+        cash_gap: cash_gap.toFixed(0),
         balance_check: balanceSheets[t].balance_check.toFixed(0),
-        ocf: operating_cash_flow.toFixed(0), 
-        icf: investing_cash_flow.toFixed(0), 
-        fcf: financing_cash_flow.toFixed(0) 
       });
       
       // Validation: Ensure balance sheet balances within $0.01
