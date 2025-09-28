@@ -327,8 +327,8 @@ export class FinancialCalculationEngine {
       
       // Depreciation and interest (negative values)
       const depreciation = this.inputs.depreciation[t] || 0;
-      // Fix 1 & 2: Use debt schedule interest, negative on IS
-      const interest_expense = -debtSchedule[t].interest_expense;
+      // CRITICAL FIX: Interest expense should be POSITIVE on Income Statement (it's an expense)
+      const interest_expense = debtSchedule[t].interest_expense;
       
       const earnings_before_tax = ebitda - Math.abs(depreciation) - Math.abs(interest_expense);
       const income_tax = Math.max(0, earnings_before_tax * this.inputs.income_tax_rate);
@@ -600,8 +600,6 @@ export class FinancialCalculationEngine {
       const unearned_inflow = this.inputs.purchase_amount[t] || 0; // Cash inflow from purchases
       const unearned_release = 0; // No cash impact - just revenue recognition
       
-      const financing_cash_flow = debt_draw + debt_repayment + interest_payment + equity_injection + unearned_inflow + unearned_release;
-      
       // Investing cash flow
       const capex = this.inputs.capex[t] || 0; // Already negative
       const investing_cash_flow = capex;
@@ -662,9 +660,9 @@ export class FinancialCalculationEngine {
         unearned_inflow,
         unearned_release,
         debt_draw,
-        debt_repayment,
+        debt_repayment: corrected_principal,
         equity_injection,
-        financing_cash_flow,
+        financing_cash_flow: corrected_financing_cf,
         capex,
         investing_cash_flow,
         cash_start,
