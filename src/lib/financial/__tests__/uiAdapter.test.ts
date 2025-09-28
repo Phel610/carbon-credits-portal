@@ -150,3 +150,11 @@ test('fromEngineToUI handles partial objects - operational only', () => {
   expect(ui.debt_duration_years).toBe(0);
   expect(ui.initial_equity_t0).toBe(0);
 });
+
+test('fromEngineToUI pads mismatched lengths', () => {
+  const ui = fromEngineToUI({
+    years: [2025, 2026],
+    credits_generated: [1000], // length 1, should pad to [1000, 0]
+  });
+  expect(ui.credits_generated).toEqual([1000, 0]);
+});

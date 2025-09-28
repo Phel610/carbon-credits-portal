@@ -1,4 +1,6 @@
 // src/lib/financial/uiAdapter.ts
+import { ModelInputData } from './calculationEngine';
+
 export function parseNumberLoose(input: string | number | null | undefined): number {
   if (input === null || input === undefined) return 0;
   if (typeof input === 'number') return input;
@@ -110,7 +112,7 @@ function num(v: unknown, d = 0): number {
 // Map engine inputs -> UI state (for editing existing scenarios)
 // NOTE: No helper hints; expenses shown as positive in UI.
 // Tolerates partial engine objects for category-specific form loading
-export function fromEngineToUI(engine: Partial<any> & { years: number[] }) {
+export function fromEngineToUI(engine: Partial<ModelInputData> & { years: number[] }) {
   const L = engine.years.length;
   const asPositive = (n: number) => Math.abs(n);
   
