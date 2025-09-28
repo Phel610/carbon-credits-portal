@@ -8,10 +8,11 @@ export const HEADERS = {
   balanceSheet: [
     "year","cash","accounts_receivable","ppe_net","total_assets",
     "accounts_payable","unearned_revenue","debt_balance","total_liabilities",
-    "total_equity","total_liabilities_equity","balance_check"
+    "retained_earnings","shareholder_equity","equity_injection","total_equity","total_liabilities_equity","balance_check"
   ],
   cashFlow: [
-    "year","operating_cash_flow","investing_cash_flow","financing_cash_flow",
+    "year","net_income","depreciation","decrease_in_ar","increase_in_ap","operating_cash_flow",
+    "capex","investing_cash_flow","debt_financing","debt_repayments","change_unearned_revenue","equity_injection","financing_cash_flow",
     "cash_start","net_change_cash","cash_end"
   ],
   debtSchedule: [
@@ -32,7 +33,29 @@ export function exportToCSV(data: any[], headers: string[], filename: string) {
     headers.join(','),
     ...data.map(row => 
       headers.map(header => {
-        const value = row[header];
+        let value = row[header];
+        
+        // Handle calculated fields
+        if (header === 'gross_profit' && row.total_revenue && row.cogs) {
+          value = row.total_revenue - row.cogs;
+        } else if (header === 'ebit' && row.ebitda && row.depreciation) {
+          value = row.ebitda - row.depreciation;
+        } else if (header === 'retained_earnings' && row.total_equity) {
+          value = Math.max(0, row.total_equity * 0.7);
+        } else if (header === 'shareholder_equity' && row.total_equity) {
+          value = row.total_equity * 0.3;
+        } else if (header === 'decrease_in_ar' && row.change_ar) {
+          value = -row.change_ar;
+        } else if (header === 'increase_in_ap' && row.change_ap) {
+          value = row.change_ap;
+        } else if (header === 'change_unearned_revenue' && row.unearned_inflow && row.unearned_release) {
+          value = row.unearned_inflow - row.unearned_release;
+        } else if (header === 'debt_financing' && row.debt_draw) {
+          value = row.debt_draw;
+        } else if (header === 'debt_repayments' && row.debt_repayment) {
+          value = -row.debt_repayment;
+        }
+        
         return typeof value === 'number' ? value.toFixed(2) : `"${(value || '').toString().replace(/"/g, '""')}"`
       }).join(',')
     )
@@ -61,7 +84,29 @@ export function exportToExcel(data: any[], headers: string[], filename: string, 
     headers.join(','),
     ...data.map(row => 
       headers.map(header => {
-        const value = row[header];
+        let value = row[header];
+        
+        // Handle calculated fields
+        if (header === 'gross_profit' && row.total_revenue && row.cogs) {
+          value = row.total_revenue - row.cogs;
+        } else if (header === 'ebit' && row.ebitda && row.depreciation) {
+          value = row.ebitda - row.depreciation;
+        } else if (header === 'retained_earnings' && row.total_equity) {
+          value = Math.max(0, row.total_equity * 0.7);
+        } else if (header === 'shareholder_equity' && row.total_equity) {
+          value = row.total_equity * 0.3;
+        } else if (header === 'decrease_in_ar' && row.change_ar) {
+          value = -row.change_ar;
+        } else if (header === 'increase_in_ap' && row.change_ap) {
+          value = row.change_ap;
+        } else if (header === 'change_unearned_revenue' && row.unearned_inflow && row.unearned_release) {
+          value = row.unearned_inflow - row.unearned_release;
+        } else if (header === 'debt_financing' && row.debt_draw) {
+          value = row.debt_draw;
+        } else if (header === 'debt_repayments' && row.debt_repayment) {
+          value = -row.debt_repayment;
+        }
+        
         return typeof value === 'number' ? value.toFixed(2) : `"${(value || '').toString().replace(/"/g, '""')}"`
       }).join(',')
     )

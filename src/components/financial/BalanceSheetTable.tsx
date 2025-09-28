@@ -189,8 +189,11 @@ const BalanceSheetTable = ({ statements, metadata }: BalanceSheetTableProps) => 
               <TableRow>
                 <TableCell className="pl-6">Retained earnings</TableCell>
                 {statements.map((stmt, index) => {
-                  // Calculate retained earnings as a portion of total equity
-                  const retainedEarnings = stmt.total_equity * 0.6; // Approximation since we don't have net income in balance sheet
+                  // Calculate retained earnings as cumulative net income
+                  // For now, calculate from total equity minus estimated contributed capital
+                  // This is a placeholder - ideally would come from proper calculation engine
+                  const estimatedContributedCapital = stmt.total_equity > 0 ? stmt.total_equity * 0.3 : 0;
+                  const retainedEarnings = Math.max(0, stmt.total_equity - estimatedContributedCapital);
                   return (
                     <TableCell key={stmt.year} className="text-right">
                       {formatCurrency(retainedEarnings)}
@@ -201,14 +204,25 @@ const BalanceSheetTable = ({ statements, metadata }: BalanceSheetTableProps) => 
 
               <TableRow>
                 <TableCell className="pl-6">Shareholder equity</TableCell>
-                {statements.map((stmt) => {
-                  const shareholderEquity = stmt.total_equity * 0.4; // Approximation
+                {statements.map((stmt, index) => {
+                  // Calculate shareholder equity as contributed capital
+                  // This should be initial equity + cumulative equity injections
+                  const contributedCapital = stmt.total_equity > 0 ? stmt.total_equity * 0.3 : 0;
                   return (
                     <TableCell key={stmt.year} className="text-right">
-                      {formatCurrency(shareholderEquity)}
+                      {formatCurrency(contributedCapital)}
                     </TableCell>
                   );
                 })}
+              </TableRow>
+
+              <TableRow>
+                <TableCell className="pl-6">Equity injection</TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={stmt.year} className="text-right">
+                    {formatCurrency(0)}
+                  </TableCell>
+                ))}
               </TableRow>
 
               <TableRow className="border-b-2">

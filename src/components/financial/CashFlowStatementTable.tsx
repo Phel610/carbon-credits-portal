@@ -120,17 +120,6 @@ const CashFlowStatementTable = ({ statements, metadata }: CashFlowStatementTable
                 </TableCell>
               </TableRow>
 
-              <TableRow>
-                <TableCell className="pl-4">Change in unearned revenue (prepurchase) account</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.unearned_inflow - stmt.unearned_release)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + (stmt.unearned_inflow - stmt.unearned_release), 0))}
-                </TableCell>
-              </TableRow>
 
               <TableRow className="border-b">
                 <TableCell className="font-semibold">Operating Cash Flow</TableCell>
@@ -207,6 +196,18 @@ const CashFlowStatementTable = ({ statements, metadata }: CashFlowStatementTable
                 ))}
                 <TableCell className="text-right font-medium">
                   {formatCurrency(statements.reduce((sum, stmt) => sum + (-stmt.debt_repayment), 0))}
+                </TableCell>
+              </TableRow>
+
+              <TableRow>
+                <TableCell className="pl-4">Change in unearned revenue (prepurchase) account</TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={stmt.year} className="text-right">
+                    {formatCurrency(stmt.unearned_inflow - stmt.unearned_release)}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right font-medium">
+                  {formatCurrency(statements.reduce((sum, stmt) => sum + (stmt.unearned_inflow - stmt.unearned_release), 0))}
                 </TableCell>
               </TableRow>
 
