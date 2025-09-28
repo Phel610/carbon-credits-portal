@@ -503,8 +503,8 @@ export class FinancialCalculationEngine {
       cumulativeUnearned += purchaseInflow + unearnedRelease;
       const unearned_revenue = Math.max(0, cumulativeUnearned);
       
-      // Debt - store ending balance as positive
-      const debt_balance = Math.abs(debtSchedule[t].ending_balance);
+      // Debt - store ending balance as positive (debt is liability)
+      const debt_balance = Math.max(0, debtSchedule[t].ending_balance);
       
       // Equity - fix the equity formula
       cumulativeRetainedEarnings += income.net_income;
@@ -572,30 +572,35 @@ export class FinancialCalculationEngine {
       
       const operating_cash_flow = net_income + depreciation_addback + change_ap - change_ar;
       
-      // Financing cash flow (Fix 2: Use debt schedule interest)
+      // Financing cash flow
       const unearned_inflow = this.inputs.purchase_amount[t] || 0;
-      const unearnedRelease = -this.purchasedCreditsDelivered[t] * this.impliedPurchasePrice;
-      const debt_draw = debt.draw;
-      const debt_repayment = debt.principal_payment; // Already negative
-      const interest_cash = debt.interest_expense; // Positive cash outflow
-      const equity_injection = this.inputs.equity_injection[t] || 0;
+      const unearnedRelease = -this.purchasedCreditsDelivered[t] * this.impliedPurchasePrice; // Reduces unearned (cash outflow)
+      const debt_draw = debt.draw; // Cash inflow (positive)
+      const debt_repayment = debt.principal_payment; // Already negative (cash outflow)  
+      const interest_payment = -Math.abs(debt.interest_expense); // Cash outflow (negative)
+      const equity_injection = this.inputs.equity_injection[t] || 0; // Cash inflow (positive)
       
-      const financing_cash_flow = unearned_inflow + unearnedRelease + debt_draw + debt_repayment - interest_cash + equity_injection;
+      const financing_cash_flow = unearned_inflow + debt_draw + debt_repayment + interest_payment + equity_injection;
       
       // Investing cash flow
       const capex = this.inputs.capex[t] || 0; // Already negative
       const investing_cash_flow = capex;
       
       // Cash roll
-      const cash_start = prevBalance ? prevBalance.cash : (t === 0 ? this.inputs.opening_cash_y1 : 0);
+      const cash_start = t === 0 ? (this.inputs.opening_cash_y1 || 0) : (prevBalance ? prevBalance.cash : 0);
       const net_change_cash = operating_cash_flow + financing_cash_flow + investing_cash_flow;
       const cash_end = cash_start + net_change_cash;
 
-      // Update balance sheet with calculated cash
+      // Update balance sheet with calculated cash and recalculate totals
       balanceSheets[t].cash = cash_end;
       balanceSheets[t].total_assets = cash_end + balanceSheets[t].accounts_receivable + balanceSheets[t].ppe_net;
       balanceSheets[t].total_liabilities_equity = balanceSheets[t].total_liabilities + balanceSheets[t].total_equity;
       balanceSheets[t].balance_check = balanceSheets[t].total_assets - balanceSheets[t].total_liabilities_equity;
+      
+      // Validation: Ensure balance sheet balances within $0.01
+      if (Math.abs(balanceSheets[t].balance_check) > 0.01) {
+        console.warn(`Balance sheet does not balance in year ${year}: ${balanceSheets[t].balance_check.toFixed(2)}`);
+      }
 
       statements.push({
         year,
