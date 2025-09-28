@@ -51,60 +51,88 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
 
         if (existingInputs && existingInputs.length > 0) {
           // Load existing rates
+          // Reconstruct engine format from database
+          const engineData: any = {
+            years: [...new Set(existingInputs.filter(i => i.year).map(i => i.year))].sort(),
+            cogs_rate: 0,
+            ar_rate: 0,
+            ap_rate: 0,
+            income_tax_rate: 0,
+            feasibility_costs: [],
+            pdd_costs: [],
+            mrv_costs: [],
+            staff_costs: [],
+            capex: [],
+            depreciation: [],
+          };
+
+          // Load rate inputs
           const cogsInput = existingInputs.find(i => i.input_key === 'cogs_rate');
           const arInput = existingInputs.find(i => i.input_key === 'ar_rate');
           const apInput = existingInputs.find(i => i.input_key === 'ap_rate');
           const taxInput = existingInputs.find(i => i.input_key === 'income_tax_rate');
           const notesInput = existingInputs.find(i => i.input_key === 'notes');
 
-          if (cogsInput && cogsInput.input_value && typeof cogsInput.input_value === 'object' && 'value' in cogsInput.input_value) {
-            setCogsRate(Number(cogsInput.input_value.value) * 100);
+          if (cogsInput?.input_value && typeof cogsInput.input_value === 'object' && 'value' in cogsInput.input_value) {
+            engineData.cogs_rate = Number(cogsInput.input_value.value);
           }
-          if (arInput && arInput.input_value && typeof arInput.input_value === 'object' && 'value' in arInput.input_value) {
-            setArRate(Number(arInput.input_value.value) * 100);
+          if (arInput?.input_value && typeof arInput.input_value === 'object' && 'value' in arInput.input_value) {
+            engineData.ar_rate = Number(arInput.input_value.value);
           }
-          if (apInput && apInput.input_value && typeof apInput.input_value === 'object' && 'value' in apInput.input_value) {
-            setApRate(Number(apInput.input_value.value) * 100);
+          if (apInput?.input_value && typeof apInput.input_value === 'object' && 'value' in apInput.input_value) {
+            engineData.ap_rate = Number(apInput.input_value.value);
           }
-          if (taxInput && taxInput.input_value && typeof taxInput.input_value === 'object' && 'value' in taxInput.input_value) {
-            setIncomeTaxRate(Number(taxInput.input_value.value) * 100);
+          if (taxInput?.input_value && typeof taxInput.input_value === 'object' && 'value' in taxInput.input_value) {
+            engineData.income_tax_rate = Number(taxInput.input_value.value);
           }
-          if (notesInput && notesInput.input_value && typeof notesInput.input_value === 'object' && 'value' in notesInput.input_value) {
+          if (notesInput?.input_value && typeof notesInput.input_value === 'object' && 'value' in notesInput.input_value) {
             setNotes(String(notesInput.input_value.value) || '');
           }
 
-          // Load yearly expenses
-          const years = [...new Set(existingInputs.filter(i => i.year).map(i => i.year))].sort();
-          if (years.length > 0) {
-            const expenses = years.map(year => {
-              const feasibilityInput = existingInputs.find(i => i.year === year && i.input_key === 'feasibility_costs');
-              const pddInput = existingInputs.find(i => i.year === year && i.input_key === 'pdd_costs');
-              const mrvInput = existingInputs.find(i => i.year === year && i.input_key === 'mrv_costs');
-              const staffInput = existingInputs.find(i => i.year === year && i.input_key === 'staff_costs');
-              const capexInput = existingInputs.find(i => i.year === year && i.input_key === 'capex');
-              const deprecInput = existingInputs.find(i => i.year === year && i.input_key === 'depreciation');
+          // Load yearly expense data into engine format
+          engineData.years.forEach(year => {
+            const feasibilityInput = existingInputs.find(i => i.year === year && i.input_key === 'feasibility_costs');
+            const pddInput = existingInputs.find(i => i.year === year && i.input_key === 'pdd_costs');
+            const mrvInput = existingInputs.find(i => i.year === year && i.input_key === 'mrv_costs');
+            const staffInput = existingInputs.find(i => i.year === year && i.input_key === 'staff_costs');
+            const capexInput = existingInputs.find(i => i.year === year && i.input_key === 'capex');
+            const deprecInput = existingInputs.find(i => i.year === year && i.input_key === 'depreciation');
 
-              const getValue = (input: any) => {
-                if (input?.input_value && typeof input.input_value === 'object' && 'value' in input.input_value) {
-                  return Math.abs(Number(input.input_value.value));
-                }
-                return 0;
-              };
+            const getValue = (input: any) => {
+              if (input?.input_value && typeof input.input_value === 'object' && 'value' in input.input_value) {
+                return Number(input.input_value.value); // Keep engine format (negative)
+              }
+              return 0;
+            };
 
-              return {
-                year,
-                feasibility_costs: getValue(feasibilityInput),
-                pdd_costs: getValue(pddInput),
-                mrv_costs: getValue(mrvInput),
-                staff_costs: getValue(staffInput),
-                capex: getValue(capexInput),
-                depreciation: getValue(deprecInput),
-              };
-            });
-            setYearlyExpenses(expenses);
-          } else {
-            initializeDefaults();
-          }
+            engineData.feasibility_costs.push(getValue(feasibilityInput));
+            engineData.pdd_costs.push(getValue(pddInput));
+            engineData.mrv_costs.push(getValue(mrvInput));
+            engineData.staff_costs.push(getValue(staffInput));
+            engineData.capex.push(getValue(capexInput));
+            engineData.depreciation.push(getValue(deprecInput));
+          });
+
+          // Convert to UI format using adapter
+          const uiData = fromEngineToUI(engineData);
+          
+          // Set form state
+          setCogsRate(uiData.cogs_rate);
+          setArRate(uiData.ar_rate);
+          setApRate(uiData.ap_rate);
+          setIncomeTaxRate(uiData.income_tax_rate);
+          
+          const expenses = engineData.years.map((year: number, index: number) => ({
+            year,
+            feasibility_costs: uiData.feasibility_costs[index],
+            pdd_costs: uiData.pdd_costs[index],
+            mrv_costs: uiData.mrv_costs[index],
+            staff_costs: uiData.staff_costs[index],
+            capex: uiData.capex[index],
+            depreciation: uiData.depreciation[index],
+          }));
+          
+          setYearlyExpenses(expenses);
         } else {
           initializeDefaults();
         }

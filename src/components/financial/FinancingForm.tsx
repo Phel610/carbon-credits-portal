@@ -50,6 +50,20 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
 
         if (existingInputs && existingInputs.length > 0) {
           // Load existing parameters
+          // Reconstruct engine format from database
+          const engineData: any = {
+            years: [...new Set(existingInputs.filter(i => i.year).map(i => i.year))].sort(),
+            interest_rate: 0,
+            debt_duration_years: 0,
+            purchase_share: 0,
+            discount_rate: 0,
+            initial_equity_t0: 0,
+            opening_cash_y1: 0,
+            equity_injection: [],
+            debt_draw: [],
+            purchase_amount: [],
+          };
+
           const interestInput = existingInputs.find(i => i.input_key === 'interest_rate');
           const debtDurationInput = existingInputs.find(i => i.input_key === 'debt_duration_years');
           const purchaseShareInput = existingInputs.find(i => i.input_key === 'purchase_share');
@@ -58,54 +72,65 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           const cashInput = existingInputs.find(i => i.input_key === 'opening_cash_y1');
           const notesInput = existingInputs.find(i => i.input_key === 'notes');
 
-          if (interestInput && interestInput.input_value && typeof interestInput.input_value === 'object' && 'value' in interestInput.input_value) {
-            setInterestRate(Number(interestInput.input_value.value) * 100);
+          if (interestInput?.input_value && typeof interestInput.input_value === 'object' && 'value' in interestInput.input_value) {
+            engineData.interest_rate = Number(interestInput.input_value.value);
           }
-          if (debtDurationInput && debtDurationInput.input_value && typeof debtDurationInput.input_value === 'object' && 'value' in debtDurationInput.input_value) {
-            setDebtDurationYears(Number(debtDurationInput.input_value.value));
+          if (debtDurationInput?.input_value && typeof debtDurationInput.input_value === 'object' && 'value' in debtDurationInput.input_value) {
+            engineData.debt_duration_years = Number(debtDurationInput.input_value.value);
           }
-          if (purchaseShareInput && purchaseShareInput.input_value && typeof purchaseShareInput.input_value === 'object' && 'value' in purchaseShareInput.input_value) {
-            setPurchaseShare(Number(purchaseShareInput.input_value.value) * 100);
+          if (purchaseShareInput?.input_value && typeof purchaseShareInput.input_value === 'object' && 'value' in purchaseShareInput.input_value) {
+            engineData.purchase_share = Number(purchaseShareInput.input_value.value);
           }
-          if (discountInput && discountInput.input_value && typeof discountInput.input_value === 'object' && 'value' in discountInput.input_value) {
-            setDiscountRate(Number(discountInput.input_value.value) * 100);
+          if (discountInput?.input_value && typeof discountInput.input_value === 'object' && 'value' in discountInput.input_value) {
+            engineData.discount_rate = Number(discountInput.input_value.value);
           }
-          if (equityInput && equityInput.input_value && typeof equityInput.input_value === 'object' && 'value' in equityInput.input_value) {
-            setInitialEquityT0(Number(equityInput.input_value.value));
+          if (equityInput?.input_value && typeof equityInput.input_value === 'object' && 'value' in equityInput.input_value) {
+            engineData.initial_equity_t0 = Number(equityInput.input_value.value);
           }
-          if (cashInput && cashInput.input_value && typeof cashInput.input_value === 'object' && 'value' in cashInput.input_value) {
-            setOpeningCashY1(Number(cashInput.input_value.value));
+          if (cashInput?.input_value && typeof cashInput.input_value === 'object' && 'value' in cashInput.input_value) {
+            engineData.opening_cash_y1 = Number(cashInput.input_value.value);
           }
-          if (notesInput && notesInput.input_value && typeof notesInput.input_value === 'object' && 'value' in notesInput.input_value) {
+          if (notesInput?.input_value && typeof notesInput.input_value === 'object' && 'value' in notesInput.input_value) {
             setNotes(String(notesInput.input_value.value) || '');
           }
 
-          // Load yearly financing
-          const years = [...new Set(existingInputs.filter(i => i.year).map(i => i.year))].sort();
-          if (years.length > 0) {
-            const financing = years.map(year => {
-              const equityInput = existingInputs.find(i => i.year === year && i.input_key === 'equity_injection');
-              const debtInput = existingInputs.find(i => i.year === year && i.input_key === 'debt_draw');
-              const purchaseInput = existingInputs.find(i => i.year === year && i.input_key === 'purchase_amount');
+          // Load yearly financing data into engine format
+          engineData.years.forEach(year => {
+            const equityInput = existingInputs.find(i => i.year === year && i.input_key === 'equity_injection');
+            const debtInput = existingInputs.find(i => i.year === year && i.input_key === 'debt_draw');
+            const purchaseInput = existingInputs.find(i => i.year === year && i.input_key === 'purchase_amount');
 
-              const getValue = (input: any) => {
-                if (input?.input_value && typeof input.input_value === 'object' && 'value' in input.input_value) {
-                  return Number(input.input_value.value);
-                }
-                return 0;
-              };
+            const getValue = (input: any) => {
+              if (input?.input_value && typeof input.input_value === 'object' && 'value' in input.input_value) {
+                return Number(input.input_value.value);
+              }
+              return 0;
+            };
 
-              return {
-                year,
-                equity_injection: getValue(equityInput),
-                debt_draw: getValue(debtInput),
-                purchase_amount: getValue(purchaseInput),
-              };
-            });
-            setYearlyFinancing(financing);
-          } else {
-            initializeDefaults();
-          }
+            engineData.equity_injection.push(getValue(equityInput));
+            engineData.debt_draw.push(getValue(debtInput));
+            engineData.purchase_amount.push(getValue(purchaseInput));
+          });
+
+          // Convert to UI format using adapter
+          const uiData = fromEngineToUI(engineData);
+          
+          // Set form state
+          setInterestRate(uiData.interest_rate);
+          setDebtDurationYears(uiData.debt_duration_years);
+          setPurchaseShare(uiData.purchase_share);
+          setDiscountRate(uiData.discount_rate);
+          setInitialEquityT0(uiData.initial_equity_t0);
+          setOpeningCashY1(uiData.opening_cash_y1);
+          
+          const financing = engineData.years.map((year: number, index: number) => ({
+            year,
+            equity_injection: uiData.equity_injection[index],
+            debt_draw: uiData.debt_draw[index],
+            purchase_amount: uiData.purchase_amount[index],
+          }));
+          
+          setYearlyFinancing(financing);
         } else {
           initializeDefaults();
         }

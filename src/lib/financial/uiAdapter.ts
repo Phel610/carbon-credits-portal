@@ -93,6 +93,7 @@ export function toEngineInputs(ui: any) {
     // other
     opening_cash_y1: parseNumberLoose(ui.opening_cash_y1),
     discount_rate:   normalizeRate(ui.discount_rate),
+    initial_equity_t0: parseNumberLoose(ui.initial_equity_t0),
   };
 }
 
@@ -130,5 +131,6 @@ export function fromEngineToUI(engine: any) {
 
     opening_cash_y1: engine.opening_cash_y1,
     discount_rate:   engine.discount_rate * 100,
+    initial_equity_t0: engine.initial_equity_t0,
   };
 }
