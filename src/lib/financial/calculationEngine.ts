@@ -578,24 +578,25 @@ export class FinancialCalculationEngine {
       const prevBalance = t > 0 ? balanceSheets[t - 1] : null;
       const debt = debtSchedule[t];
       
-      // Operating cash flow - includes unearned revenue impacts (revenue recognition)
+      // Operating cash flow - working capital changes only (no unearned revenue)
       const net_income = income.net_income;
       const depreciation_addback = -income.depreciation; // Add back negative depreciation
       const change_ar = prevBalance ? balance.accounts_receivable - prevBalance.accounts_receivable : balance.accounts_receivable;
       const change_ap = prevBalance ? balance.accounts_payable - prevBalance.accounts_payable : balance.accounts_payable;
       
-      // Unearned revenue change (operating activity)
-      const change_unearned = prevBalance ? balance.unearned_revenue - prevBalance.unearned_revenue : balance.unearned_revenue;
+      const operating_cash_flow = net_income + depreciation_addback + change_ap - change_ar;
       
-      const operating_cash_flow = net_income + depreciation_addback + change_ap - change_ar + change_unearned;
-      
-      // Financing cash flow - debt and equity activities only
+      // Financing cash flow - build correctly with all components
       const debt_draw = debt.draw; // Cash inflow (positive)
       const debt_repayment = debt.principal_payment; // Already negative (cash outflow)  
       const interest_payment = debt.interest_expense > 0 ? -debt.interest_expense : 0; // Cash outflow (negative)
       const equity_injection = this.inputs.equity_injection[t] || 0; // Cash inflow (positive)
       
-      const financing_cash_flow = debt_draw + debt_repayment + interest_payment + equity_injection;
+      // Unearned revenue flows (financing activities)
+      const unearned_inflow = this.inputs.purchase_amount[t] || 0; // Cash inflow from purchases
+      const unearned_release = 0; // No cash impact - just revenue recognition
+      
+      const financing_cash_flow = debt_draw + debt_repayment + interest_payment + equity_injection + unearned_inflow + unearned_release;
       
       // Investing cash flow
       const capex = this.inputs.capex[t] || 0; // Already negative
@@ -607,8 +608,8 @@ export class FinancialCalculationEngine {
       const cash_end = cash_start + net_change_cash;
 
       console.log(`Year ${year}:`);
-      console.log(`  OCF: NI=${net_income.toFixed(0)}, Depr=${depreciation_addback.toFixed(0)}, ΔAR=${(-change_ar).toFixed(0)}, ΔAP=${change_ap.toFixed(0)}, ΔUnearned=${change_unearned.toFixed(0)} = ${operating_cash_flow.toFixed(0)}`);
-      console.log(`  FCF: Draw=${debt_draw.toFixed(0)}, Repay=${debt_repayment.toFixed(0)}, Interest=${interest_payment.toFixed(0)}, Equity=${equity_injection.toFixed(0)} = ${financing_cash_flow.toFixed(0)}`);
+      console.log(`  OCF: NI=${net_income.toFixed(0)}, Depr=${depreciation_addback.toFixed(0)}, ΔAR=${(-change_ar).toFixed(0)}, ΔAP=${change_ap.toFixed(0)} = ${operating_cash_flow.toFixed(0)}`);
+      console.log(`  FCF: Draw=${debt_draw.toFixed(0)}, Repay=${debt_repayment.toFixed(0)}, Interest=${interest_payment.toFixed(0)}, Equity=${equity_injection.toFixed(0)}, Unearned=${unearned_inflow.toFixed(0)} = ${financing_cash_flow.toFixed(0)}`);
       console.log(`  ICF: Capex=${capex.toFixed(0)} = ${investing_cash_flow.toFixed(0)}`);
       console.log(`  Cash: Start=${cash_start.toFixed(0)}, Change=${net_change_cash.toFixed(0)}, End=${cash_end.toFixed(0)}`);
 
@@ -617,6 +618,20 @@ export class FinancialCalculationEngine {
       balanceSheets[t].total_assets = cash_end + balanceSheets[t].accounts_receivable + balanceSheets[t].ppe_net;
       balanceSheets[t].total_liabilities_equity = balanceSheets[t].total_liabilities + balanceSheets[t].total_equity;
       balanceSheets[t].balance_check = balanceSheets[t].total_assets - balanceSheets[t].total_liabilities_equity;
+      
+      // Debug: cash plug diagnostic (user's suggested diagnostic)
+      const cash_plug = balanceSheets[t].total_liabilities_equity - (balanceSheets[t].accounts_receivable + balanceSheets[t].ppe_net);
+      const cash_gap = balanceSheets[t].cash - cash_plug;
+      
+      console.log(`Y${t+1} Diagnostic:`, { 
+        cash: balanceSheets[t].cash.toFixed(0), 
+        cash_plug: cash_plug.toFixed(0), 
+        cash_gap: cash_gap.toFixed(0), 
+        balance_check: balanceSheets[t].balance_check.toFixed(0),
+        ocf: operating_cash_flow.toFixed(0), 
+        icf: investing_cash_flow.toFixed(0), 
+        fcf: financing_cash_flow.toFixed(0) 
+      });
       
       // Validation: Ensure balance sheet balances within $0.01
       if (Math.abs(balanceSheets[t].balance_check) > 0.01) {
@@ -633,8 +648,8 @@ export class FinancialCalculationEngine {
         change_ar,
         change_ap,
         operating_cash_flow,
-        unearned_inflow: this.inputs.purchase_amount[t] || 0, // Track separately for reporting
-        unearned_release: -this.purchasedCreditsDelivered[t] * this.impliedPurchasePrice, // Track separately for reporting
+        unearned_inflow,
+        unearned_release,
         debt_draw,
         debt_repayment,
         equity_injection,
