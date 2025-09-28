@@ -18,7 +18,7 @@
   "debt_duration_years": 5,
   "debt_draw": [1000000, 0, 0],
   "purchase_amount": [300000, 400000, 0],
-  "purchase_share": 0.6,
+  "purchase_share": 0,
   "discount_rate": 0.12,
   "initial_equity_t0": 0,
   "opening_cash_y1": 0

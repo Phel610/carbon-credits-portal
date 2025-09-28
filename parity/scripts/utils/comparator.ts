@@ -34,24 +34,43 @@ export function compareValues(
     };
   }
 
-  // Determine tolerance based on field type
-  let tolerance: number;
-  if (field.toLowerCase().includes('irr') || field.toLowerCase().includes('rate')) {
-    tolerance = config.tolerance.irr_bps / 10000; // Convert bps to decimal
-  } else if (field.toLowerCase().includes('percent') || field.toLowerCase().includes('%')) {
-    tolerance = config.tolerance.percent_bps / 10000;
-  } else {
-    tolerance = config.tolerance.default_abs;
+  const e = Number(excel);
+  const a = Number(engine);
+  
+  // Handle NaN values
+  if (isNaN(e) || isNaN(a)) {
+    return {
+      field,
+      year,
+      excel,
+      engine,
+      match: false,
+      delta: NaN
+    };
   }
 
-  const delta = Math.abs(excel - engine);
-  const match = delta <= tolerance;
+  const isPercent = /rate|irr|discount/i.test(field);
+  let match = false;
+  let delta: number;
+  let tolerance: number;
+
+  if (isPercent) {
+    // Compare in basis points
+    delta = Math.abs((a - e) * 10000);
+    tolerance = field.toLowerCase().includes('irr') ? config.tolerance.irr_bps : config.tolerance.percent_bps;
+    match = delta <= tolerance;
+  } else {
+    // Compare absolute values
+    delta = Math.abs(a - e);
+    tolerance = config.tolerance.default_abs;
+    match = delta <= tolerance;
+  }
 
   return {
     field,
     year,
-    excel,
-    engine,
+    excel: e,
+    engine: a,
     match,
     delta,
     tolerance

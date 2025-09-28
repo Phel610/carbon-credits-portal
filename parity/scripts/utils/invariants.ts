@@ -5,7 +5,7 @@ export interface InvariantResult {
   details?: string;
 }
 
-export function validateInvariants(data: any): InvariantResult[] {
+export function validateInvariants(data: any, inputs?: any): InvariantResult[] {
   const results: InvariantResult[] = [];
 
   // Revenue components add up
@@ -25,17 +25,78 @@ export function validateInvariants(data: any): InvariantResult[] {
     }
   }
 
-  // COGS calculation
-  if (data.incomeStatements) {
+  // COGS calculation (if inputs provided)
+  if (data.incomeStatements && inputs) {
     for (let i = 0; i < data.incomeStatements.length; i++) {
       const is = data.incomeStatements[i];
-      // We'd need the COGS rate from inputs to validate this properly
-      // For now, just check if COGS exists and is reasonable
+      const expectedCOGS = (inputs.cogs_rate || 0) * (is.total_revenue || 0);
+      const actualCOGS = Math.abs(is.cogs || 0); // COGS is typically negative
+      const delta = Math.abs(expectedCOGS - actualCOGS);
+      
       results.push({
-        name: `COGS Exists Year ${i + 1}`,
-        description: 'COGS field exists and is numeric',
-        pass: typeof is.cogs === 'number' && !isNaN(is.cogs),
-        details: typeof is.cogs !== 'number' ? `COGS is not numeric: ${is.cogs}` : undefined
+        name: `COGS Calculation Year ${i + 1}`,
+        description: 'COGS = COGS Rate × Total Revenue',
+        pass: delta < 0.01,
+        details: delta >= 0.01 ? `Expected: ${expectedCOGS.toFixed(2)}, Actual: ${actualCOGS.toFixed(2)}, Delta: ${delta.toFixed(2)}` : undefined
+      });
+    }
+  }
+
+  // AR/AP working capital relationships
+  if (data.incomeStatements && data.balanceSheets && inputs) {
+    for (let i = 0; i < Math.min(data.incomeStatements.length, data.balanceSheets.length); i++) {
+      const is = data.incomeStatements[i];
+      const bs = data.balanceSheets[i];
+      
+      // Accounts Receivable = AR Rate × Total Revenue
+      if (inputs.ar_rate) {
+        const expectedAR = inputs.ar_rate * (is.total_revenue || 0);
+        const actualAR = bs.accounts_receivable || 0;
+        const arDelta = Math.abs(expectedAR - actualAR);
+        
+        results.push({
+          name: `AR Calculation Year ${i + 1}`,
+          description: 'AR = AR Rate × Total Revenue',
+          pass: arDelta < 0.01,
+          details: arDelta >= 0.01 ? `Expected: ${expectedAR.toFixed(2)}, Actual: ${actualAR.toFixed(2)}, Delta: ${arDelta.toFixed(2)}` : undefined
+        });
+      }
+      
+      // Accounts Payable = AP Rate × OPEX Total
+      if (inputs.ap_rate) {
+        const expectedAP = inputs.ap_rate * Math.abs(is.opex_total || 0);
+        const actualAP = Math.abs(bs.accounts_payable || 0);
+        const apDelta = Math.abs(expectedAP - actualAP);
+        
+        results.push({
+          name: `AP Calculation Year ${i + 1}`,
+          description: 'AP = AP Rate × |OPEX Total|',
+          pass: apDelta < 0.01,
+          details: apDelta >= 0.01 ? `Expected: ${expectedAP.toFixed(2)}, Actual: ${actualAP.toFixed(2)}, Delta: ${apDelta.toFixed(2)}` : undefined
+        });
+      }
+    }
+  }
+
+  // Pre-purchase price consistency
+  if (data.carbonStream) {
+    const purchaseYears = data.carbonStream.filter((cs: any) => (cs.purchase_amount || 0) > 0);
+    if (purchaseYears.length > 1) {
+      const firstPrice = purchaseYears[0].implied_purchase_price;
+      let priceConsistent = true;
+      
+      for (let i = 1; i < purchaseYears.length; i++) {
+        if (Math.abs(purchaseYears[i].implied_purchase_price - firstPrice) > 0.01) {
+          priceConsistent = false;
+          break;
+        }
+      }
+      
+      results.push({
+        name: 'Pre-purchase Price Consistency',
+        description: 'Implied purchase price must be constant across all purchase years',
+        pass: priceConsistent,
+        details: !priceConsistent ? `Prices vary across years: ${purchaseYears.map((p: any) => p.implied_purchase_price).join(', ')}` : undefined
       });
     }
   }

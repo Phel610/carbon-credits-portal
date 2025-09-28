@@ -1,0 +1,4 @@
+{
+  "description": "Edge cases scenario with no debt and no pre-purchase",
+  "expected_error_regex": null
+}

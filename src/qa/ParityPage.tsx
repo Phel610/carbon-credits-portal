@@ -150,14 +150,15 @@ export default function ParityPage() {
 
     setLoading(true);
     try {
-      // In real implementation, this would call the parity engine
-      // For now, we'll use mock data
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-      setReport(mockReport);
+      // Call the actual parity engine
+      const { runParityCheckClient } = await import('../pages/api/parity');
+      const reportData = await runParityCheckClient(selectedScenario);
+      setReport(reportData);
       
       toast({
         title: "Parity check completed",
-        description: `Scenario: ${selectedScenario}`,
+        description: `Scenario: ${selectedScenario} - ${reportData.overall}`,
+        variant: reportData.overall === 'PASS' ? 'default' : 'destructive'
       });
     } catch (error) {
       toast({

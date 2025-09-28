@@ -1,0 +1,4 @@
+{
+  "description": "Error scenario: purchase_share=0 but purchase_amount>0 should error",
+  "expected_error_regex": "purchase.*share.*amount"
+}

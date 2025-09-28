@@ -18,13 +18,19 @@ export function loadCSV(filePath: string): Promise<CSVData[]> {
       .pipe(csv.parse({ headers: true }))
       .on('error', reject)
       .on('data', (row: any) => {
-        // Convert numeric strings to numbers
+        // Convert numeric strings to numbers, handle whitespace
         const converted: CSVData = {};
         for (const [key, value] of Object.entries(row)) {
-          if (typeof value === 'string' && !isNaN(Number(value)) && value.trim() !== '') {
-            converted[key] = Number(value);
+          const trimmedKey = String(key).trim();
+          const trimmedValue = String(value).trim();
+          
+          if (trimmedValue === '') {
+            // Preserve empty strings as missing values
+            converted[trimmedKey] = '';
+          } else if (!isNaN(Number(trimmedValue))) {
+            converted[trimmedKey] = Number(trimmedValue);
           } else {
-            converted[key] = value as string;
+            converted[trimmedKey] = trimmedValue;
           }
         }
         results.push(converted);
@@ -48,10 +54,12 @@ export function loadScalarCSV(filePath: string): Promise<Record<string, number |
       .on('data', (row: any) => {
         // Assume first column is key, second is value
         const [firstCol, secondCol] = Object.keys(row);
-        const key = row[firstCol];
-        const value = row[secondCol];
+        const key = String(row[firstCol]).trim();
+        const value = String(row[secondCol]).trim();
         
-        if (typeof value === 'string' && !isNaN(Number(value)) && value.trim() !== '') {
+        if (value === '') {
+          results[key] = '';
+        } else if (!isNaN(Number(value))) {
           results[key] = Number(value);
         } else {
           results[key] = value;

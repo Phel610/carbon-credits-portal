@@ -76,41 +76,40 @@ export function generateMarkdownReport(report: ParityReport): string {
 }
 
 export function generateJUnitXML(report: ParityReport): string {
-  const { scenario, summary, statements, invariants } = report;
-  
-  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-  xml += `<testsuites name="Model Parity" tests="${summary.totalComparisons + invariants.length}" failures="${summary.failed + invariants.filter(i => !i.pass).length}">\n`;
-  xml += `  <testsuite name="${scenario}" tests="${summary.totalComparisons + invariants.length}">\n`;
-  
-  // Statement comparisons
-  for (const [statementType, data] of Object.entries(statements)) {
-    for (const comp of data.comparisons) {
-      const testName = `${statementType}.${comp.field}${comp.year ? `.${comp.year}` : ''}`;
-      xml += `    <testcase name="${testName}" classname="ModelParity">\n`;
-      
-      if (!comp.match) {
-        xml += `      <failure message="Value mismatch">Excel: ${comp.excel}, Engine: ${comp.engine}, Delta: ${comp.delta}</failure>\n`;
+  const total = report.summary.totalComparisons + report.invariants.length;
+  const failures = report.summary.failed + report.invariants.filter(i => !i.pass).length;
+
+  const lines: string[] = [];
+  lines.push(`<?xml version="1.0" encoding="UTF-8"?>`);
+  lines.push(`<testsuite name="ModelParity:${report.scenario}" tests="${total}" failures="${failures}">`);
+
+  for (const [type, data] of Object.entries(report.statements)) {
+    for (const c of data.comparisons) {
+      const name = `${type}.${c.field}${c.year !== undefined ? '.' + c.year : ''}`;
+      lines.push(`  <testcase classname="${type}" name="${name}">`);
+      if (!c.match) {
+        const msg = `Excel=${c.excel} Engine=${c.engine} Delta=${c.delta}`;
+        lines.push(`    <failure message="${escapeXml(msg)}"/>`);
       }
-      
-      xml += `    </testcase>\n`;
+      lines.push(`  </testcase>`);
     }
   }
-  
-  // Invariants
-  for (const invariant of invariants) {
-    xml += `    <testcase name="${invariant.name}" classname="Invariants">\n`;
-    
-    if (!invariant.pass) {
-      xml += `      <failure message="${invariant.description}">${invariant.details || ''}</failure>\n`;
+
+  for (const inv of report.invariants) {
+    lines.push(`  <testcase classname="invariant" name="${inv.name}">`);
+    if (!inv.pass) {
+      const msg = `${inv.description}${inv.details ? ' :: ' + inv.details : ''}`;
+      lines.push(`    <failure message="${escapeXml(msg)}"/>`);
     }
-    
-    xml += `    </testcase>\n`;
+    lines.push(`  </testcase>`);
   }
-  
-  xml += `  </testsuite>\n`;
-  xml += `</testsuites>`;
-  
-  return xml;
+
+  lines.push(`</testsuite>`);
+  return lines.join('\n');
+}
+
+function escapeXml(s: string) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
 }
 
 export function saveReports(report: ParityReport, outputDir: string): void {

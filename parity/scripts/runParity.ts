@@ -46,52 +46,8 @@ async function loadMapping(): Promise<ExcelMapping> {
 }
 
 async function runEngine(inputsPath: string): Promise<any> {
-  const inputsContent = fs.readFileSync(inputsPath, 'utf-8');
-  const inputs = JSON.parse(inputsContent);
-  
-  // Transform inputs to match engine format
-  const engineInputs = {
-    years: inputs.years,
-    credits_generated: inputs.revenues.credits_sold,
-    price_per_credit: inputs.revenues.spot_price,
-    issuance_flag: inputs.years.map(() => 1), // Assume all years have issuance
-    
-    // Convert costs to negative values (engine convention)
-    cogs_rate: inputs.costs.cogs_rate,
-    feasibility_costs: inputs.costs.feasibility.map((v: number) => -Math.abs(v)),
-    pdd_costs: inputs.costs.pdd.map((v: number) => -Math.abs(v)),
-    mrv_costs: inputs.costs.mrv.map((v: number) => -Math.abs(v)),
-    staff_costs: inputs.costs.staff.map((v: number) => -Math.abs(v)),
-    depreciation: inputs.years.map((_, i) => {
-      const capex = inputs.capex[i] || 0;
-      return -Math.abs(capex * (inputs.depreciation_rate || 0.1));
-    }),
-    income_tax_rate: 0.25, // Default if not specified
-    
-    // Working capital
-    ar_rate: inputs.working_capital?.ar_rate || 0,
-    ap_rate: inputs.working_capital?.ap_rate || 0,
-    
-    // CAPEX and financing
-    capex: inputs.capex.map((v: number) => -Math.abs(v)),
-    equity_injection: inputs.years.map(() => 0), // Default to no equity injection
-    interest_rate: inputs.debt?.interest_rate || 0,
-    debt_duration_years: inputs.debt?.term_years || 5,
-    debt_draw: inputs.debt?.draw_years ? inputs.years.map((year: number) => 
-      inputs.debt.draw_years.includes(year) ? inputs.debt.facility_size : 0
-    ) : inputs.years.map(() => 0),
-    
-    // Pre-purchase agreements
-    purchase_amount: inputs.purchase?.purchase_amounts || inputs.years.map(() => 0),
-    purchase_share: inputs.purchase?.purchase_share || 0,
-    
-    // Returns
-    discount_rate: inputs.equity_discount_rate || 0.12,
-    initial_equity_t0: 0,
-    opening_cash_y1: 0,
-  };
-  
-  const engine = new FinancialCalculationEngine(engineInputs);
+  const inputs = JSON.parse(fs.readFileSync(inputsPath, 'utf-8'));
+  const engine = new FinancialCalculationEngine(inputs);
   return engine.calculateFinancialStatements();
 }
 
@@ -141,19 +97,30 @@ async function compareStatement(
   const yearCol = statementMapping.year_col;
   
   for (const [excelCol, enginePath] of Object.entries(statementMapping.columns)) {
-    const engineValues = getValueFromPath(engineData, enginePath);
+    const engineTable = getValueFromPath(engineData, enginePath);
     
-    if (!Array.isArray(engineValues)) {
+    if (!Array.isArray(engineTable)) {
       missingFields.push(excelCol);
       continue;
     }
     
-    // Compare year by year
-    for (let i = 0; i < excelData.length; i++) {
-      const excelRow = excelData[i];
+    // Align data by year, not by index
+    const { excel: alignedExcel, engine: alignedEngine } = alignDataByYear(
+      excelData, 
+      engineTable, 
+      yearCol
+    );
+    
+    // Compare aligned data
+    for (let i = 0; i < alignedExcel.length; i++) {
+      const excelRow = alignedExcel[i];
+      const engineRow = alignedEngine[i];
       const year = excelRow[yearCol];
       const excelValue = excelRow[excelCol];
-      const engineValue = engineValues[i];
+      
+      // Extract field from engine row (handle nested paths)
+      const fieldKey = enginePath.split('[*].')[1] || enginePath;
+      const engineValue = engineRow[fieldKey];
       
       if (excelValue !== undefined && engineValue !== undefined) {
         const comparison = compareValues(excelValue, engineValue, excelCol, config, year);
@@ -175,14 +142,67 @@ async function runParityCheck(scenarioName: string): Promise<ParityReport> {
   
   const fixturesDir = path.join(process.cwd(), 'parity', 'fixtures', scenarioName);
   const inputsPath = path.join(fixturesDir, 'engine_inputs.json');
+  const metadataPath = path.join(fixturesDir, 'metadata.json');
   
   if (!fs.existsSync(inputsPath)) {
     throw new Error(`Engine inputs not found: ${inputsPath}`);
   }
   
-  // Run engine
-  const engineData = await runEngine(inputsPath);
-  console.log(chalk.green('✓ Engine calculation completed'));
+  // Check for "should error" scenarios
+  let metadata: any = {};
+  if (fs.existsSync(metadataPath)) {
+    metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+  }
+  
+  let engineData: any;
+  let shouldError = metadata.expected_error_regex;
+  
+  try {
+    // Run engine
+    engineData = await runEngine(inputsPath);
+    console.log(chalk.green('✓ Engine calculation completed'));
+    
+    // If we expected an error but didn't get one, that's a failure
+    if (shouldError) {
+      return {
+        scenario: scenarioName,
+        timestamp: new Date().toISOString(),
+        summary: { totalComparisons: 0, passed: 0, failed: 1, completeness: 0 },
+        statements: {},
+        invariants: [{
+          name: 'Expected Error',
+          description: `Expected engine to throw error matching: ${shouldError}`,
+          pass: false,
+          details: 'Engine did not throw expected error'
+        }],
+        overall: 'FAIL'
+      };
+    }
+  } catch (error) {
+    if (shouldError) {
+      // Check if the error matches expected pattern
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const regex = new RegExp(shouldError, 'i');
+      const matches = regex.test(errorMessage);
+      
+      return {
+        scenario: scenarioName,
+        timestamp: new Date().toISOString(),
+        summary: { totalComparisons: 1, passed: matches ? 1 : 0, failed: matches ? 0 : 1, completeness: 1 },
+        statements: {},
+        invariants: [{
+          name: 'Expected Error',
+          description: `Engine should throw error matching: ${shouldError}`,
+          pass: matches,
+          details: matches ? `Got expected error: ${errorMessage}` : `Got unexpected error: ${errorMessage}`
+        }],
+        overall: matches ? 'PASS' : 'FAIL'
+      };
+    } else {
+      // Unexpected error
+      throw error;
+    }
+  }
   
   // Compare each statement
   const statements: ParityReport['statements'] = {};
@@ -203,9 +223,10 @@ async function runParityCheck(scenarioName: string): Promise<ParityReport> {
     }
   }
   
-  // Validate invariants
+  // Validate invariants with inputs
   console.log(chalk.blue('Validating mathematical invariants...'));
-  const invariants = validateInvariants(engineData);
+  const inputs = JSON.parse(fs.readFileSync(inputsPath, 'utf-8'));
+  const invariants = validateInvariants(engineData, inputs);
   const invariantsPassed = invariants.filter(i => i.pass).length;
   console.log(chalk.blue(`Invariants: ${invariantsPassed}/${invariants.length} passed`));
   
@@ -218,7 +239,9 @@ async function runParityCheck(scenarioName: string): Promise<ParityReport> {
   const allMissingFields = Object.values(statements).flatMap(s => s.missingFields);
   const completeness = allMissingFields.length === 0 ? 1 : (totalComparisons / (totalComparisons + allMissingFields.length));
   
-  const overall = failed === 0 && invariants.every(i => i.pass) && completeness === 1 ? 'PASS' : 'FAIL';
+  // Strict completeness enforcement
+  const hasAnyMissingFields = allMissingFields.length > 0;
+  const overall = failed === 0 && invariants.every(i => i.pass) && !hasAnyMissingFields ? 'PASS' : 'FAIL';
   
   const report: ParityReport = {
     scenario: scenarioName,
