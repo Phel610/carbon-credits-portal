@@ -79,101 +79,105 @@ export const createComprehensiveTestModel = async (): Promise<TestModelResult> =
     for (let i = 0; i < testYears.length; i++) {
       const year = testYears[i];
       
-      // Operational metrics - using correct form keys
-      const opMetrics = comprehensiveTestData.operationalMetrics[i];
+      // Operational metrics - accessing individual arrays at index i
       model_inputs.push(
         {
           model_id: newModel.id,
           category: 'operational_metrics',
           input_key: 'credits_generated',
-          input_value: { value: opMetrics.credits_generated },
+          input_value: { value: comprehensiveTestData.operationalMetrics.creditsGenerated[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'operational_metrics', 
-          input_key: 'price_per_credit', // Fixed: was 'credit_price'
-          input_value: { value: opMetrics.credit_price },
+          input_key: 'price_per_credit',
+          input_value: { value: comprehensiveTestData.operationalMetrics.creditPrice[i] },
+          year: year,
+        },
+        {
+          model_id: newModel.id,
+          category: 'operational_metrics',
+          input_key: 'credits_issued',
+          input_value: { value: comprehensiveTestData.operationalMetrics.creditsIssued[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'operational_metrics',
           input_key: 'issuance_flag',
-          input_value: { value: opMetrics.issuance_flag },
+          input_value: { value: comprehensiveTestData.operationalMetrics.issuanceFlag[i] },
           year: year,
         }
       );
 
-      // Expenses - using correct form keys
-      const expenses = comprehensiveTestData.expenses[i];
+      // Expenses - accessing individual arrays at index i
       model_inputs.push(
         {
           model_id: newModel.id,
           category: 'expenses',
           input_key: 'feasibility_costs',
-          input_value: { value: expenses.feasibility_costs },
+          input_value: { value: comprehensiveTestData.expenses.feasibilityStudies[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'expenses',
           input_key: 'pdd_costs',
-          input_value: { value: expenses.pdd_costs },
+          input_value: { value: comprehensiveTestData.expenses.pddPreparation[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'expenses',
           input_key: 'mrv_costs',
-          input_value: { value: expenses.mrv_costs },
+          input_value: { value: comprehensiveTestData.expenses.mrvCosts[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'expenses',
           input_key: 'staff_costs',
-          input_value: { value: expenses.staff_costs },
+          input_value: { value: comprehensiveTestData.expenses.staffCosts[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'expenses',
           input_key: 'capex',
-          input_value: { value: expenses.capex },
+          input_value: { value: comprehensiveTestData.expenses.equipmentPurchases[i] },
           year: year,
         },
         {
           model_id: newModel.id,
           category: 'expenses',
           input_key: 'depreciation',
-          input_value: { value: expenses.depreciation },
+          input_value: { value: comprehensiveTestData.expenses.depreciation[i] },
           year: year,
         }
       );
 
-      // Financing strategy - using correct form keys and category
-      const financing = comprehensiveTestData.financing[i];
+      // Financing - accessing individual arrays at index i
       model_inputs.push(
         {
           model_id: newModel.id,
-          category: 'financing', // Fixed: was 'financing_strategy'
+          category: 'financing',
           input_key: 'equity_injection',
-          input_value: { value: financing.equity_injection },
+          input_value: { value: comprehensiveTestData.financing.contributedCapital[i] },
           year: year,
         },
         {
           model_id: newModel.id,
-          category: 'financing', // Fixed: was 'financing_strategy'
+          category: 'financing',
           input_key: 'debt_draw',
-          input_value: { value: financing.debt_draw },
+          input_value: { value: comprehensiveTestData.financing.debtDraws[i] },
           year: year,
         },
         {
           model_id: newModel.id,
-          category: 'financing', // Fixed: was 'financing_strategy'
+          category: 'financing',
           input_key: 'purchase_amount',
-          input_value: { value: financing.purchase_amount },
+          input_value: { value: comprehensiveTestData.financing.purchaseAgreements[i] },
           year: year,
         }
       );

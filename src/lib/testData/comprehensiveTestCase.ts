@@ -33,6 +33,9 @@ export const comprehensiveTestData = {
     // Credit Issuance Strategy (delayed issuance pattern)
     creditsIssued: [0, 3000, 5000, 8000, 9500, 11000, 12000, 13000, 14000, 15000],
     
+    // Issuance Flag (true when credits are issued that year)
+    issuanceFlag: [false, true, true, true, true, true, true, true, true, true],
+    
     // Revenue Components
     carbonRevenue: [0, 37500, 66000, 112000, 140600, 170500, 194400, 221000, 245000, 270000],
     otherRevenue: [15000, 18000, 22000, 25000, 28000, 30000, 32000, 35000, 37000, 40000],
