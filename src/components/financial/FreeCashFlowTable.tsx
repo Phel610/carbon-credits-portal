@@ -66,7 +66,7 @@ const FreeCashFlowTable = ({ statements }: FreeCashFlowTableProps) => {
               </TableRow>
               
               <TableRow>
-                <TableCell className="font-medium">- Change in net working capital</TableCell>
+                <TableCell className="font-medium">Change in net working capital</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={`${stmt.year}-wc`} className="text-right">
                     {formatCurrency(-stmt.change_working_capital)}

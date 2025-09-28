@@ -28,7 +28,7 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(Math.abs(amount));
-    return amount > 0 ? `(${formatted})` : formatted;
+    return amount > 0 ? formatted : `(${formatted})`;
   };
 
   const formatNumber = (value: number) => {
