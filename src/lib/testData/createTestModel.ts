@@ -185,56 +185,56 @@ export const createComprehensiveTestModel = async (): Promise<TestModelResult> =
 
     // Add non-yearly inputs (rates, parameters, etc.) using correct form keys and categories
     model_inputs.push(
-      // Expense rates
+      // Expense rates - store as decimals (0.01-1.00 range)
       {
         model_id: newModel.id,
         category: 'expenses',
         input_key: 'cogs_rate',
-        input_value: { value: 15 }, // 15% COGS rate
+        input_value: { value: 0.15 }, // 15% COGS rate
       },
       {
         model_id: newModel.id,
         category: 'expenses',
         input_key: 'ar_rate', 
-        input_value: { value: 12 }, // 12% AR rate
+        input_value: { value: 0.12 }, // 12% AR rate
       },
       {
         model_id: newModel.id,
         category: 'expenses',
         input_key: 'ap_rate',
-        input_value: { value: 8 }, // 8% AP rate
+        input_value: { value: 0.08 }, // 8% AP rate
       },
       {
         model_id: newModel.id,
         category: 'expenses',
         input_key: 'income_tax_rate',
-        input_value: { value: 25 }, // 25% tax rate
+        input_value: { value: 0.25 }, // 25% tax rate
       },
       
-      // Financing parameters - using correct category 'financing'
+      // Financing parameters - store as decimals (0.01-1.00 range)
       {
         model_id: newModel.id,
         category: 'financing', // Fixed: was 'financing_strategy'
         input_key: 'interest_rate',
-        input_value: { value: 7 }, // 7% interest rate
+        input_value: { value: 0.07 }, // 7% interest rate
       },
       {
         model_id: newModel.id,
         category: 'financing', // Fixed: was 'financing_strategy'
         input_key: 'debt_duration_years',
-        input_value: { value: 7 }, // 7-year debt term
+        input_value: { value: 7 }, // 7-year debt term (not a percentage)
       },
       {
         model_id: newModel.id,
         category: 'financing', // Fixed: was 'financing_strategy'
         input_key: 'purchase_share',
-        input_value: { value: 40 }, // 40% pre-purchase share
+        input_value: { value: 0.40 }, // 40% pre-purchase share
       },
       {
         model_id: newModel.id,
         category: 'financing', // Fixed: was 'financing_strategy'
         input_key: 'discount_rate',
-        input_value: { value: 12 }, // 12% discount rate
+        input_value: { value: 0.12 }, // 12% discount rate
       },
       {
         model_id: newModel.id,
