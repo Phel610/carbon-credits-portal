@@ -28,6 +28,7 @@ const baseUI = {
 
   opening_cash_y1: 0,
   discount_rate: '12%',
+  initial_equity_t0: 100000,
 };
 
 test('issuance checkbox -> 0/1 flags', () => {
@@ -57,4 +58,5 @@ test('fromEngineToUI makes expenses positive and rates percents', () => {
   expect(ui.capex[0]).toBe(20000);
   expect(ui.depreciation[0]).toBe(3000);
   expect(ui.cogs_rate).toBeCloseTo(10, 6); // percent
+  expect(ui.initial_equity_t0).toBe(100000); // round-trip test
 });

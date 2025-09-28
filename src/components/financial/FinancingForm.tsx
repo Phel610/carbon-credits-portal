@@ -201,6 +201,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
         
         opening_cash_y1: openingCashY1,
         discount_rate: discountRate,
+        initial_equity_t0: initialEquityT0,
       };
 
       // Normalize using adapter
@@ -238,7 +239,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           model_id: modelId,
           category: 'financing',
           input_key: 'initial_equity_t0',
-          input_value: { value: initialEquityT0 },
+          input_value: { value: engineInputs.initial_equity_t0 },
         },
         {
           model_id: modelId,
