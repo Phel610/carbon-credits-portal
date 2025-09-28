@@ -2,8 +2,8 @@ export const HEADERS = {
   incomeStatement: [
     "year","credits_generated","credits_issued","price_per_credit","purchased_credits",
     "implied_purchase_price","spot_revenue","pre_purchase_revenue","total_revenue",
-    "cogs","feasibility_costs","pdd_costs","mrv_costs","staff_costs","opex_total",
-    "ebitda","depreciation","interest_expense","earnings_before_tax","income_tax","net_income"
+    "cogs","gross_profit","feasibility_costs","pdd_costs","mrv_costs","staff_costs","opex_total",
+    "ebitda","depreciation","ebit","interest_expense","earnings_before_tax","income_tax","net_income"
   ],
   balanceSheet: [
     "year","cash","accounts_receivable","ppe_net","total_assets",

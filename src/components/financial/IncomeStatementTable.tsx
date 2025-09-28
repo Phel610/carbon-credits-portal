@@ -149,7 +149,7 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               </TableRow>
               
               <TableRow>
-                <TableCell className="pl-4">Spot Revenue</TableCell>
+                <TableCell className="pl-4">Carbon credit revenue – spot market</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.spot_revenue)}
@@ -161,7 +161,7 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               </TableRow>
 
               <TableRow>
-                <TableCell className="pl-4">Pre-Purchase Revenue</TableCell>
+                <TableCell className="pl-4">Carbon credit revenue – pre-purchase</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.pre_purchase_revenue)}
@@ -185,7 +185,7 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               </TableRow>
 
               {/* COGS Section */}
-              <TableRow className="border-b-2">
+              <TableRow>
                 <TableCell className="font-semibold">Cost of Goods Sold</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
@@ -194,6 +194,18 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
                 ))}
                 <TableCell className="text-right font-medium">
                   {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.cogs, 0))}
+                </TableCell>
+              </TableRow>
+
+              <TableRow className="border-b-2">
+                <TableCell className="font-semibold">Gross Profit</TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={stmt.year} className="text-right font-semibold text-trust">
+                    {formatCurrency(stmt.total_revenue - stmt.cogs)}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right font-bold text-trust">
+                  {formatCurrency(statements.reduce((sum, stmt) => sum + (stmt.total_revenue - stmt.cogs), 0))}
                 </TableCell>
               </TableRow>
 
@@ -255,7 +267,7 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               </TableRow>
 
               <TableRow className="border-b">
-                <TableCell className="font-semibold">OPEX Total</TableCell>
+                <TableCell className="font-semibold">Total Operational cost</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right font-semibold">
                     {formatCurrency(stmt.opex_total)}
@@ -292,7 +304,19 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               </TableRow>
 
               <TableRow>
-                <TableCell className="font-semibold">Interest Expense</TableCell>
+                <TableCell className="font-semibold">EBIT</TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={stmt.year} className="text-right font-semibold text-trust">
+                    {formatCurrency(stmt.ebitda - stmt.depreciation)}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right font-bold text-trust">
+                  {formatCurrency(statements.reduce((sum, stmt) => sum + (stmt.ebitda - stmt.depreciation), 0))}
+                </TableCell>
+              </TableRow>
+
+              <TableRow>
+                <TableCell className="font-semibold">Interest payments</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.interest_expense)}
