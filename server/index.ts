@@ -1,74 +1,73 @@
 #!/usr/bin/env tsx
 import express from 'express';
 import cors from 'cors';
-import bodyParser from 'body-parser';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { runParityCheck } from '../parity/scripts/runParity.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Allow override via env, else resolve relative to this file
+const FIXTURES_DIR = process.env.PARITY_FIXTURES_DIR 
+  ? path.resolve(process.env.PARITY_FIXTURES_DIR)
+  : path.resolve(__dirname, '../parity/fixtures');
+
 const app = express();
-const PORT = process.env.PARITY_API_PORT || 4000;
+const PORT = process.env.PORT || 4000;
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
 app.use(express.json());
 
+function listScenarios(): string[] {
+  return fs.readdirSync(FIXTURES_DIR)
+    .filter((d) => fs.statSync(path.join(FIXTURES_DIR, d)).isDirectory());
+}
+
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'parity-api' });
 });
 
 // Parity check endpoint
 app.post('/api/parity/run', async (req, res) => {
   try {
-    const { scenario } = req.body as { scenario?: string };
-    
+    const scenario = String(req.body?.scenario || '');
+
     if (!scenario) {
+      return res.status(400).json({ error: 'Missing "scenario" parameter in request body' });
+    }
+
+    // Belt-and-suspenders name check (you already whitelist via FS)
+    if (!/^[\w-]+$/.test(scenario)) {
+      return res.status(400).json({ error: 'Invalid scenario name' });
+    }
+
+    const allowed = listScenarios();
+    if (!allowed.includes(scenario)) {
       return res.status(400).json({ 
-        error: 'Missing "scenario" parameter in request body' 
+        error: `Unknown scenario: ${scenario}. Available: ${allowed.join(', ')}` 
       });
     }
 
-    // Validate scenario against available fixtures (security)
-    const fs = await import('fs');
-    const path = await import('path');
-    const fixturesDir = path.resolve('./parity/fixtures');
-    const allowedScenarios = fs.readdirSync(fixturesDir)
-      .filter(dir => fs.statSync(path.join(fixturesDir, dir)).isDirectory());
-    
-    if (!allowedScenarios.includes(scenario)) {
-      return res.status(400).json({ 
-        error: `Unknown scenario: ${scenario}. Available scenarios: ${allowedScenarios.join(', ')}` 
-      });
-    }
-
-    console.log(`Running parity check for scenario: ${scenario}`);
     const report = await runParityCheck(scenario);
-    
-    console.log(`Parity check completed: ${report.overall} (${report.summary.passed}/${report.summary.totalComparisons} passed)`);
-    
     res.json(report);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error('Parity check failed:', message);
-    
-    res.status(500).json({ 
+    const isProd = process.env.NODE_ENV === 'production';
+    res.status(500).json({
       error: `Parity check failed: ${message}`,
-      details: error instanceof Error ? error.stack : undefined
+      ...(isProd ? {} : { stack: error instanceof Error ? error.stack : undefined }),
     });
   }
 });
 
 // List available scenarios endpoint
-app.get('/api/parity/scenarios', async (req, res) => {
+app.get('/api/parity/scenarios', (_req, res) => {
   try {
-    const fs = await import('fs');
-    const path = await import('path');
-    
-    const fixturesDir = path.resolve('./parity/fixtures');
-    const scenarios = fs.readdirSync(fixturesDir)
-      .filter(dir => fs.statSync(path.join(fixturesDir, dir)).isDirectory());
-    
-    res.json({ scenarios });
+    res.json({ scenarios: listScenarios() });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     res.status(500).json({ error: `Failed to list scenarios: ${message}` });
@@ -76,7 +75,5 @@ app.get('/api/parity/scenarios', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Parity API server running on http://localhost:${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔍 Parity endpoint: http://localhost:${PORT}/api/parity/run`);
+  console.log(`🚀 Parity API server http://localhost:${PORT}`);
 });
