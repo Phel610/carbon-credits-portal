@@ -191,7 +191,7 @@ export class FinancialCalculationEngine {
       'debt_duration_years', 'purchase_share', 'discount_rate', 'initial_equity_t0', 
       'opening_cash_y1', 'credits_generated', 'price_per_credit', 'issuance_flag', 
       'feasibility_costs', 'pdd_costs', 'mrv_costs', 'staff_costs', 'depreciation', 
-      'capex', 'equity_injection', 'debt_draw', 'purchase_amount'
+      'capex', 'equity_injection', 'debt_draw', 'purchase_amount', 'initial_ppe'
     ]);
     
     for (const key of Object.keys(this.inputs)) {
