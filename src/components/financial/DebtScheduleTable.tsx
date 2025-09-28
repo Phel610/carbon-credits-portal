@@ -33,8 +33,8 @@ const DebtScheduleTable = ({ statements }: DebtScheduleTableProps) => {
         <div className="space-y-2 text-right">
           <div className="text-sm text-muted-foreground">Debt Assumptions</div>
           <div className="space-y-1">
-            <div className="text-sm">Interest rate: <span className="font-semibold">8.0%</span></div>
-            <div className="text-sm">Duration: <span className="font-semibold">5 years</span></div>
+            <div className="text-sm">Interest rate: <span className="font-semibold">{((statements[0]?.interest_rate || 0.08) * 100).toFixed(1)}%</span></div>
+            <div className="text-sm">Duration: <span className="font-semibold">{statements[0]?.debt_duration || 5} years</span></div>
           </div>
         </div>
       </CardHeader>

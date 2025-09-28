@@ -120,6 +120,8 @@ export interface DebtSchedule {
   ending_balance: number;
   interest_expense: number;
   dscr: number;
+  interest_rate?: number;
+  debt_duration?: number;
 }
 
 export interface CarbonStream {
@@ -450,6 +452,8 @@ export class FinancialCalculationEngine {
         ending_balance,
         interest_expense,
         dscr,
+        interest_rate: this.inputs.interest_rate,
+        debt_duration: this.inputs.debt_duration_years,
       });
     }
     

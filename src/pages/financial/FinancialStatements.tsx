@@ -408,10 +408,10 @@ const FinancialStatements = () => {
 
             {/* Key Assumptions Panel */}
             <AssumptionsPanel 
-              discountRate={0.12}
-              initialEquity={0}
-              interestRate={0.08}
-              debtDuration={5}
+              discountRate={statements.inputs?.discount_rate || 0.12}
+              initialEquity={statements.inputs?.initial_equity_t0 || 0}
+              interestRate={statements.inputs?.interest_rate || 0.08}
+              debtDuration={statements.inputs?.debt_duration_years || 5}
             />
 
             {/* Summary Badges - Updated to match spec */}

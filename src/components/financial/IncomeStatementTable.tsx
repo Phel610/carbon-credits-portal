@@ -20,6 +20,17 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
     }).format(amount);
   };
 
+  const formatExpense = (amount: number) => {
+    if (amount === 0) return '$0.00';
+    const formatted = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Math.abs(amount));
+    return amount > 0 ? `(${formatted})` : formatted;
+  };
+
   const formatNumber = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
@@ -129,11 +140,11 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
                 <TableCell className="pl-4">COGS</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.cogs)}
+                    {formatExpense(stmt.cogs)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.cogs, 0))}
+                  {formatExpense(statements.reduce((sum, stmt) => sum + stmt.cogs, 0))}
                 </TableCell>
               </TableRow>
 
@@ -162,11 +173,11 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
                 <TableCell className="pl-4">Feasibility study costs</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.feasibility_costs)}
+                    {formatExpense(stmt.feasibility_costs)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.feasibility_costs, 0))}
+                  {formatExpense(statements.reduce((sum, stmt) => sum + stmt.feasibility_costs, 0))}
                 </TableCell>
               </TableRow>
 
@@ -174,11 +185,11 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
                 <TableCell className="pl-4">PDD development costs</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.pdd_costs)}
+                    {formatExpense(stmt.pdd_costs)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.pdd_costs, 0))}
+                  {formatExpense(statements.reduce((sum, stmt) => sum + stmt.pdd_costs, 0))}
                 </TableCell>
               </TableRow>
 
@@ -186,11 +197,11 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
                 <TableCell className="pl-4">Monitoring, Reporting, and Verification (MRV) costs</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.mrv_costs)}
+                    {formatExpense(stmt.mrv_costs)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.mrv_costs, 0))}
+                  {formatExpense(statements.reduce((sum, stmt) => sum + stmt.mrv_costs, 0))}
                 </TableCell>
               </TableRow>
 
@@ -198,11 +209,11 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
                 <TableCell className="pl-4">Staff costs</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.staff_costs)}
+                    {formatExpense(stmt.staff_costs)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.staff_costs, 0))}
+                  {formatExpense(statements.reduce((sum, stmt) => sum + stmt.staff_costs, 0))}
                 </TableCell>
               </TableRow>
 
@@ -210,11 +221,11 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
                 <TableCell className="font-semibold">Total Operational cost</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right font-semibold">
-                    {formatCurrency(stmt.opex_total)}
+                    {formatExpense(stmt.opex_total)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-bold">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.opex_total, 0))}
+                  {formatExpense(statements.reduce((sum, stmt) => sum + stmt.opex_total, 0))}
                 </TableCell>
               </TableRow>
 
@@ -235,11 +246,11 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
                 <TableCell className="font-semibold">Depreciation</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.depreciation)}
+                    {formatExpense(stmt.depreciation)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.depreciation, 0))}
+                  {formatExpense(statements.reduce((sum, stmt) => sum + stmt.depreciation, 0))}
                 </TableCell>
               </TableRow>
 
@@ -259,11 +270,11 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
                 <TableCell className="font-semibold">Interest payments</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.interest_expense)}
+                    {formatExpense(stmt.interest_expense)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.interest_expense, 0))}
+                  {formatExpense(statements.reduce((sum, stmt) => sum + stmt.interest_expense, 0))}
                 </TableCell>
               </TableRow>
 
@@ -283,11 +294,11 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
                 <TableCell className="font-semibold">Income Tax</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.income_tax)}
+                    {formatExpense(stmt.income_tax)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.income_tax, 0))}
+                  {formatExpense(statements.reduce((sum, stmt) => sum + stmt.income_tax, 0))}
                 </TableCell>
               </TableRow>
 
