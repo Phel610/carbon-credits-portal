@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Building, CreditCard, Handshake, Plus, Trash2, Percent } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { toEngineInputs } from '@/lib/financial/uiAdapter';
+import { toEngineInputs, fromEngineToUI } from '@/lib/financial/uiAdapter';
 
 interface FinancingFormProps {
   modelId: string;
@@ -28,34 +28,108 @@ interface YearlyFinancing {
 }
 
 const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
-  // Debt parameters (single facility for simplicity, matching Excel)
-  const [interestRate, setInterestRate] = useState(8); // 8% for UI
+  const [interestRate, setInterestRate] = useState(8);
   const [debtDurationYears, setDebtDurationYears] = useState(5);
-  
-  // Pre-purchase parameters
-  const [purchaseShare, setPurchaseShare] = useState(30); // 30% for UI
-  
-  // Returns parameters
-  const [discountRate, setDiscountRate] = useState(12); // 12% for UI
-  const [initialEquityT0, setInitialEquityT0] = useState(100000); // Initial founder equity
-  const [openingCashY1, setOpeningCashY1] = useState(0); // Opening cash at start of Year 1
-  
-  // Yearly financing schedule
-  const [yearlyFinancing, setYearlyFinancing] = useState<YearlyFinancing[]>(() => {
-    const years = [];
-    for (let year = model.start_year; year <= model.end_year; year++) {
-      years.push({
-        year,
-        equity_injection: year === model.start_year ? 100000 : 0, // Initial equity
-        debt_draw: year === model.start_year ? 500000 : 0,        // Initial debt draw
-        purchase_amount: 0, // Pre-purchase advances
-      });
-    }
-    return years;
-  });
-
+  const [purchaseShare, setPurchaseShare] = useState(30);
+  const [discountRate, setDiscountRate] = useState(12);
+  const [initialEquityT0, setInitialEquityT0] = useState(100000);
+  const [openingCashY1, setOpeningCashY1] = useState(0);
+  const [yearlyFinancing, setYearlyFinancing] = useState<YearlyFinancing[]>([]);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Load existing data and initialize
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const { data: existingInputs } = await supabase
+          .from('model_inputs')
+          .select('*')
+          .eq('model_id', modelId)
+          .eq('category', 'financing');
+
+        if (existingInputs && existingInputs.length > 0) {
+          // Load existing parameters
+          const interestInput = existingInputs.find(i => i.input_key === 'interest_rate');
+          const debtDurationInput = existingInputs.find(i => i.input_key === 'debt_duration_years');
+          const purchaseShareInput = existingInputs.find(i => i.input_key === 'purchase_share');
+          const discountInput = existingInputs.find(i => i.input_key === 'discount_rate');
+          const equityInput = existingInputs.find(i => i.input_key === 'initial_equity_t0');
+          const cashInput = existingInputs.find(i => i.input_key === 'opening_cash_y1');
+          const notesInput = existingInputs.find(i => i.input_key === 'notes');
+
+          if (interestInput && interestInput.input_value && typeof interestInput.input_value === 'object' && 'value' in interestInput.input_value) {
+            setInterestRate(Number(interestInput.input_value.value) * 100);
+          }
+          if (debtDurationInput && debtDurationInput.input_value && typeof debtDurationInput.input_value === 'object' && 'value' in debtDurationInput.input_value) {
+            setDebtDurationYears(Number(debtDurationInput.input_value.value));
+          }
+          if (purchaseShareInput && purchaseShareInput.input_value && typeof purchaseShareInput.input_value === 'object' && 'value' in purchaseShareInput.input_value) {
+            setPurchaseShare(Number(purchaseShareInput.input_value.value) * 100);
+          }
+          if (discountInput && discountInput.input_value && typeof discountInput.input_value === 'object' && 'value' in discountInput.input_value) {
+            setDiscountRate(Number(discountInput.input_value.value) * 100);
+          }
+          if (equityInput && equityInput.input_value && typeof equityInput.input_value === 'object' && 'value' in equityInput.input_value) {
+            setInitialEquityT0(Number(equityInput.input_value.value));
+          }
+          if (cashInput && cashInput.input_value && typeof cashInput.input_value === 'object' && 'value' in cashInput.input_value) {
+            setOpeningCashY1(Number(cashInput.input_value.value));
+          }
+          if (notesInput && notesInput.input_value && typeof notesInput.input_value === 'object' && 'value' in notesInput.input_value) {
+            setNotes(String(notesInput.input_value.value) || '');
+          }
+
+          // Load yearly financing
+          const years = [...new Set(existingInputs.filter(i => i.year).map(i => i.year))].sort();
+          if (years.length > 0) {
+            const financing = years.map(year => {
+              const equityInput = existingInputs.find(i => i.year === year && i.input_key === 'equity_injection');
+              const debtInput = existingInputs.find(i => i.year === year && i.input_key === 'debt_draw');
+              const purchaseInput = existingInputs.find(i => i.year === year && i.input_key === 'purchase_amount');
+
+              const getValue = (input: any) => {
+                if (input?.input_value && typeof input.input_value === 'object' && 'value' in input.input_value) {
+                  return Number(input.input_value.value);
+                }
+                return 0;
+              };
+
+              return {
+                year,
+                equity_injection: getValue(equityInput),
+                debt_draw: getValue(debtInput),
+                purchase_amount: getValue(purchaseInput),
+              };
+            });
+            setYearlyFinancing(financing);
+          } else {
+            initializeDefaults();
+          }
+        } else {
+          initializeDefaults();
+        }
+      } catch (error) {
+        console.error('Error loading financing:', error);
+        initializeDefaults();
+      }
+    };
+
+    const initializeDefaults = () => {
+      const years = [];
+      for (let year = model.start_year; year <= model.end_year; year++) {
+        years.push({
+          year,
+          equity_injection: year === model.start_year ? 100000 : 0,
+          debt_draw: year === model.start_year ? 500000 : 0,
+          purchase_amount: 0,
+        });
+      }
+      setYearlyFinancing(years);
+    };
+
+    loadData();
+  }, [model, modelId]);
 
   const updateYearlyFinancing = (year: number, field: keyof Omit<YearlyFinancing, 'year'>, value: number) => {
     setYearlyFinancing(prev => 

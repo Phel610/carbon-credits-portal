@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2, Calendar, Target, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { toEngineInputs } from '@/lib/financial/uiAdapter';
+import { toEngineInputs, fromEngineToUI } from '@/lib/financial/uiAdapter';
 
 interface OperationalMetricsFormProps {
   modelId: string;
@@ -33,19 +33,93 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState('');
 
-  // Initialize years based on model projection period
+  // Load existing data and initialize
   useEffect(() => {
-    const years = [];
-    for (let year = model.start_year; year <= model.end_year; year++) {
-      years.push({
-        year,
-        credits_generated: 0,
-        price_per_credit: 10, // Default $10 per credit
-        issue: year > model.start_year, // Default: issue starting year 2
-      });
-    }
-    setYearlyMetrics(years);
-  }, [model]);
+    const loadData = async () => {
+      try {
+        // Try to load existing data
+        const { data: existingInputs } = await supabase
+          .from('model_inputs')
+          .select('*')
+          .eq('model_id', modelId)
+          .eq('category', 'operational_metrics');
+
+        if (existingInputs && existingInputs.length > 0) {
+          // Load existing data using adapter
+          const engineData = {
+            years: [],
+            issuance_flag: [],
+            credits_generated: [],
+            price_per_credit: [],
+          };
+
+          // Reconstruct engine format from database
+          const years = [...new Set(existingInputs.filter(i => i.year).map(i => i.year))].sort();
+          engineData.years = years;
+
+          years.forEach(year => {
+            const creditsInput = existingInputs.find(i => i.year === year && i.input_key === 'credits_generated');
+            const priceInput = existingInputs.find(i => i.year === year && i.input_key === 'price_per_credit');
+            const issuanceInput = existingInputs.find(i => i.year === year && i.input_key === 'issuance_flag');
+
+            const creditsValue = creditsInput?.input_value && typeof creditsInput.input_value === 'object' && 'value' in creditsInput.input_value ? Number(creditsInput.input_value.value) : 0;
+            const priceValue = priceInput?.input_value && typeof priceInput.input_value === 'object' && 'value' in priceInput.input_value ? Number(priceInput.input_value.value) : 10;
+            const issuanceValue = issuanceInput?.input_value && typeof issuanceInput.input_value === 'object' && 'value' in issuanceInput.input_value ? Number(issuanceInput.input_value.value) : 0;
+
+            engineData.credits_generated.push(creditsValue);
+            engineData.price_per_credit.push(priceValue);
+            engineData.issuance_flag.push(issuanceValue);
+          });
+
+          // Convert to UI format using adapter
+          const uiData = fromEngineToUI(engineData);
+          
+          // Set form state
+          const metrics = years.map((year, index) => ({
+            year,
+            credits_generated: uiData.credits_generated[index],
+            price_per_credit: uiData.price_per_credit[index],
+            issue: uiData.issue[index],
+          }));
+          
+          setYearlyMetrics(metrics);
+          
+          // Load notes
+          const notesInput = existingInputs.find(i => i.input_key === 'notes');
+          if (notesInput && notesInput.input_value && typeof notesInput.input_value === 'object' && 'value' in notesInput.input_value) {
+            setNotes(String(notesInput.input_value.value) || '');
+          }
+        } else {
+          // Initialize with defaults
+          const years = [];
+          for (let year = model.start_year; year <= model.end_year; year++) {
+            years.push({
+              year,
+              credits_generated: 0,
+              price_per_credit: 10,
+              issue: year > model.start_year,
+            });
+          }
+          setYearlyMetrics(years);
+        }
+      } catch (error) {
+        console.error('Error loading operational metrics:', error);
+        // Fall back to defaults
+        const years = [];
+        for (let year = model.start_year; year <= model.end_year; year++) {
+          years.push({
+            year,
+            credits_generated: 0,
+            price_per_credit: 10,
+            issue: year > model.start_year,
+          });
+        }
+        setYearlyMetrics(years);
+      }
+    };
+
+    loadData();
+  }, [model, modelId]);
 
   const updateYearlyMetric = (year: number, field: keyof YearlyMetrics, value: number | boolean) => {
     setYearlyMetrics(prev => 
@@ -60,34 +134,30 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
   const saveOperationalMetrics = async () => {
     setLoading(true);
     try {
-      // Build UI payload for adapter
+      // Build UI payload for adapter  
       const uiPayload = {
         years: yearlyMetrics.map(m => m.year),
         issue: yearlyMetrics.map(m => m.issue),
         credits_generated: yearlyMetrics.map(m => m.credits_generated),
         price_per_credit: yearlyMetrics.map(m => m.price_per_credit),
         
-        // Placeholder values for complete schema (these will be set by other forms)
+        // Required fields for adapter - use minimal placeholders
         feasibility_costs: yearlyMetrics.map(() => 0),
         pdd_costs: yearlyMetrics.map(() => 0),
         mrv_costs: yearlyMetrics.map(() => 0),
         staff_costs: yearlyMetrics.map(() => 0),
         depreciation: yearlyMetrics.map(() => 0),
         capex: yearlyMetrics.map(() => 0),
-        
         ar_rate: 5,
         ap_rate: 10,
         cogs_rate: 15,
         income_tax_rate: 25,
-        
         interest_rate: 8,
         debt_duration_years: 5,
         equity_injection: yearlyMetrics.map(() => 0),
         debt_draw: yearlyMetrics.map(() => 0),
-        
         purchase_amount: yearlyMetrics.map(() => 0),
         purchase_share: 30,
-        
         opening_cash_y1: 0,
         discount_rate: 12,
       };
@@ -95,27 +165,27 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
       // Normalize using adapter
       const engineInputs = toEngineInputs(uiPayload);
 
-      // Prepare inputs for database
-      const yearlyInputs = yearlyMetrics.flatMap(metric => [
+      // Save only the fields owned by this form
+      const yearlyInputs = yearlyMetrics.flatMap((metric, index) => [
         {
           model_id: modelId,
           category: 'operational_metrics',
           input_key: 'credits_generated',
-          input_value: { value: metric.credits_generated },
+          input_value: { value: engineInputs.credits_generated[index] },
           year: metric.year,
         },
         {
           model_id: modelId,
           category: 'operational_metrics',
           input_key: 'price_per_credit',
-          input_value: { value: metric.price_per_credit },
+          input_value: { value: engineInputs.price_per_credit[index] },
           year: metric.year,
         },
         {
           model_id: modelId,
           category: 'operational_metrics',
           input_key: 'issuance_flag',
-          input_value: { value: engineInputs.issuance_flag[yearlyMetrics.findIndex(m => m.year === metric.year)] },
+          input_value: { value: engineInputs.issuance_flag[index] },
           year: metric.year,
         }
       ]);
@@ -162,14 +232,14 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
     }
   };
 
-  // Calculate cumulative issued credits using Excel logic
+  // Calculate cumulative issued credits using engine logic
   const calculateIssuedCredits = () => {
     const issued: number[] = [];
     for (let i = 0; i < yearlyMetrics.length; i++) {
       const cumGenerated = yearlyMetrics.slice(0, i + 1).reduce((sum, m) => sum + m.credits_generated, 0);
       const cumIssuedPrev = issued.reduce((sum, val) => sum + val, 0);
-      const issuanceFlag = yearlyMetrics[i].issue ? 1 : 0;
-      issued[i] = (cumGenerated - cumIssuedPrev) * issuanceFlag;
+      const issuanceFlag = yearlyMetrics[i].issue;
+      issued[i] = issuanceFlag ? (cumGenerated - cumIssuedPrev) : 0;
     }
     return issued;
   };

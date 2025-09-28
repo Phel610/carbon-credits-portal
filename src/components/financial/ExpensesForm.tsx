@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { DollarSign, Calculator, Building, Receipt, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { toEngineInputs } from '@/lib/financial/uiAdapter';
+import { toEngineInputs, fromEngineToUI } from '@/lib/financial/uiAdapter';
 
 interface ExpensesFormProps {
   modelId: string;
@@ -31,35 +31,107 @@ interface YearlyExpenses {
 }
 
 const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
-  // Cost of Goods Sold (rate)
-  const [cogsRate, setCogsRate] = useState(15); // 15% for UI
-
-  // Working capital rates
-  const [arRate, setArRate] = useState(5); // 5% for UI
-  const [apRate, setApRate] = useState(10); // 10% for UI
-
-  // Tax rate
-  const [incomeTaxRate, setIncomeTaxRate] = useState(25); // 25% for UI
-
-  // Yearly expenses (as positive numbers for UI)
-  const [yearlyExpenses, setYearlyExpenses] = useState<YearlyExpenses[]>(() => {
-    const years = [];
-    for (let year = model.start_year; year <= model.end_year; year++) {
-      years.push({ 
-        year, 
-        feasibility_costs: year === model.start_year ? 50000 : 0, // One-time cost
-        pdd_costs: year === model.start_year ? 75000 : 0,         // One-time cost
-        mrv_costs: year === model.start_year ? 40000 : 15000,     // Initial + annual
-        staff_costs: 100000,  // Annual cost
-        capex: 0,             // Equipment/infrastructure
-        depreciation: 0,      // Will be calculated
-      });
-    }
-    return years;
-  });
-
+  const [cogsRate, setCogsRate] = useState(15);
+  const [arRate, setArRate] = useState(5);
+  const [apRate, setApRate] = useState(10);
+  const [incomeTaxRate, setIncomeTaxRate] = useState(25);
+  const [yearlyExpenses, setYearlyExpenses] = useState<YearlyExpenses[]>([]);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Load existing data and initialize
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const { data: existingInputs } = await supabase
+          .from('model_inputs')
+          .select('*')
+          .eq('model_id', modelId)
+          .eq('category', 'expenses');
+
+        if (existingInputs && existingInputs.length > 0) {
+          // Load existing rates
+          const cogsInput = existingInputs.find(i => i.input_key === 'cogs_rate');
+          const arInput = existingInputs.find(i => i.input_key === 'ar_rate');
+          const apInput = existingInputs.find(i => i.input_key === 'ap_rate');
+          const taxInput = existingInputs.find(i => i.input_key === 'income_tax_rate');
+          const notesInput = existingInputs.find(i => i.input_key === 'notes');
+
+          if (cogsInput && cogsInput.input_value && typeof cogsInput.input_value === 'object' && 'value' in cogsInput.input_value) {
+            setCogsRate(Number(cogsInput.input_value.value) * 100);
+          }
+          if (arInput && arInput.input_value && typeof arInput.input_value === 'object' && 'value' in arInput.input_value) {
+            setArRate(Number(arInput.input_value.value) * 100);
+          }
+          if (apInput && apInput.input_value && typeof apInput.input_value === 'object' && 'value' in apInput.input_value) {
+            setApRate(Number(apInput.input_value.value) * 100);
+          }
+          if (taxInput && taxInput.input_value && typeof taxInput.input_value === 'object' && 'value' in taxInput.input_value) {
+            setIncomeTaxRate(Number(taxInput.input_value.value) * 100);
+          }
+          if (notesInput && notesInput.input_value && typeof notesInput.input_value === 'object' && 'value' in notesInput.input_value) {
+            setNotes(String(notesInput.input_value.value) || '');
+          }
+
+          // Load yearly expenses
+          const years = [...new Set(existingInputs.filter(i => i.year).map(i => i.year))].sort();
+          if (years.length > 0) {
+            const expenses = years.map(year => {
+              const feasibilityInput = existingInputs.find(i => i.year === year && i.input_key === 'feasibility_costs');
+              const pddInput = existingInputs.find(i => i.year === year && i.input_key === 'pdd_costs');
+              const mrvInput = existingInputs.find(i => i.year === year && i.input_key === 'mrv_costs');
+              const staffInput = existingInputs.find(i => i.year === year && i.input_key === 'staff_costs');
+              const capexInput = existingInputs.find(i => i.year === year && i.input_key === 'capex');
+              const deprecInput = existingInputs.find(i => i.year === year && i.input_key === 'depreciation');
+
+              const getValue = (input: any) => {
+                if (input?.input_value && typeof input.input_value === 'object' && 'value' in input.input_value) {
+                  return Math.abs(Number(input.input_value.value));
+                }
+                return 0;
+              };
+
+              return {
+                year,
+                feasibility_costs: getValue(feasibilityInput),
+                pdd_costs: getValue(pddInput),
+                mrv_costs: getValue(mrvInput),
+                staff_costs: getValue(staffInput),
+                capex: getValue(capexInput),
+                depreciation: getValue(deprecInput),
+              };
+            });
+            setYearlyExpenses(expenses);
+          } else {
+            initializeDefaults();
+          }
+        } else {
+          initializeDefaults();
+        }
+      } catch (error) {
+        console.error('Error loading expenses:', error);
+        initializeDefaults();
+      }
+    };
+
+    const initializeDefaults = () => {
+      const years = [];
+      for (let year = model.start_year; year <= model.end_year; year++) {
+        years.push({ 
+          year, 
+          feasibility_costs: year === model.start_year ? 50000 : 0,
+          pdd_costs: year === model.start_year ? 75000 : 0,
+          mrv_costs: year === model.start_year ? 40000 : 15000,
+          staff_costs: 100000,
+          capex: 0,
+          depreciation: 0,
+        });
+      }
+      setYearlyExpenses(years);
+    };
+
+    loadData();
+  }, [model, modelId]);
 
   const updateYearlyExpense = (year: number, field: keyof Omit<YearlyExpenses, 'year'>, value: number) => {
     setYearlyExpenses(prev => 
