@@ -589,7 +589,11 @@ export class FinancialCalculationEngine {
       // Financing cash flow - build correctly with all components
       const debt_draw = debt.draw; // Cash inflow (positive)
       const debt_repayment = debt.principal_payment; // Already negative (cash outflow)  
-      const interest_payment = debt.interest_expense > 0 ? -debt.interest_expense : 0; // Cash outflow (negative)
+      
+      // CRITICAL FIX: Use exact same interest as debt schedule/income statement
+      // Interest payment = negative of debt schedule interest_expense (cash outflow)
+      const interest_payment = -debt.interest_expense; // Will be 0 when beg balance = 0
+      
       const equity_injection = this.inputs.equity_injection[t] || 0; // Cash inflow (positive)
       
       // Unearned revenue flows (financing activities)
