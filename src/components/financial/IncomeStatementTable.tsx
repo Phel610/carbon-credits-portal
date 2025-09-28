@@ -28,7 +28,7 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
   };
 
   const handleExportCSV = () => {
-    exportToCSV(statements, HEADERS.incomeStatement, 'income-statement');
+    exportToCSV(statements, HEADERS.incomeStatement, 'income-statement', metadata);
   };
 
   const handleExportExcel = () => {

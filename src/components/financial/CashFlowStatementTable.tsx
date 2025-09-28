@@ -21,7 +21,7 @@ const CashFlowStatementTable = ({ statements, metadata }: CashFlowStatementTable
   };
 
   const handleExportCSV = () => {
-    exportToCSV(statements, HEADERS.cashFlow, 'cash-flow-statement');
+    exportToCSV(statements, HEADERS.cashFlow, 'cash-flow-statement', metadata);
   };
 
   const handleExportExcel = () => {

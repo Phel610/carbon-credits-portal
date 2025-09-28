@@ -26,12 +26,65 @@ export const HEADERS = {
   ]
 };
 
-export function exportToCSV(data: any[], headers: string[], filename: string) {
+// Helper function to add calculated fields to export data
+function addCalculatedFields(data: any[], metadata?: any): any[] {
+  if (!data || data.length === 0) return data;
+
+  const incomeStatements = metadata?.incomeStatements || [];
+  const equityInjections = metadata?.inputs?.equity_injection || [];
+  const initialEquity = metadata?.inputs?.initial_equity_t0 || 0;
+
+  return data.map((row, index) => {
+    // Calculate cumulative sums
+    const cumulativeSum = (arr: number[], i: number): number => {
+      let sum = 0;
+      for (let k = 0; k <= i; k++) {
+        sum += arr[k] || 0;
+      }
+      return sum;
+    };
+
+    // Calculate derived fields
+    const derivedFields: any = {};
+
+    // Income statement derived fields
+    if (row.total_revenue !== undefined && row.cogs !== undefined) {
+      derivedFields.gross_profit = row.total_revenue - row.cogs;
+    }
+    if (row.ebitda !== undefined && row.depreciation !== undefined) {
+      derivedFields.ebit = row.ebitda - row.depreciation;
+    }
+
+    // Balance sheet equity breakdown
+    if (incomeStatements.length > 0) {
+      derivedFields.retained_earnings = cumulativeSum(
+        incomeStatements.map(is => is.net_income || 0), 
+        index
+      );
+    }
+    derivedFields.shareholder_equity = initialEquity + cumulativeSum(equityInjections, index);
+    derivedFields.equity_injection = equityInjections[index] || 0;
+
+    // Cash flow working capital changes
+    if (row.change_ar !== undefined) {
+      derivedFields.decrease_in_ar = -row.change_ar;
+    }
+    if (row.change_ap !== undefined) {
+      derivedFields.increase_in_ap = row.change_ap;
+    }
+
+    return { ...row, ...derivedFields };
+  });
+}
+
+export function exportToCSV(data: any[], headers: string[], filename: string, metadata?: any) {
   if (!data || data.length === 0) return;
+  
+  const enrichedData = addCalculatedFields(data, metadata);
   
   const csvContent = [
     headers.join(','),
-    ...data.map(row => 
+    ...enrichedData.map(row => 
       headers.map(header => {
         let value = row[header];
         
@@ -40,20 +93,22 @@ export function exportToCSV(data: any[], headers: string[], filename: string) {
           value = row.total_revenue - row.cogs;
         } else if (header === 'ebit' && row.ebitda && row.depreciation) {
           value = row.ebitda - row.depreciation;
-        } else if (header === 'retained_earnings' && row.total_equity) {
-          value = Math.max(0, row.total_equity * 0.7);
-        } else if (header === 'shareholder_equity' && row.total_equity) {
-          value = row.total_equity * 0.3;
-        } else if (header === 'decrease_in_ar' && row.change_ar) {
+        } else if (header === 'retained_earnings' && row.retained_earnings !== undefined) {
+          value = row.retained_earnings;
+        } else if (header === 'shareholder_equity' && row.shareholder_equity !== undefined) {
+          value = row.shareholder_equity;
+        } else if (header === 'decrease_in_ar' && row.change_ar !== undefined) {
           value = -row.change_ar;
-        } else if (header === 'increase_in_ap' && row.change_ap) {
+        } else if (header === 'increase_in_ap' && row.change_ap !== undefined) {
           value = row.change_ap;
-        } else if (header === 'change_unearned_revenue' && row.unearned_inflow && row.unearned_release) {
-          value = row.unearned_inflow - row.unearned_release;
-        } else if (header === 'debt_financing' && row.debt_draw) {
-          value = row.debt_draw;
-        } else if (header === 'debt_repayments' && row.debt_repayment) {
-          value = -row.debt_repayment;
+        } else if (header === 'change_unearned_revenue') {
+          value = row.change_unearned_revenue || 0;
+        } else if (header === 'debt_financing') {
+          value = row.debt_financing || 0;
+        } else if (header === 'debt_repayments') {
+          value = row.debt_repayments || 0;
+        } else if (header === 'depreciation' && row.depreciation !== undefined) {
+          value = Math.abs(row.depreciation); // Positive for cash flow addback
         }
         
         return typeof value === 'number' ? value.toFixed(2) : `"${(value || '').toString().replace(/"/g, '""')}"`
@@ -70,6 +125,8 @@ export function exportToCSV(data: any[], headers: string[], filename: string) {
 
 export function exportToExcel(data: any[], headers: string[], filename: string, metadata?: any) {
   // For now, use CSV format. Can be enhanced with a proper Excel library later
+  const enrichedData = addCalculatedFields(data, metadata);
+  
   let csvContent = '';
   
   // Add metadata if provided
@@ -82,7 +139,7 @@ export function exportToExcel(data: any[], headers: string[], filename: string, 
   
   csvContent += [
     headers.join(','),
-    ...data.map(row => 
+    ...enrichedData.map(row =>
       headers.map(header => {
         let value = row[header];
         
@@ -91,20 +148,22 @@ export function exportToExcel(data: any[], headers: string[], filename: string, 
           value = row.total_revenue - row.cogs;
         } else if (header === 'ebit' && row.ebitda && row.depreciation) {
           value = row.ebitda - row.depreciation;
-        } else if (header === 'retained_earnings' && row.total_equity) {
-          value = Math.max(0, row.total_equity * 0.7);
-        } else if (header === 'shareholder_equity' && row.total_equity) {
-          value = row.total_equity * 0.3;
-        } else if (header === 'decrease_in_ar' && row.change_ar) {
+        } else if (header === 'retained_earnings' && row.retained_earnings !== undefined) {
+          value = row.retained_earnings;
+        } else if (header === 'shareholder_equity' && row.shareholder_equity !== undefined) {
+          value = row.shareholder_equity;
+        } else if (header === 'decrease_in_ar' && row.change_ar !== undefined) {
           value = -row.change_ar;
-        } else if (header === 'increase_in_ap' && row.change_ap) {
+        } else if (header === 'increase_in_ap' && row.change_ap !== undefined) {
           value = row.change_ap;
-        } else if (header === 'change_unearned_revenue' && row.unearned_inflow && row.unearned_release) {
-          value = row.unearned_inflow - row.unearned_release;
-        } else if (header === 'debt_financing' && row.debt_draw) {
-          value = row.debt_draw;
-        } else if (header === 'debt_repayments' && row.debt_repayment) {
-          value = -row.debt_repayment;
+        } else if (header === 'change_unearned_revenue') {
+          value = row.change_unearned_revenue || 0;
+        } else if (header === 'debt_financing') {
+          value = row.debt_financing || 0;
+        } else if (header === 'debt_repayments') {
+          value = row.debt_repayments || 0;
+        } else if (header === 'depreciation' && row.depreciation !== undefined) {
+          value = Math.abs(row.depreciation); // Positive for cash flow addback
         }
         
         return typeof value === 'number' ? value.toFixed(2) : `"${(value || '').toString().replace(/"/g, '""')}"`

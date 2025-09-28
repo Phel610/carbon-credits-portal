@@ -8,9 +8,18 @@ import { exportToCSV, exportToExcel, HEADERS } from '@/lib/utils/exportUtils';
 interface BalanceSheetTableProps {
   statements: BalanceSheet[];
   metadata?: any;
+  incomeStatements?: any[];
+  equityInjections?: number[];
+  initialEquity?: number;
 }
 
-const BalanceSheetTable = ({ statements, metadata }: BalanceSheetTableProps) => {
+const BalanceSheetTable = ({ 
+  statements, 
+  metadata, 
+  incomeStatements = [], 
+  equityInjections = [], 
+  initialEquity = 0 
+}: BalanceSheetTableProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -20,8 +29,17 @@ const BalanceSheetTable = ({ statements, metadata }: BalanceSheetTableProps) => 
     }).format(amount);
   };
 
+  // Helper function for cumulative sums
+  const cumulativeSum = (arr: number[], index: number): number => {
+    let sum = 0;
+    for (let i = 0; i <= index; i++) {
+      sum += arr[i] || 0;
+    }
+    return sum;
+  };
+
   const handleExportCSV = () => {
-    exportToCSV(statements, HEADERS.balanceSheet, 'balance-sheet');
+    exportToCSV(statements, HEADERS.balanceSheet, 'balance-sheet', metadata);
   };
 
   const handleExportExcel = () => {
@@ -190,10 +208,9 @@ const BalanceSheetTable = ({ statements, metadata }: BalanceSheetTableProps) => 
                 <TableCell className="pl-6">Retained earnings</TableCell>
                 {statements.map((stmt, index) => {
                   // Calculate retained earnings as cumulative net income
-                  // For now, calculate from total equity minus estimated contributed capital
-                  // This is a placeholder - ideally would come from proper calculation engine
-                  const estimatedContributedCapital = stmt.total_equity > 0 ? stmt.total_equity * 0.3 : 0;
-                  const retainedEarnings = Math.max(0, stmt.total_equity - estimatedContributedCapital);
+                  const retainedEarnings = incomeStatements.length > 0 
+                    ? cumulativeSum(incomeStatements.map(is => is.net_income || 0), index)
+                    : 0;
                   return (
                     <TableCell key={stmt.year} className="text-right">
                       {formatCurrency(retainedEarnings)}
@@ -205,9 +222,8 @@ const BalanceSheetTable = ({ statements, metadata }: BalanceSheetTableProps) => 
               <TableRow>
                 <TableCell className="pl-6">Shareholder equity</TableCell>
                 {statements.map((stmt, index) => {
-                  // Calculate shareholder equity as contributed capital
-                  // This should be initial equity + cumulative equity injections
-                  const contributedCapital = stmt.total_equity > 0 ? stmt.total_equity * 0.3 : 0;
+                  // Calculate shareholder equity as initial equity + cumulative equity injections
+                  const contributedCapital = initialEquity + cumulativeSum(equityInjections, index);
                   return (
                     <TableCell key={stmt.year} className="text-right">
                       {formatCurrency(contributedCapital)}
@@ -218,9 +234,9 @@ const BalanceSheetTable = ({ statements, metadata }: BalanceSheetTableProps) => 
 
               <TableRow>
                 <TableCell className="pl-6">Equity injection</TableCell>
-                {statements.map((stmt) => (
+                {statements.map((stmt, index) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(0)}
+                    {formatCurrency(equityInjections[index] || 0)}
                   </TableCell>
                 ))}
               </TableRow>

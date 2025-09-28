@@ -489,7 +489,13 @@ const FinancialStatements = () => {
               </TabsContent>
 
               <TabsContent value="balance">
-                <BalanceSheetTable statements={statements.balanceSheets} metadata={statements} />
+                <BalanceSheetTable 
+                  statements={statements.balanceSheets} 
+                  metadata={statements}
+                  incomeStatements={statements.incomeStatements}
+                  equityInjections={statements.inputs?.equity_injection || []}
+                  initialEquity={statements.inputs?.initial_equity_t0 || 0}
+                />
               </TabsContent>
 
               <TabsContent value="cashflow">
