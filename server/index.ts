@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import express from 'express';
 import cors from 'cors';
+import bodyParser from 'body-parser';
 import { runParityCheck } from '../parity/scripts/runParity.js';
 
 const app = express();
@@ -8,6 +9,7 @@ const PORT = process.env.PARITY_API_PORT || 4000;
 
 // Middleware
 app.use(cors());
+app.use(bodyParser.json());
 app.use(express.json());
 
 // Health check endpoint

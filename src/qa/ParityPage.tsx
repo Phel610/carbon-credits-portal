@@ -118,10 +118,29 @@ const mockReport: ParityReport = {
 };
 
 export default function ParityPage() {
-  const [selectedScenario, setSelectedScenario] = useState<string>('');
+  const [selectedScenario, setSelectedScenario] = useState<string>('scenario_simple');
+  const [availableScenarios, setAvailableScenarios] = useState<string[]>([]);
   const [report, setReport] = useState<ParityReport | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedStatement, setSelectedStatement] = useState<string>('');
+  const [selectedStatement, setSelectedStatement] = useState<string>('income_statement');
+
+  // Load available scenarios on mount
+  useEffect(() => {
+    if (import.meta.env.VITE_QA_MODE !== 'true') return;
+    
+    fetch('/api/parity/scenarios')
+      .then(r => r.json())
+      .then(({ scenarios }) => {
+        setAvailableScenarios(scenarios);
+        if (scenarios.length > 0 && !scenarios.includes(selectedScenario)) {
+          setSelectedScenario(scenarios[0]);
+        }
+      })
+      .catch(error => {
+        console.error('Failed to load scenarios:', error);
+        setAvailableScenarios(['scenario_simple', 'scenario_edgecases', 'scenario_error_test']);
+      });
+  }, [selectedScenario]);
 
   // Only show this page if QA mode is enabled
   const isQAMode = import.meta.env.VITE_QA_MODE === 'true';
@@ -262,7 +281,7 @@ ${report.invariants.map(i => `- ${i.name}: ${i.pass ? '✅' : '❌'} ${i.descrip
                   <SelectValue placeholder="Select scenario..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockScenarios.map(scenario => (
+                  {availableScenarios.map(scenario => (
                     <SelectItem key={scenario} value={scenario}>
                       {scenario}
                     </SelectItem>
