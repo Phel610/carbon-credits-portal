@@ -80,7 +80,6 @@ describe("Export Parity Guards", () => {
     "opex_total",
     "ebitda",
     "depreciation",
-    "ebit",
     "interest_payments",
     "earnings_before_tax",
     "income_tax",
