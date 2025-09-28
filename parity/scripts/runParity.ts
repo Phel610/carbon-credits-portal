@@ -4,6 +4,19 @@ import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
+
+// New roots (prefer envs, fallback to cwd)
+const PARITY_ROOT = process.env.PARITY_ROOT_DIR   // e.g. repo root
+  ? path.resolve(process.env.PARITY_ROOT_DIR)
+  : process.cwd();
+
+const PARITY_DIR = process.env.PARITY_DIR         // e.g. absolute /…/parity
+  ? path.resolve(process.env.PARITY_DIR)
+  : path.join(PARITY_ROOT, 'parity');
+
+const FIXTURES_DIR = process.env.PARITY_FIXTURES_DIR
+  ? path.resolve(process.env.PARITY_FIXTURES_DIR)
+  : path.join(PARITY_DIR, 'fixtures');
 import { FinancialCalculationEngine } from '../../src/lib/financial/calculationEngine';
 import { loadCSV, loadScalarCSV } from './utils/csvLoader';
 import { compareValues, getValueFromPath, alignDataByYear, type ComparisonResult } from './utils/comparator';
@@ -34,13 +47,13 @@ interface ExcelMapping {
 }
 
 async function loadConfig(): Promise<ParityConfig> {
-  const configPath = path.join(process.cwd(), 'parity', 'parity.config.json');
+  const configPath = path.join(PARITY_DIR, 'parity.config.json');
   const configContent = fs.readFileSync(configPath, 'utf-8');
   return JSON.parse(configContent);
 }
 
 async function loadMapping(): Promise<ExcelMapping> {
-  const mappingPath = path.join(process.cwd(), 'parity', 'maps', 'excel_to_engine.map.json');
+  const mappingPath = path.join(PARITY_DIR, 'maps', 'excel_to_engine.map.json');
   const mappingContent = fs.readFileSync(mappingPath, 'utf-8');
   return JSON.parse(mappingContent);
 }
@@ -140,7 +153,7 @@ async function runParityCheck(scenarioName: string): Promise<ParityReport> {
   const config = await loadConfig();
   const mapping = await loadMapping();
   
-  const fixturesDir = path.join(process.cwd(), 'parity', 'fixtures', scenarioName);
+  const fixturesDir = path.join(FIXTURES_DIR, scenarioName);
   const inputsPath = path.join(fixturesDir, 'engine_inputs.json');
   const metadataPath = path.join(fixturesDir, 'metadata.json');
   
@@ -258,7 +271,7 @@ async function runParityCheck(scenarioName: string): Promise<ParityReport> {
   };
   
   // Save reports
-  const outputDir = path.join(process.cwd(), 'parity', 'out');
+  const outputDir = path.join(PARITY_DIR, 'out');
   saveReports(report, outputDir);
   
   console.log(chalk.green(`Reports saved to: ${outputDir}`));
@@ -267,9 +280,8 @@ async function runParityCheck(scenarioName: string): Promise<ParityReport> {
 }
 
 async function runAllScenarios(): Promise<void> {
-  const fixturesDir = path.join(process.cwd(), 'parity', 'fixtures');
-  const scenarios = fs.readdirSync(fixturesDir).filter(item => {
-    const itemPath = path.join(fixturesDir, item);
+  const scenarios = fs.readdirSync(FIXTURES_DIR).filter(item => {
+    const itemPath = path.join(FIXTURES_DIR, item);
     return fs.statSync(itemPath).isDirectory();
   });
   
