@@ -2,7 +2,7 @@ export const HEADERS = {
   incomeStatement: [
     "year","spot_revenue","pre_purchase_revenue","total",
     "cogs","gross_profit","feasibility_study_costs","pdd_development_costs","mrv_costs","staff_costs","opex_total",
-    "ebitda","depreciation","ebit","interest_payments","earnings_before_tax","income_tax","net_income"
+    "ebitda","depreciation","interest_payments","earnings_before_tax","income_tax","net_income"
   ],
   balanceSheet: [
     "year","cash","accounts_receivable","ppe_net","total_assets",
@@ -49,9 +49,6 @@ function addCalculatedFields(data: any[], metadata?: any): any[] {
     // Income statement derived fields
     if (row.total_revenue !== undefined && row.cogs !== undefined) {
       derivedFields.gross_profit = row.total_revenue - row.cogs;
-    }
-    if (row.ebitda !== undefined && row.depreciation !== undefined) {
-      derivedFields.ebit = row.ebitda - row.depreciation;
     }
 
     // Balance sheet equity breakdown
@@ -106,8 +103,6 @@ export function exportToCSV(data: any[], headers: string[], filename: string, me
         // Handle calculated fields
         if (header === 'gross_profit' && row.total_revenue && row.cogs) {
           value = row.total_revenue - row.cogs;
-        } else if (header === 'ebit' && row.ebitda && row.depreciation) {
-          value = row.ebitda - row.depreciation;
         } else if (header === 'retained_earnings' && row.retained_earnings !== undefined) {
           value = row.retained_earnings;
         } else if (header === 'shareholder_equity' && row.shareholder_equity !== undefined) {
@@ -161,8 +156,6 @@ export function exportToExcel(data: any[], headers: string[], filename: string, 
         // Handle calculated fields
         if (header === 'gross_profit' && row.total_revenue && row.cogs) {
           value = row.total_revenue - row.cogs;
-        } else if (header === 'ebit' && row.ebitda && row.depreciation) {
-          value = row.ebitda - row.depreciation;
         } else if (header === 'retained_earnings' && row.retained_earnings !== undefined) {
           value = row.retained_earnings;
         } else if (header === 'shareholder_equity' && row.shareholder_equity !== undefined) {
