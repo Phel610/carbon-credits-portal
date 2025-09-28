@@ -45,6 +45,7 @@ export const InputSchema = z.object({
   discount_rate: z.number().min(0).max(1),
   initial_equity_t0: z.number().default(0),
   opening_cash_y1: z.number().default(0),
+  initial_ppe: z.number().default(0),
 });
 
 export type ModelInputData = z.infer<typeof InputSchema>;
@@ -486,7 +487,7 @@ export class FinancialCalculationEngine {
       // PPE roll exactly as Excel
       const capex = this.inputs.capex[t] || 0; // negative
       const depreciation = this.inputs.depreciation[t] || 0; // negative
-      const prevPPE = t === 0 ? 0 : sheets[t - 1].ppe_net;
+      const prevPPE = t === 0 ? (this.inputs.initial_ppe || 0) : sheets[t - 1].ppe_net;
       const ppe_net = prevPPE - capex + depreciation; // capex and depreciation are negative
       
       // Working capital - store as positive balances

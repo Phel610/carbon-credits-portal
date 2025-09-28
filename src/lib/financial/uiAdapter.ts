@@ -96,6 +96,7 @@ export function toEngineInputs(ui: any) {
     opening_cash_y1: parseNumberLoose(ui.opening_cash_y1),
     discount_rate:   normalizeRate(ui.discount_rate),
     initial_equity_t0: parseNumberLoose(ui.initial_equity_t0),
+    initial_ppe: parseNumberLoose(ui.initial_ppe),
   };
 }
 
@@ -143,5 +144,6 @@ export function fromEngineToUI(engine: Partial<ModelInputData> & { years: number
     opening_cash_y1: typeof engine.opening_cash_y1 === "number" ? engine.opening_cash_y1 : 0,
     discount_rate:   (typeof engine.discount_rate === "number" ? engine.discount_rate : 0) * 100,
     initial_equity_t0: typeof engine.initial_equity_t0 === "number" ? engine.initial_equity_t0 : 0,
+    initial_ppe: typeof engine.initial_ppe === "number" ? engine.initial_ppe : 0,
   };
 }

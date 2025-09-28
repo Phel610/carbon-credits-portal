@@ -34,6 +34,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
   const [discountRate, setDiscountRate] = useState(12);
   const [initialEquityT0, setInitialEquityT0] = useState(100000);
   const [openingCashY1, setOpeningCashY1] = useState(0);
+  const [initialPpe, setInitialPpe] = useState(0);
   const [yearlyFinancing, setYearlyFinancing] = useState<YearlyFinancing[]>([]);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,6 +60,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
             discount_rate: 0,
             initial_equity_t0: 0,
             opening_cash_y1: 0,
+            initial_ppe: 0,
             equity_injection: [],
             debt_draw: [],
             purchase_amount: [],
@@ -70,6 +72,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           const discountInput = existingInputs.find(i => i.input_key === 'discount_rate');
           const equityInput = existingInputs.find(i => i.input_key === 'initial_equity_t0');
           const cashInput = existingInputs.find(i => i.input_key === 'opening_cash_y1');
+          const ppeInput = existingInputs.find(i => i.input_key === 'initial_ppe');
           const notesInput = existingInputs.find(i => i.input_key === 'notes');
 
           if (interestInput?.input_value && typeof interestInput.input_value === 'object' && 'value' in interestInput.input_value) {
@@ -89,6 +92,9 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           }
           if (cashInput?.input_value && typeof cashInput.input_value === 'object' && 'value' in cashInput.input_value) {
             engineData.opening_cash_y1 = Number(cashInput.input_value.value);
+          }
+          if (ppeInput?.input_value && typeof ppeInput.input_value === 'object' && 'value' in ppeInput.input_value) {
+            engineData.initial_ppe = Number(ppeInput.input_value.value);
           }
           if (notesInput?.input_value && typeof notesInput.input_value === 'object' && 'value' in notesInput.input_value) {
             setNotes(String(notesInput.input_value.value) || '');
@@ -122,6 +128,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           setDiscountRate(uiData.discount_rate);
           setInitialEquityT0(uiData.initial_equity_t0);
           setOpeningCashY1(uiData.opening_cash_y1);
+          setInitialPpe(uiData.initial_ppe);
           
           const financing = engineData.years.map((year: number, index: number) => ({
             year,
@@ -202,6 +209,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
         opening_cash_y1: openingCashY1,
         discount_rate: discountRate,
         initial_equity_t0: initialEquityT0,
+        initial_ppe: initialPpe,
       };
 
       // Normalize using adapter
@@ -246,6 +254,12 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           category: 'financing',
           input_key: 'opening_cash_y1',
           input_value: { value: engineInputs.opening_cash_y1 },
+        },
+        {
+          model_id: modelId,
+          category: 'financing',
+          input_key: 'initial_ppe',
+          input_value: { value: engineInputs.initial_ppe },
         },
         // Notes
         {
@@ -495,6 +509,21 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Cash at start of Year 1
+              </p>
+            </div>
+            
+            <div>
+              <Label htmlFor="initial-ppe">Initial PPE</Label>
+              <Input
+                id="initial-ppe"
+                type="number"
+                value={initialPpe}
+                onChange={(e) => setInitialPpe(Number(e.target.value))}
+                placeholder="0"
+                min="0"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Initial Property, Plant & Equipment
               </p>
             </div>
           </div>
