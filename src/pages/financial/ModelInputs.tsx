@@ -220,7 +220,10 @@ const ModelInputs = () => {
           <Button variant="outline" onClick={() => navigate(`/financial/models/${id}`)}>
             Save & Return to Model
           </Button>
-          <Button className="bg-trust hover:bg-trust/90">
+          <Button 
+            className="bg-trust hover:bg-trust/90"
+            onClick={() => navigate(`/financial/models/${id}/statements`)}
+          >
             <TrendingUp className="mr-2 h-4 w-4" />
             Generate Statements
           </Button>
