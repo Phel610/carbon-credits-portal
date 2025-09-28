@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2, Calendar, Target, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { toEngineInputs } from '@/lib/financial/uiAdapter';
 
 interface OperationalMetricsFormProps {
   modelId: string;
@@ -59,7 +60,42 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
   const saveOperationalMetrics = async () => {
     setLoading(true);
     try {
-      // Prepare inputs with Excel-compatible structure
+      // Build UI payload for adapter
+      const uiPayload = {
+        years: yearlyMetrics.map(m => m.year),
+        issue: yearlyMetrics.map(m => m.issue),
+        credits_generated: yearlyMetrics.map(m => m.credits_generated),
+        price_per_credit: yearlyMetrics.map(m => m.price_per_credit),
+        
+        // Placeholder values for complete schema (these will be set by other forms)
+        feasibility_costs: yearlyMetrics.map(() => 0),
+        pdd_costs: yearlyMetrics.map(() => 0),
+        mrv_costs: yearlyMetrics.map(() => 0),
+        staff_costs: yearlyMetrics.map(() => 0),
+        depreciation: yearlyMetrics.map(() => 0),
+        capex: yearlyMetrics.map(() => 0),
+        
+        ar_rate: 5,
+        ap_rate: 10,
+        cogs_rate: 15,
+        income_tax_rate: 25,
+        
+        interest_rate: 8,
+        debt_duration_years: 5,
+        equity_injection: yearlyMetrics.map(() => 0),
+        debt_draw: yearlyMetrics.map(() => 0),
+        
+        purchase_amount: yearlyMetrics.map(() => 0),
+        purchase_share: 30,
+        
+        opening_cash_y1: 0,
+        discount_rate: 12,
+      };
+
+      // Normalize using adapter
+      const engineInputs = toEngineInputs(uiPayload);
+
+      // Prepare inputs for database
       const yearlyInputs = yearlyMetrics.flatMap(metric => [
         {
           model_id: modelId,
@@ -79,7 +115,7 @@ const OperationalMetricsForm = ({ modelId, model }: OperationalMetricsFormProps)
           model_id: modelId,
           category: 'operational_metrics',
           input_key: 'issuance_flag',
-          input_value: { value: metric.issue ? 1 : 0 },
+          input_value: { value: engineInputs.issuance_flag[yearlyMetrics.findIndex(m => m.year === metric.year)] },
           year: metric.year,
         }
       ]);

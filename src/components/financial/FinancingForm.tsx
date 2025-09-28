@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Building, CreditCard, Handshake, Plus, Trash2, Percent } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { toEngineInputs } from '@/lib/financial/uiAdapter';
 
 interface FinancingFormProps {
   modelId: string;
@@ -69,33 +70,70 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
   const saveFinancingStrategy = async () => {
     setLoading(true);
     try {
+      // Build UI payload for adapter
+      const uiPayload = {
+        years: yearlyFinancing.map(f => f.year),
+        issue: yearlyFinancing.map(() => false), // Placeholder - set by operational form
+        credits_generated: yearlyFinancing.map(() => 0),
+        price_per_credit: yearlyFinancing.map(() => 10),
+        
+        // Placeholder expense values
+        feasibility_costs: yearlyFinancing.map(() => 0),
+        pdd_costs: yearlyFinancing.map(() => 0),
+        mrv_costs: yearlyFinancing.map(() => 0),
+        staff_costs: yearlyFinancing.map(() => 0),
+        depreciation: yearlyFinancing.map(() => 0),
+        capex: yearlyFinancing.map(() => 0),
+        
+        // Placeholder rates
+        ar_rate: 5,
+        ap_rate: 10,
+        cogs_rate: 15,
+        income_tax_rate: 25,
+        
+        // Financing rates as UI percentages
+        interest_rate: interestRate,
+        debt_duration_years: debtDurationYears,
+        equity_injection: yearlyFinancing.map(f => f.equity_injection),
+        debt_draw: yearlyFinancing.map(f => f.debt_draw),
+        
+        purchase_amount: yearlyFinancing.map(f => f.purchase_amount),
+        purchase_share: purchaseShare,
+        
+        opening_cash_y1: openingCashY1,
+        discount_rate: discountRate,
+      };
+
+      // Normalize using adapter
+      const engineInputs = toEngineInputs(uiPayload);
+
       const financingInputs = [
-        // Debt parameters
+        // Debt parameters (normalized by adapter)
         {
           model_id: modelId,
           category: 'financing',
           input_key: 'interest_rate',
-          input_value: { value: interestRate / 100 },
+          input_value: { value: engineInputs.interest_rate },
         },
         {
           model_id: modelId,
           category: 'financing',
           input_key: 'debt_duration_years',
-          input_value: { value: debtDurationYears },
+          input_value: { value: engineInputs.debt_duration_years },
         },
-        // Pre-purchase parameters
+        // Pre-purchase parameters (normalized by adapter)
         {
           model_id: modelId,
           category: 'financing',
           input_key: 'purchase_share',
-          input_value: { value: purchaseShare / 100 },
+          input_value: { value: engineInputs.purchase_share },
         },
-        // Returns parameters
+        // Returns parameters (normalized by adapter)
         {
           model_id: modelId,
           category: 'financing',
           input_key: 'discount_rate',
-          input_value: { value: discountRate / 100 },
+          input_value: { value: engineInputs.discount_rate },
         },
         {
           model_id: modelId,
@@ -107,7 +145,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           model_id: modelId,
           category: 'financing',
           input_key: 'opening_cash_y1',
-          input_value: { value: openingCashY1 },
+          input_value: { value: engineInputs.opening_cash_y1 },
         },
         // Notes
         {
@@ -119,26 +157,26 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
       ];
 
       // Add yearly financing inputs
-      const yearlyInputs = yearlyFinancing.flatMap(financing => [
+      const yearlyInputs = yearlyFinancing.flatMap((financing, index) => [
         {
           model_id: modelId,
           category: 'financing',
           input_key: 'equity_injection',
-          input_value: { value: financing.equity_injection },
+          input_value: { value: engineInputs.equity_injection[index] },
           year: financing.year,
         },
         {
           model_id: modelId,
           category: 'financing',
           input_key: 'debt_draw',
-          input_value: { value: financing.debt_draw },
+          input_value: { value: engineInputs.debt_draw[index] },
           year: financing.year,
         },
         {
           model_id: modelId,
           category: 'financing',
           input_key: 'purchase_amount',
-          input_value: { value: financing.purchase_amount },
+          input_value: { value: engineInputs.purchase_amount[index] },
           year: financing.year,
         },
       ]);

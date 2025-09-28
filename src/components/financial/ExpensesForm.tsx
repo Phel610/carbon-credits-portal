@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { DollarSign, Calculator, Building, Receipt, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { toEngineInputs } from '@/lib/financial/uiAdapter';
 
 interface ExpensesFormProps {
   modelId: string;
@@ -73,32 +74,69 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
   const saveExpenses = async () => {
     setLoading(true);
     try {
+      // Build UI payload for adapter
+      const uiPayload = {
+        years: yearlyExpenses.map(e => e.year),
+        issue: yearlyExpenses.map(() => false), // Placeholder - set by operational form
+        credits_generated: yearlyExpenses.map(() => 0),
+        price_per_credit: yearlyExpenses.map(() => 10),
+        
+        // Expenses as positive in UI
+        feasibility_costs: yearlyExpenses.map(e => e.feasibility_costs),
+        pdd_costs: yearlyExpenses.map(e => e.pdd_costs),
+        mrv_costs: yearlyExpenses.map(e => e.mrv_costs),
+        staff_costs: yearlyExpenses.map(e => e.staff_costs),
+        depreciation: yearlyExpenses.map(e => e.depreciation),
+        capex: yearlyExpenses.map(e => e.capex),
+        
+        // Rates as UI percentages
+        ar_rate: arRate,
+        ap_rate: apRate,
+        cogs_rate: cogsRate,
+        income_tax_rate: incomeTaxRate,
+        
+        // Placeholder financing values
+        interest_rate: 8,
+        debt_duration_years: 5,
+        equity_injection: yearlyExpenses.map(() => 0),
+        debt_draw: yearlyExpenses.map(() => 0),
+        
+        purchase_amount: yearlyExpenses.map(() => 0),
+        purchase_share: 30,
+        
+        opening_cash_y1: 0,
+        discount_rate: 12,
+      };
+
+      // Normalize using adapter
+      const engineInputs = toEngineInputs(uiPayload);
+
       // Prepare all expense inputs with normalized values
       const expenseInputs = [
-        // Rates (normalized to decimals)
+        // Rates (normalized by adapter)
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'cogs_rate',
-          input_value: { value: cogsRate / 100 },
+          input_value: { value: engineInputs.cogs_rate },
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'ar_rate',
-          input_value: { value: arRate / 100 },
+          input_value: { value: engineInputs.ar_rate },
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'ap_rate',
-          input_value: { value: apRate / 100 },
+          input_value: { value: engineInputs.ap_rate },
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'income_tax_rate',
-          input_value: { value: incomeTaxRate / 100 },
+          input_value: { value: engineInputs.income_tax_rate },
         },
         // Notes
         {
@@ -109,48 +147,48 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
         },
       ];
 
-      // Add yearly expense inputs (converted to negative for engine)
-      const yearlyInputs = yearlyExpenses.flatMap(expense => [
+      // Add yearly expense inputs (normalized by adapter)
+      const yearlyInputs = yearlyExpenses.flatMap((expense, index) => [
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'feasibility_costs',
-          input_value: { value: -expense.feasibility_costs },
+          input_value: { value: engineInputs.feasibility_costs[index] },
           year: expense.year,
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'pdd_costs',
-          input_value: { value: -expense.pdd_costs },
+          input_value: { value: engineInputs.pdd_costs[index] },
           year: expense.year,
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'mrv_costs',
-          input_value: { value: -expense.mrv_costs },
+          input_value: { value: engineInputs.mrv_costs[index] },
           year: expense.year,
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'staff_costs',
-          input_value: { value: -expense.staff_costs },
+          input_value: { value: engineInputs.staff_costs[index] },
           year: expense.year,
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'capex',
-          input_value: { value: -expense.capex },
+          input_value: { value: engineInputs.capex[index] },
           year: expense.year,
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'depreciation',
-          input_value: { value: -expense.depreciation },
+          input_value: { value: engineInputs.depreciation[index] },
           year: expense.year,
         },
       ]);
