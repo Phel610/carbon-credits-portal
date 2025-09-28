@@ -28,6 +28,19 @@ app.post('/api/parity/run', async (req, res) => {
       });
     }
 
+    // Validate scenario against available fixtures (security)
+    const fs = await import('fs');
+    const path = await import('path');
+    const fixturesDir = path.resolve('./parity/fixtures');
+    const allowedScenarios = fs.readdirSync(fixturesDir)
+      .filter(dir => fs.statSync(path.join(fixturesDir, dir)).isDirectory());
+    
+    if (!allowedScenarios.includes(scenario)) {
+      return res.status(400).json({ 
+        error: `Unknown scenario: ${scenario}. Available scenarios: ${allowedScenarios.join(', ')}` 
+      });
+    }
+
     console.log(`Running parity check for scenario: ${scenario}`);
     const report = await runParityCheck(scenario);
     
