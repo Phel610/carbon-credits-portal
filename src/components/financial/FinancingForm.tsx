@@ -28,14 +28,14 @@ interface YearlyFinancing {
 
 const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
   // Debt parameters (single facility for simplicity, matching Excel)
-  const [interestRate, setInterestRate] = useState(0.08); // 8% as decimal
+  const [interestRate, setInterestRate] = useState(8); // 8% for UI
   const [debtDurationYears, setDebtDurationYears] = useState(5);
   
-  // Pre-purchase parameters (NEW per Excel spec)
-  const [purchaseShare, setPurchaseShare] = useState(0.30); // 30% of credits pre-purchased
+  // Pre-purchase parameters
+  const [purchaseShare, setPurchaseShare] = useState(30); // 30% for UI
   
   // Returns parameters
-  const [discountRate, setDiscountRate] = useState(0.12); // 12% as decimal
+  const [discountRate, setDiscountRate] = useState(12); // 12% for UI
   const [initialEquityT0, setInitialEquityT0] = useState(100000); // Initial founder equity
   const [openingCashY1, setOpeningCashY1] = useState(0); // Opening cash at start of Year 1
   
@@ -75,7 +75,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           model_id: modelId,
           category: 'financing',
           input_key: 'interest_rate',
-          input_value: { value: interestRate },
+          input_value: { value: interestRate / 100 },
         },
         {
           model_id: modelId,
@@ -88,14 +88,14 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           model_id: modelId,
           category: 'financing',
           input_key: 'purchase_share',
-          input_value: { value: purchaseShare },
+          input_value: { value: purchaseShare / 100 },
         },
         // Returns parameters
         {
           model_id: modelId,
           category: 'financing',
           input_key: 'discount_rate',
-          input_value: { value: discountRate },
+          input_value: { value: discountRate / 100 },
         },
         {
           model_id: modelId,
@@ -206,7 +206,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Pre-Purchase Share</CardDescription>
-            <CardTitle className="text-2xl">{(purchaseShare * 100).toFixed(1)}%</CardTitle>
+            <CardTitle className="text-2xl">{purchaseShare.toFixed(1)}%</CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -226,19 +226,19 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="interest-rate">Interest Rate</Label>
+              <Label htmlFor="interest-rate">Interest Rate (%)</Label>
               <Input
                 id="interest-rate"
                 type="number"
-                step="0.001"
+                step="0.1"
                 value={interestRate}
                 onChange={(e) => setInterestRate(Number(e.target.value))}
-                placeholder="0.08"
+                placeholder="8"
                 min="0"
-                max="1"
+                max="100"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Decimal (0.08 = 8% annual rate)
+                Annual rate
               </p>
             </div>
             
@@ -273,30 +273,27 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="purchase-share">Purchase Share</Label>
+              <Label htmlFor="purchase-share">Purchase Share (%)</Label>
               <Input
                 id="purchase-share"
                 type="number"
-                step="0.001"
+                step="0.1"
                 value={purchaseShare}
                 onChange={(e) => setPurchaseShare(Number(e.target.value))}
-                placeholder="0.30"
+                placeholder="30"
                 min="0"
-                max="1"
+                max="100"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Decimal (0.30 = 30% of credits pre-purchased)
+                % of credits pre-purchased
               </p>
             </div>
             
             <div className="mt-4 p-4 bg-muted rounded-lg">
-              <h4 className="font-medium mb-2">Pre-purchase Logic (Excel Implementation)</h4>
+              <h4 className="font-medium mb-2">Pre-purchase Logic</h4>
               <p className="text-sm text-muted-foreground">
                 Pre-purchase uses a single implied purchase price computed from the first year with a purchase. 
                 Unearned revenue increases with purchase cash and decreases when purchased credits are delivered.
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                This matches Excel Rows 123 (purchase amount), 124 (purchase share), 126 (purchased credits), and 128 (implied price).
               </p>
             </div>
           </CardContent>
@@ -317,19 +314,19 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <Label htmlFor="discount-rate">Discount Rate</Label>
+              <Label htmlFor="discount-rate">Discount Rate (%)</Label>
               <Input
                 id="discount-rate"
                 type="number"
-                step="0.001"
+                step="0.1"
                 value={discountRate}
                 onChange={(e) => setDiscountRate(Number(e.target.value))}
-                placeholder="0.12"
+                placeholder="12"
                 min="0"
-                max="1"
+                max="100"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Decimal (0.12 = 12% WACC for NPV calculation)
+                WACC for NPV calculation
               </p>
             </div>
             
@@ -349,7 +346,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
             </div>
             
             <div>
-              <Label htmlFor="opening-cash">Opening Cash Y1 (G93)</Label>
+              <Label htmlFor="opening-cash">Opening Cash Y1</Label>
               <Input
                 id="opening-cash"
                 type="number"
@@ -359,7 +356,7 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
                 min="0"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Cash at start of Year 1 (Excel Row 93)
+                Cash at start of Year 1
               </p>
             </div>
           </div>
@@ -431,9 +428,9 @@ const FinancingForm = ({ modelId, model }: FinancingFormProps) => {
           </div>
           
           <div className="mt-4 p-4 bg-muted rounded-lg">
-            <h4 className="font-medium mb-2">Excel Formula Implementation</h4>
+            <h4 className="font-medium mb-2">Implementation Notes</h4>
             <p className="text-sm text-muted-foreground">
-              • Debt Schedule: Uses PPMT function for principal payments matching Excel
+              • Debt Schedule: Uses PPMT function for principal payments
             </p>
             <p className="text-sm text-muted-foreground">
               • Pre-purchase: Single implied price from first purchase year

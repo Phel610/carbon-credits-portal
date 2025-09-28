@@ -21,37 +21,37 @@ interface ExpensesFormProps {
 
 interface YearlyExpenses {
   year: number;
-  feasibility_costs: number;  // Negative values per Excel
-  pdd_costs: number;         // Negative values per Excel
-  mrv_costs: number;         // Negative values per Excel
-  staff_costs: number;       // Negative values per Excel
-  capex: number;             // Negative values per Excel
-  depreciation: number;      // Negative values per Excel
+  feasibility_costs: number;
+  pdd_costs: number;
+  mrv_costs: number;
+  staff_costs: number;
+  capex: number;
+  depreciation: number;
 }
 
 const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
   // Cost of Goods Sold (rate)
-  const [cogsRate, setCogsRate] = useState(0.15); // 15% as decimal
+  const [cogsRate, setCogsRate] = useState(15); // 15% for UI
 
-  // Working capital rates (NEW per Excel spec)
-  const [arRate, setArRate] = useState(0.05); // 5% of revenue as A/R
-  const [apRate, setApRate] = useState(0.10); // 10% of OPEX as A/P
+  // Working capital rates
+  const [arRate, setArRate] = useState(5); // 5% for UI
+  const [apRate, setApRate] = useState(10); // 10% for UI
 
   // Tax rate
-  const [incomeTaxRate, setIncomeTaxRate] = useState(0.25); // 25% as decimal
+  const [incomeTaxRate, setIncomeTaxRate] = useState(25); // 25% for UI
 
-  // Yearly expenses (all as negative numbers per Excel convention)
+  // Yearly expenses (as positive numbers for UI)
   const [yearlyExpenses, setYearlyExpenses] = useState<YearlyExpenses[]>(() => {
     const years = [];
     for (let year = model.start_year; year <= model.end_year; year++) {
       years.push({ 
         year, 
-        feasibility_costs: year === model.start_year ? -50000 : 0, // One-time cost
-        pdd_costs: year === model.start_year ? -75000 : 0,         // One-time cost
-        mrv_costs: year === model.start_year ? -40000 : -15000,    // Initial + annual
-        staff_costs: -100000,  // Annual cost
-        capex: 0,              // Equipment/infrastructure
-        depreciation: 0,       // Will be calculated
+        feasibility_costs: year === model.start_year ? 50000 : 0, // One-time cost
+        pdd_costs: year === model.start_year ? 75000 : 0,         // One-time cost
+        mrv_costs: year === model.start_year ? 40000 : 15000,     // Initial + annual
+        staff_costs: 100000,  // Annual cost
+        capex: 0,             // Equipment/infrastructure
+        depreciation: 0,      // Will be calculated
       });
     }
     return years;
@@ -61,16 +61,6 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
   const [loading, setLoading] = useState(false);
 
   const updateYearlyExpense = (year: number, field: keyof Omit<YearlyExpenses, 'year'>, value: number) => {
-    // Validate that cost inputs are negative
-    if (['feasibility_costs', 'pdd_costs', 'mrv_costs', 'staff_costs', 'capex', 'depreciation'].includes(field) && value > 0) {
-      toast({
-        title: "Invalid input",
-        description: `${field.replace('_', ' ')} must be negative (e.g., -50000 for $50,000 expense)`,
-        variant: "destructive",
-      });
-      return;
-    }
-    
     setYearlyExpenses(prev => 
       prev.map(expense => 
         expense.year === year 
@@ -81,54 +71,34 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
   };
 
   const saveExpenses = async () => {
-    // Validate all cost inputs are negative
-    const invalidInputs = [];
-    for (const expense of yearlyExpenses) {
-      if (expense.feasibility_costs > 0) invalidInputs.push('Feasibility costs must be negative');
-      if (expense.pdd_costs > 0) invalidInputs.push('PDD costs must be negative');
-      if (expense.mrv_costs > 0) invalidInputs.push('MRV costs must be negative');
-      if (expense.staff_costs > 0) invalidInputs.push('Staff costs must be negative');
-      if (expense.capex > 0) invalidInputs.push('CAPEX must be negative');
-      if (expense.depreciation > 0) invalidInputs.push('Depreciation must be negative');
-    }
-    
-    if (invalidInputs.length > 0) {
-      toast({
-        title: "Validation Error",
-        description: `${invalidInputs[0]}. All cost values must be negative per Excel convention.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
     try {
-      // Prepare all expense inputs with Excel sign conventions
+      // Prepare all expense inputs with normalized values
       const expenseInputs = [
-        // Rates (as decimals, not percentages)
+        // Rates (normalized to decimals)
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'cogs_rate',
-          input_value: { value: cogsRate },
+          input_value: { value: cogsRate / 100 },
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'ar_rate',
-          input_value: { value: arRate },
+          input_value: { value: arRate / 100 },
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'ap_rate',
-          input_value: { value: apRate },
+          input_value: { value: apRate / 100 },
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'income_tax_rate',
-          input_value: { value: incomeTaxRate },
+          input_value: { value: incomeTaxRate / 100 },
         },
         // Notes
         {
@@ -139,48 +109,48 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
         },
       ];
 
-      // Add yearly expense inputs (all as negative numbers)  
+      // Add yearly expense inputs (converted to negative for engine)
       const yearlyInputs = yearlyExpenses.flatMap(expense => [
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'feasibility_costs',
-          input_value: { value: expense.feasibility_costs },
+          input_value: { value: -expense.feasibility_costs },
           year: expense.year,
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'pdd_costs',
-          input_value: { value: expense.pdd_costs },
+          input_value: { value: -expense.pdd_costs },
           year: expense.year,
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'mrv_costs',
-          input_value: { value: expense.mrv_costs },
+          input_value: { value: -expense.mrv_costs },
           year: expense.year,
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'staff_costs',
-          input_value: { value: expense.staff_costs },
+          input_value: { value: -expense.staff_costs },
           year: expense.year,
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'capex',
-          input_value: { value: expense.capex },
+          input_value: { value: -expense.capex },
           year: expense.year,
         },
         {
           model_id: modelId,
           category: 'expenses',
           input_key: 'depreciation',
-          input_value: { value: expense.depreciation },
+          input_value: { value: -expense.depreciation },
           year: expense.year,
         },
       ]);
@@ -220,10 +190,10 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
   };
 
   // Calculate totals
-  const totalCapex = yearlyExpenses.reduce((sum, expense) => sum + Math.abs(expense.capex), 0);
-  const totalFeasibility = Math.abs(yearlyExpenses.find(e => e.feasibility_costs < 0)?.feasibility_costs || 0);
-  const totalPDD = Math.abs(yearlyExpenses.find(e => e.pdd_costs < 0)?.pdd_costs || 0);
-  const totalInitialMRV = Math.abs(yearlyExpenses.find(e => e.year === model.start_year)?.mrv_costs || 0);
+  const totalCapex = yearlyExpenses.reduce((sum, expense) => sum + expense.capex, 0);
+  const totalFeasibility = yearlyExpenses.find(e => e.feasibility_costs > 0)?.feasibility_costs || 0;
+  const totalPDD = yearlyExpenses.find(e => e.pdd_costs > 0)?.pdd_costs || 0;
+  const totalInitialMRV = yearlyExpenses.find(e => e.year === model.start_year)?.mrv_costs || 0;
   const totalDevelopmentCosts = totalFeasibility + totalPDD + totalInitialMRV;
 
   return (
@@ -245,24 +215,11 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>COGS Rate</CardDescription>
-            <CardTitle className="text-2xl">{(cogsRate * 100).toFixed(1)}%</CardTitle>
+            <CardTitle className="text-2xl">{cogsRate.toFixed(1)}%</CardTitle>
           </CardHeader>
         </Card>
       </div>
 
-      {/* Sign Convention Alert */}
-      <Card className="border-warning bg-warning/5">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-2 text-warning">
-            <AlertTriangle className="h-5 w-5" />
-            <p className="font-medium">Excel Sign Convention</p>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            All costs are entered as <strong>negative numbers</strong> to match Excel formulas. 
-            Enter -50000 for a $50,000 expense.
-          </p>
-        </CardContent>
-      </Card>
 
       {/* Cost Structure */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -279,53 +236,53 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="cogs">Cost of Goods Sold (Rate)</Label>
+              <Label htmlFor="cogs">Cost of Goods Sold (%)</Label>
               <Input
                 id="cogs"
                 type="number"
-                step="0.001"
+                step="0.1"
                 value={cogsRate}
                 onChange={(e) => setCogsRate(Number(e.target.value))}
-                placeholder="0.15"
+                placeholder="15"
                 min="0"
-                max="1"
+                max="100"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                % of <strong>total revenue</strong>
+                % of total revenue
               </p>
             </div>
             
             <div>
-              <Label htmlFor="ar_rate">Accounts Receivable Rate</Label>
+              <Label htmlFor="ar_rate">Accounts Receivable (%)</Label>
               <Input
                 id="ar_rate"
                 type="number"
-                step="0.001"
+                step="0.1"
                 value={arRate}
                 onChange={(e) => setArRate(Number(e.target.value))}
-                placeholder="0.05"
+                placeholder="5"
                 min="0"
-                max="1"
+                max="100"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Decimal (0.05 = 5% of revenue as A/R)
+                % of revenue as A/R
               </p>
             </div>
             
             <div>
-              <Label htmlFor="ap_rate">Accounts Payable Rate</Label>
+              <Label htmlFor="ap_rate">Accounts Payable (%)</Label>
               <Input
                 id="ap_rate"
                 type="number"
-                step="0.001"
+                step="0.1"
                 value={apRate}
                 onChange={(e) => setApRate(Number(e.target.value))}
-                placeholder="0.10"
+                placeholder="10"
                 min="0"
-                max="1"
+                max="100"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Decimal (0.10 = 10% of OPEX as A/P)
+                % of OPEX as A/P
               </p>
             </div>
           </CardContent>
@@ -344,19 +301,19 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="tax-rate">Income Tax Rate</Label>
+              <Label htmlFor="tax-rate">Income Tax Rate (%)</Label>
               <Input
                 id="tax-rate"
                 type="number"
-                step="0.001"
+                step="0.1"
                 value={incomeTaxRate}
                 onChange={(e) => setIncomeTaxRate(Number(e.target.value))}
-                placeholder="0.25"
+                placeholder="25"
                 min="0"
-                max="1"
+                max="100"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Decimal (0.25 = 25% corporate tax rate)
+                Corporate tax rate
               </p>
             </div>
           </CardContent>
@@ -371,7 +328,7 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
             Yearly Expense Schedule
           </CardTitle>
           <CardDescription>
-            All expenses by year (enter as negative numbers per Excel convention)
+            All expenses by year
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -394,7 +351,7 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
                     onChange={(e) => updateYearlyExpense(expense.year, 'feasibility_costs', Number(e.target.value))}
                     placeholder="0"
                   />
-                  <p className="text-xs text-muted-foreground">e.g., -50000</p>
+                  <p className="text-xs text-muted-foreground">e.g., 50000</p>
                 </div>
                 
                 <div>
@@ -406,7 +363,7 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
                     onChange={(e) => updateYearlyExpense(expense.year, 'pdd_costs', Number(e.target.value))}
                     placeholder="0"
                   />
-                  <p className="text-xs text-muted-foreground">e.g., -75000</p>
+                  <p className="text-xs text-muted-foreground">e.g., 75000</p>
                 </div>
                 
                 <div>
@@ -418,7 +375,7 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
                     onChange={(e) => updateYearlyExpense(expense.year, 'mrv_costs', Number(e.target.value))}
                     placeholder="0"
                   />
-                  <p className="text-xs text-muted-foreground">e.g., -15000</p>
+                  <p className="text-xs text-muted-foreground">e.g., 15000</p>
                 </div>
                 
                 <div>
@@ -430,7 +387,7 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
                     onChange={(e) => updateYearlyExpense(expense.year, 'staff_costs', Number(e.target.value))}
                     placeholder="0"
                   />
-                  <p className="text-xs text-muted-foreground">e.g., -100000</p>
+                  <p className="text-xs text-muted-foreground">e.g., 100000</p>
                 </div>
                 
                 <div>
@@ -442,7 +399,7 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
                     onChange={(e) => updateYearlyExpense(expense.year, 'capex', Number(e.target.value))}
                     placeholder="0"
                   />
-                  <p className="text-xs text-muted-foreground">e.g., -200000</p>
+                  <p className="text-xs text-muted-foreground">e.g., 200000</p>
                 </div>
                 
                 <div>
@@ -454,7 +411,7 @@ const ExpensesForm = ({ modelId, model }: ExpensesFormProps) => {
                     onChange={(e) => updateYearlyExpense(expense.year, 'depreciation', Number(e.target.value))}
                     placeholder="0"
                   />
-                  <p className="text-xs text-muted-foreground">e.g., -20000</p>
+                  <p className="text-xs text-muted-foreground">e.g., 20000</p>
                 </div>
               </div>
             ))}
