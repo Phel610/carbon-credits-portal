@@ -24,6 +24,9 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { createComprehensiveTestModel } from '@/lib/testData/createTestModel';
+import { toast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 import { 
   Calculator, 
@@ -31,7 +34,9 @@ import {
   Settings, 
   User,
   ArrowLeftRight,
-  Home
+  Home,
+  TestTube,
+  Loader2
 } from 'lucide-react';
 
 
@@ -48,9 +53,50 @@ const globalNavigation = [
 
 function FinancialSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [isCreatingTest, setIsCreatingTest] = useState(false);
   
   const isActivePath = (href: string) => {
     return location.pathname === href || location.pathname.startsWith(href);
+  };
+
+  const handleCreateTestModel = async () => {
+    if (isCreatingTest) return;
+    
+    setIsCreatingTest(true);
+    
+    try {
+      toast({
+        title: "Creating Test Model",
+        description: "Setting up comprehensive Ghana Solar Cookstoves test case...",
+      });
+
+      const result = await createComprehensiveTestModel();
+      
+      if (result.success && result.modelId) {
+        toast({
+          title: "Test Model Created Successfully! ✅",
+          description: "Ghana Solar Cookstoves project with 10 years of data ready for testing.",
+        });
+        
+        // Navigate to the statements page of the new model
+        navigate(`/financial/models/${result.modelId}/statements`);
+      } else {
+        toast({
+          title: "Failed to Create Test Model",
+          description: result.error || "Unknown error occurred",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error Creating Test Model",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingTest(false);
+    }
   };
 
   return (
@@ -78,6 +124,25 @@ function FinancialSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Test Tools */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Test Tools</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={handleCreateTestModel} disabled={isCreatingTest}>
+                  {isCreatingTest ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <TestTube className="h-4 w-4" />
+                  )}
+                  <span>{isCreatingTest ? "Creating..." : "Create Test Model"}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
