@@ -150,9 +150,21 @@ export default function ParityPage() {
 
     setLoading(true);
     try {
-      // Call the actual parity engine
-      const { runParityCheckClient } = await import('../pages/api/parity');
-      const reportData = await runParityCheckClient(selectedScenario);
+      // Call the real HTTP API endpoint
+      const response = await fetch('/api/parity/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ scenario: selectedScenario }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      const reportData = await response.json();
       setReport(reportData);
       
       toast({

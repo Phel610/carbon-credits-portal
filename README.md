@@ -1,4 +1,50 @@
-# Welcome to your Lovable project
+# Financial Platform
+
+A comprehensive financial modeling and assessment platform for carbon credit projects.
+
+## Model Parity System
+
+The project includes a robust model parity verification system that compares financial engine calculations against Excel reference data.
+
+### Quick Start
+
+1. **Start the development servers:**
+   ```bash
+   # Terminal 1: Start the Parity API server
+   npm run parity:server
+   
+   # Terminal 2: Start the main app
+   VITE_QA_MODE=true npm run dev
+   ```
+
+2. **Run parity checks via CLI:**
+   ```bash
+   # Single scenario
+   npm run parity:run -- --scenario scenario_simple
+   
+   # All scenarios
+   npm run parity:all
+   
+   # Quick verification
+   npm run parity:verify
+   ```
+
+3. **Access the QA page:**
+   Navigate to `/qa/parity` when `VITE_QA_MODE=true` is set.
+
+### System Architecture
+
+The parity system uses:
+- **Express API Server** (`server/index.ts`) - Handles parity check requests
+- **Vite Proxy** - Routes `/api` calls to the Express server
+- **QA Interface** (`src/qa/ParityPage.tsx`) - Web UI for running checks
+- **CLI Runner** (`parity/scripts/runParity.ts`) - Command-line interface
+
+### API Endpoints
+
+- `POST /api/parity/run` - Run parity check for a scenario
+- `GET /api/parity/scenarios` - List available scenarios
+- `GET /health` - Health check
 
 ## Project info
 
