@@ -1,5 +1,5 @@
 // src/lib/financial/uiAdapter.ts
-import { ModelInputData } from './calculationEngine';
+import type { ModelInputData } from './calculationEngine';
 
 export function parseNumberLoose(input: string | number | null | undefined): number {
   if (input === null || input === undefined) return 0;
@@ -104,10 +104,6 @@ function ensureLen<T>(arr: T[] | undefined, L: number, fill: T): T[] {
   return arr && Array.isArray(arr) && arr.length === L ? arr : Array(L).fill(fill);
 }
 
-// Coerce to number with fallback
-function num(v: unknown, d = 0): number {
-  return typeof v === 'number' && !isNaN(v) ? v : d;
-}
 
 // Map engine inputs -> UI state (for editing existing scenarios)
 // NOTE: No helper hints; expenses shown as positive in UI.
