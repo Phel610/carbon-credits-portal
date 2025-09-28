@@ -1,9 +1,8 @@
 export const HEADERS = {
   incomeStatement: [
-    "year","credits_generated","credits_issued","price_per_credit","purchased_credits",
-    "implied_purchase_price","spot_revenue","pre_purchase_revenue","total_revenue",
-    "cogs","gross_profit","feasibility_costs","pdd_costs","mrv_costs","staff_costs","opex_total",
-    "ebitda","depreciation","ebit","interest_expense","earnings_before_tax","income_tax","net_income"
+    "year","spot_revenue","pre_purchase_revenue","total",
+    "cogs","gross_profit","feasibility_study_costs","pdd_development_costs","mrv_costs","staff_costs","opex_total",
+    "ebitda","depreciation","ebit","interest_payments","earnings_before_tax","income_tax","net_income"
   ],
   balanceSheet: [
     "year","cash","accounts_receivable","ppe_net","total_assets",
@@ -19,10 +18,10 @@ export const HEADERS = {
     "year","beginning_balance","draw","principal_payment","ending_balance","interest_expense","dscr"
   ],
   carbonStream: [
-    "year","purchase_amount","purchased_credits","implied_purchase_price"
+    "year","percentage_credits_purchased","number_of_credits","purchase_amount","purchased_credits","implied_purchase_price"
   ],
   freeCashFlow: [
-    "year","net_income","depreciation_addback","change_working_capital","capex","net_borrowing","fcf_to_equity"
+    "year","net_income","depreciation_addback","change_net_working_capital","capex","net_borrowing","fcf_to_equity"
   ]
 };
 

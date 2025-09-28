@@ -23,6 +23,8 @@ import CashFlowStatementTable from '@/components/financial/CashFlowStatementTabl
 import DebtScheduleTable from '@/components/financial/DebtScheduleTable';
 import CarbonStreamTable from '@/components/financial/CarbonStreamTable';
 import FreeCashFlowTable from '@/components/financial/FreeCashFlowTable';
+import OperationalMetricsPanel from '@/components/financial/OperationalMetricsPanel';
+import AssumptionsPanel from '@/components/financial/AssumptionsPanel';
 
 interface FinancialModel {
   id: string;
@@ -401,6 +403,17 @@ const FinancialStatements = () => {
 
         {statements && !calculating && (
           <>
+            {/* Operational Metrics Panel */}
+            <OperationalMetricsPanel statements={statements.incomeStatements} />
+
+            {/* Key Assumptions Panel */}
+            <AssumptionsPanel 
+              discountRate={0.12}
+              initialEquity={0}
+              interestRate={0.08}
+              debtDuration={5}
+            />
+
             {/* Summary Badges - Updated to match spec */}
             <div className="grid gap-4 md:grid-cols-4">
               <Card>

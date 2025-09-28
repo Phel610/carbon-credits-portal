@@ -57,6 +57,30 @@ const CarbonStreamTable = ({ statements, investorIRR }: CarbonStreamTableProps) 
             </TableHeader>
             <TableBody>
               <TableRow>
+                <TableCell className="font-medium">Percentage of credits purchased</TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={`${stmt.year}-percentage`} className="text-right">
+                    {(stmt.purchase_share * 100).toFixed(1)}%
+                  </TableCell>
+                ))}
+                <TableCell className="text-right font-semibold">
+                  -
+                </TableCell>
+              </TableRow>
+
+              <TableRow>
+                <TableCell className="font-medium">Number of credits</TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={`${stmt.year}-credits-num`} className="text-right">
+                    {formatCredits(stmt.purchased_credits)}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right font-semibold">
+                  {formatCredits(totalCredits)}
+                </TableCell>
+              </TableRow>
+
+              <TableRow>
                 <TableCell className="font-medium">Purchase Amount</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={`${stmt.year}-purchase`} className="text-right">

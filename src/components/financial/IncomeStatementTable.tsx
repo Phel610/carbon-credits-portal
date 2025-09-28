@@ -70,74 +70,6 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               </TableRow>
             </TableHeader>
             <TableBody>
-              {/* Input Data Section */}
-              <TableRow className="bg-muted/50">
-                <TableCell className="font-semibold">INPUT DATA</TableCell>
-                {statements.map(() => (
-                  <TableCell key="input-header"></TableCell>
-                ))}
-                <TableCell></TableCell>
-              </TableRow>
-              
-              <TableRow>
-                <TableCell className="pl-4">Credits Generated</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatNumber(stmt.credits_generated)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatNumber(statements.reduce((sum, stmt) => sum + stmt.credits_generated, 0))}
-                </TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-4">Credits Issued</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatNumber(stmt.credits_issued)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatNumber(statements.reduce((sum, stmt) => sum + stmt.credits_issued, 0))}
-                </TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-4">Price per Credit</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.price_per_credit)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  -
-                </TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-4">Purchased Credits</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatNumber(stmt.purchased_credits)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  {formatNumber(statements.reduce((sum, stmt) => sum + stmt.purchased_credits, 0))}
-                </TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell className="pl-4">Implied Purchase Price</TableCell>
-                {statements.map((stmt) => (
-                  <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.implied_purchase_price)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right font-medium">
-                  -
-                </TableCell>
-              </TableRow>
 
               {/* Revenue Section */}
               <TableRow className="bg-muted/50">
@@ -173,7 +105,7 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               </TableRow>
 
               <TableRow className="border-b-2">
-                <TableCell className="font-semibold">Total Revenue</TableCell>
+                <TableCell className="font-semibold">Total</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right font-semibold">
                     {formatCurrency(stmt.total_revenue)}
@@ -185,8 +117,16 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               </TableRow>
 
               {/* COGS Section */}
+              <TableRow className="bg-muted/50">
+                <TableCell className="font-semibold">Cost of goods sold</TableCell>
+                {statements.map(() => (
+                  <TableCell key="cogs-header"></TableCell>
+                ))}
+                <TableCell></TableCell>
+              </TableRow>
+              
               <TableRow>
-                <TableCell className="font-semibold">Cost of Goods Sold</TableCell>
+                <TableCell className="pl-4">COGS</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.cogs)}
@@ -219,7 +159,7 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               </TableRow>
 
               <TableRow>
-                <TableCell className="pl-4">Feasibility Costs</TableCell>
+                <TableCell className="pl-4">Feasibility study costs</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.feasibility_costs)}
@@ -231,7 +171,7 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               </TableRow>
 
               <TableRow>
-                <TableCell className="pl-4">PDD Costs</TableCell>
+                <TableCell className="pl-4">PDD development costs</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.pdd_costs)}
@@ -243,7 +183,7 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               </TableRow>
 
               <TableRow>
-                <TableCell className="pl-4">MRV Costs</TableCell>
+                <TableCell className="pl-4">Monitoring, Reporting, and Verification (MRV) costs</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.mrv_costs)}
@@ -255,7 +195,7 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               </TableRow>
 
               <TableRow>
-                <TableCell className="pl-4">Staff Costs</TableCell>
+                <TableCell className="pl-4">Staff costs</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatCurrency(stmt.staff_costs)}

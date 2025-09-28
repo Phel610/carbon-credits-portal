@@ -157,7 +157,7 @@ const BalanceSheetTable = ({
                 <TableCell className="pl-6">Accounts Payable</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.accounts_payable)}
+                    {formatCurrency(Math.abs(stmt.accounts_payable))}
                   </TableCell>
                 ))}
               </TableRow>

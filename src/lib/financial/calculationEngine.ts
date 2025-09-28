@@ -128,6 +128,7 @@ export interface CarbonStream {
   purchased_credits: number;
   implied_purchase_price: number;
   investor_cash_flow: number;
+  purchase_share: number;
 }
 
 export interface FreeCashFlow {
@@ -624,6 +625,7 @@ export class FinancialCalculationEngine {
         purchased_credits,
         implied_purchase_price: this.impliedPurchasePrice, // Fix 8: Single scalar
         investor_cash_flow,
+        purchase_share: this.inputs.purchase_share,
       });
     }
 

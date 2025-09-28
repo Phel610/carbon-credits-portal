@@ -23,11 +23,20 @@ const DebtScheduleTable = ({ statements }: DebtScheduleTableProps) => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Debt Schedule</CardTitle>
-        <CardDescription>
-          Debt balances, principal payments, interest expense, and debt service coverage
-        </CardDescription>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div>
+          <CardTitle>Debt Schedule</CardTitle>
+          <CardDescription>
+            Debt balances, principal payments, interest expense, and debt service coverage
+          </CardDescription>
+        </div>
+        <div className="space-y-2 text-right">
+          <div className="text-sm text-muted-foreground">Debt Assumptions</div>
+          <div className="space-y-1">
+            <div className="text-sm">Interest rate: <span className="font-semibold">8.0%</span></div>
+            <div className="text-sm">Duration: <span className="font-semibold">5 years</span></div>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
