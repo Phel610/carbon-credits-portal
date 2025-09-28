@@ -97,40 +97,53 @@ export function toEngineInputs(ui: any) {
   };
 }
 
+// Ensure array has correct length, fill with defaults if missing/wrong length
+function ensureLen<T>(arr: T[] | undefined, L: number, fill: T): T[] {
+  return arr && Array.isArray(arr) && arr.length === L ? arr : Array(L).fill(fill);
+}
+
+// Coerce to number with fallback
+function num(v: unknown, d = 0): number {
+  return typeof v === 'number' && !isNaN(v) ? v : d;
+}
+
 // Map engine inputs -> UI state (for editing existing scenarios)
 // NOTE: No helper hints; expenses shown as positive in UI.
-export function fromEngineToUI(engine: any) {
+// Tolerates partial engine objects for category-specific form loading
+export function fromEngineToUI(engine: Partial<any> & { years: number[] }) {
+  const L = engine.years.length;
   const asPositive = (n: number) => Math.abs(n);
+  
   return {
     years: engine.years,
 
-    issue: engine.issuance_flag.map((f: number) => f === 1),
-    credits_generated: engine.credits_generated,
-    price_per_credit:  engine.price_per_credit,
+    issue: ensureLen(engine.issuance_flag, L, 0).map((f: number) => f === 1),
+    credits_generated: ensureLen(engine.credits_generated, L, 0),
+    price_per_credit:  ensureLen(engine.price_per_credit, L, 0),
 
-    feasibility_costs: engine.feasibility_costs.map(asPositive),
-    pdd_costs:         engine.pdd_costs.map(asPositive),
-    mrv_costs:         engine.mrv_costs.map(asPositive),
-    staff_costs:       engine.staff_costs.map(asPositive),
-    depreciation:      engine.depreciation.map(asPositive),
-    capex:             engine.capex.map(asPositive),
+    feasibility_costs: ensureLen(engine.feasibility_costs, L, 0).map(asPositive),
+    pdd_costs:         ensureLen(engine.pdd_costs, L, 0).map(asPositive),
+    mrv_costs:         ensureLen(engine.mrv_costs, L, 0).map(asPositive),
+    staff_costs:       ensureLen(engine.staff_costs, L, 0).map(asPositive),
+    depreciation:      ensureLen(engine.depreciation, L, 0).map(asPositive),
+    capex:             ensureLen(engine.capex, L, 0).map(asPositive),
 
-    ar_rate:         engine.ar_rate * 100,
-    ap_rate:         engine.ap_rate * 100,
-    cogs_rate:       engine.cogs_rate * 100,
-    income_tax_rate: engine.income_tax_rate * 100,
+    ar_rate:         num(engine.ar_rate, 0) * 100,
+    ap_rate:         num(engine.ap_rate, 0) * 100,
+    cogs_rate:       num(engine.cogs_rate, 0) * 100,
+    income_tax_rate: num(engine.income_tax_rate, 0) * 100,
 
-    interest_rate:       engine.interest_rate * 100,
-    debt_duration_years: engine.debt_duration_years,
+    interest_rate:       num(engine.interest_rate, 0) * 100,
+    debt_duration_years: num(engine.debt_duration_years, 0),
 
-    equity_injection: engine.equity_injection,
-    debt_draw:        engine.debt_draw,
+    equity_injection: ensureLen(engine.equity_injection, L, 0),
+    debt_draw:        ensureLen(engine.debt_draw, L, 0),
 
-    purchase_amount: engine.purchase_amount,
-    purchase_share:  engine.purchase_share * 100,
+    purchase_amount: ensureLen(engine.purchase_amount, L, 0),
+    purchase_share:  num(engine.purchase_share, 0) * 100,
 
-    opening_cash_y1: engine.opening_cash_y1,
-    discount_rate:   engine.discount_rate * 100,
-    initial_equity_t0: engine.initial_equity_t0,
+    opening_cash_y1: num(engine.opening_cash_y1, 0),
+    discount_rate:   num(engine.discount_rate, 0) * 100,
+    initial_equity_t0: num(engine.initial_equity_t0, 0),
   };
 }
