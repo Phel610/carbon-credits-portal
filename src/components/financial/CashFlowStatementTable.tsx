@@ -88,11 +88,11 @@ const CashFlowStatementTable = ({ statements, metadata }: CashFlowStatementTable
                 <TableCell className="pl-4">Depreciation</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
-                    {formatCurrency(stmt.depreciation_addback)}
+                    {formatCurrency(Math.abs(stmt.depreciation_addback || 0))}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(statements.reduce((sum, stmt) => sum + stmt.depreciation_addback, 0))}
+                  {formatCurrency(statements.reduce((sum, stmt) => sum + Math.abs(stmt.depreciation_addback || 0), 0))}
                 </TableCell>
               </TableRow>
 

@@ -65,12 +65,28 @@ function addCalculatedFields(data: any[], metadata?: any): any[] {
     derivedFields.shareholder_equity = initialEquity + cumulativeSum(equityInjections, index);
     derivedFields.equity_injection = equityInjections[index] || 0;
 
-    // Cash flow working capital changes
+    // Cash flow working capital changes and depreciation
+    if (row.depreciation !== undefined) {
+      derivedFields.depreciation_addback = Math.abs(row.depreciation);
+    }
     if (row.change_ar !== undefined) {
       derivedFields.decrease_in_ar = -row.change_ar;
     }
     if (row.change_ap !== undefined) {
       derivedFields.increase_in_ap = row.change_ap;
+    }
+
+    // Debt financing fields
+    if (row.debt_draw !== undefined) {
+      derivedFields.debt_financing = row.debt_draw;
+    }
+    if (row.debt_repayment !== undefined) {
+      derivedFields.debt_repayments = -Math.abs(row.debt_repayment);
+    }
+
+    // Unearned revenue change
+    if (row.unearned_inflow !== undefined && row.unearned_release !== undefined) {
+      derivedFields.change_unearned_revenue = row.unearned_inflow - row.unearned_release;
     }
 
     return { ...row, ...derivedFields };
