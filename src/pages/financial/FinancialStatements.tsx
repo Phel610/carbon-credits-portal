@@ -323,11 +323,11 @@ const FinancialStatements = () => {
 
       // Save comprehensive metrics as JSON
       const comprehensiveMetricsRows = [];
-      if (statements.metrics.comprehensive_metrics) {
+      if (statements.metrics.comprehensive) {
         comprehensiveMetricsRows.push({
           model_id: modelId,
           metric_name: 'comprehensive_metrics',
-          value: JSON.stringify(statements.metrics.comprehensive_metrics),
+          value: JSON.stringify(statements.metrics.comprehensive),
         });
       }
 
