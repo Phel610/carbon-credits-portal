@@ -83,15 +83,15 @@ const BalanceSheetTable = ({
               {/* ASSETS SECTION */}
               <TableRow className="bg-trust/10">
                 <TableCell className="font-bold text-lg">ASSETS</TableCell>
-                {statements.map(() => (
-                  <TableCell key="assets-header"></TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={`assets-header-${stmt.year}`}></TableCell>
                 ))}
               </TableRow>
 
               <TableRow className="bg-muted/30">
                 <TableCell className="font-semibold">Current Assets</TableCell>
-                {statements.map(() => (
-                  <TableCell key="current-assets-header"></TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={`current-assets-header-${stmt.year}`}></TableCell>
                 ))}
               </TableRow>
 
@@ -115,8 +115,8 @@ const BalanceSheetTable = ({
 
               <TableRow className="bg-muted/30">
                 <TableCell className="font-semibold">Non-current Assets</TableCell>
-                {statements.map(() => (
-                  <TableCell key="non-current-assets-header"></TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={`non-current-assets-header-${stmt.year}`}></TableCell>
                 ))}
               </TableRow>
 
@@ -141,15 +141,15 @@ const BalanceSheetTable = ({
               {/* LIABILITIES SECTION */}
               <TableRow className="bg-trust/10">
                 <TableCell className="font-bold text-lg">LIABILITIES</TableCell>
-                {statements.map(() => (
-                  <TableCell key="liabilities-header"></TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={`liabilities-header-${stmt.year}`}></TableCell>
                 ))}
               </TableRow>
 
               <TableRow className="bg-muted/30">
                 <TableCell className="font-semibold">Current Liabilities</TableCell>
-                {statements.map(() => (
-                  <TableCell key="current-liab-header"></TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={`current-liab-header-${stmt.year}`}></TableCell>
                 ))}
               </TableRow>
 
@@ -164,8 +164,8 @@ const BalanceSheetTable = ({
 
               <TableRow className="bg-muted/30">
                 <TableCell className="font-semibold">Long-term Liabilities</TableCell>
-                {statements.map(() => (
-                  <TableCell key="long-term-liab-header"></TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={`long-term-liab-header-${stmt.year}`}></TableCell>
                 ))}
               </TableRow>
 
@@ -199,8 +199,8 @@ const BalanceSheetTable = ({
               {/* EQUITY SECTION */}
               <TableRow className="bg-trust/10">
                 <TableCell className="font-bold text-lg">EQUITY</TableCell>
-                {statements.map(() => (
-                  <TableCell key="equity-header"></TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={`equity-header-${stmt.year}`}></TableCell>
                 ))}
               </TableRow>
 
