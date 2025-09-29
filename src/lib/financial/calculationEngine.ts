@@ -2,6 +2,7 @@
 // Implements exact Excel formulas and logic as specified
 
 import { z } from 'zod';
+import { ComprehensiveMetricsCalculator } from './comprehensiveMetrics';
 
 const ENGINE_SCHEMA_VERSION = "1.0.0";
 
@@ -870,26 +871,19 @@ export class FinancialCalculationEngine {
     // Total costs (CAPEX + Development Costs)
     const totalCosts = totalCapex + totalDevelopmentCosts;
     
-    // Try to add comprehensive metrics
-    let comprehensiveMetrics = null;
-    try {
-      const { ComprehensiveMetricsCalculator } = require('./comprehensiveMetrics');
-      
-      const comprehensiveCalculator = new ComprehensiveMetricsCalculator(
-        this.incomeStatements,
-        this.balanceSheets,
-        this.cashFlows,
-        this.debtSchedule,
-        this.carbonStream,
-        this.freeCashFlow,
-        this.inputs
-      );
-      
-      comprehensiveMetrics = comprehensiveCalculator.calculate();
-      console.log('Comprehensive metrics calculated successfully');
-    } catch (error) {
-      console.error('Failed to calculate comprehensive metrics:', error);
-    }
+    // Calculate comprehensive metrics
+    const comprehensiveCalculator = new ComprehensiveMetricsCalculator(
+      this.incomeStatements,
+      this.balanceSheets,
+      this.cashFlows,
+      this.debtSchedule,
+      this.carbonStream,
+      this.freeCashFlow,
+      this.inputs
+    );
+    
+    const comprehensiveMetrics = comprehensiveCalculator.calculate();
+    console.log('Comprehensive metrics calculated successfully');
     
     const metrics: FinancialMetrics = {
       // Revenue and profitability
