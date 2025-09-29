@@ -1,11 +1,12 @@
-// Comprehensive test case data for Kenya Cookstoves Project (2025-2027)
+// Comprehensive test case data for Kenya Clean Cookstoves Project (2025-2029)
+// Based on ChatGPT's commercially sensible, internally consistent test case
 export const comprehensiveTestData = {
   // Project Data
   project: {
-    name: "Kenya Cookstoves Test",
-    description: "Test project for realistic financial modeling - 3-year improved cookstoves pilot in rural Kenya",
+    name: "Kenya Clean Cookstoves Test",
+    description: "Commercially grounded 5-year pilot with balanced opening position, moderate issuance, and realistic costs",
     project_type: "cookstoves" as const,
-    country: "Kenya",
+    country: "Kenya", 
     start_date: "2025-01-01",
     status: "active",
     project_size: "small",
@@ -15,120 +16,86 @@ export const comprehensiveTestData = {
 
   // Financial Model Data
   model: {
-    name: "Test Model - Kenya Cookstoves 2025-2027",
-    project_name: "Kenya Cookstoves Test",
+    name: "Kenya Clean Cookstoves – Test Case",
+    project_name: "Kenya Clean Cooking Pilot",
     country: "Kenya",
     start_year: 2025,
-    end_year: 2027,
+    end_year: 2029,
     status: "active",
-    description: "Realistic test model with 3-year financial projections for 5,000 cookstoves"
+    description: "Commercially grounded 5-year pilot with balanced opening position, moderate issuance, and realistic costs"
   },
 
-  // Model Inputs - Operational Metrics (3 years)
-  operationalMetrics: {
-    // Credit Generation and Pricing - 9,000 credits/year from 5,000 cookstoves (1.8 tCO2/cookstove/year)
-    creditsGenerated: [9000, 9000, 9000],
-    creditPrice: [16.0, 16.5, 17.0],
-    
-    // Credit Issuance Strategy - delayed by 1 year for verification
-    creditsIssued: [0, 9000, 9000],
-    
-    // Issuance Flag (0 = no issuance, 1 = issue credits that year)
-    issuanceFlag: [0, 1, 1],
-    
-    // Revenue Components - no other revenue streams
-    carbonRevenue: [0, 144000, 153000],
-    otherRevenue: [0, 0, 0],
-    
-    // Cost Structure (35% COGS for cookstove distribution)
-    cogsRate: [0.35, 0.35, 0.35],
-    
-    // Performance Metrics - realistic assumptions
-    utilizationRate: [0.80, 0.85, 0.85],
-    efficiencyGains: [0.05, 0.05, 0.05]
-  },
+  // UI format data that will be passed to toEngineInputs()
+  uiData: {
+    // Years array
+    years: [2025, 2026, 2027, 2028, 2029],
 
-  // Model Inputs - Expenses (3 years)
-  expenses: {
-    // Development Costs - front-loaded in year 1
-    feasibilityStudies: [5000, 0, 0],
-    pddPreparation: [5000, 0, 0],
-    
-    // Operational Expenses - ongoing MRV and staff
-    mrvCosts: [8000, 8000, 8000],
-    staffCosts: [7000, 7000, 7000],
-    
-    // Capital Expenditures - cookstove procurement
-    equipmentPurchases: [50000, 0, 0],
-    maintenanceCapex: [0, 2000, 2000],
-    
-    // Administrative costs - minimal for pilot project
-    legalProfessional: [2000, 1000, 1000],
-    insurance: [1500, 1500, 1500],
-    generalAdmin: [3000, 3000, 3000],
-    
-    // Depreciation - 3-year straight line for equipment
-    depreciation: [16667, 16667, 16666],
-    
-    // Tax Related - Kenya corporate tax rate
-    taxRate: [0.30, 0.30, 0.30]
-  },
+    // Operational metrics
+    credits_generated: [9000, 9000, 9000, 9000, 9000],
+    price_per_credit: [16, 16.5, 17, 17.5, 18],
+    issue: [false, true, true, true, true], // Year 1: no issuance, Year 2: catch-up issuance
 
-  // Model Inputs - Financing Strategy (3 years)
-  financing: {
-    // Equity - initial capital injection
-    contributedCapital: [25000, 0, 0],
-    
-    // Debt Structure - 3-year term loan at 10% (matches project duration)
-    debtDraws: [50000, 0, 0],
-    interestRate: [0.10, 0.10, 0.10],
-    loanTerm: 3, // years - matches project duration
-    
-    // No Purchase Agreements - keep it simple for pilot
-    purchaseAgreements: [0, 0, 0],
-    purchaseAgreementShare: [0, 0, 0],
-    
-    // Working Capital - minimal for cookstove project
-    accountsReceivableRate: [0.05, 0.05, 0.05],
-    accountsPayableRate: [0.08, 0.08, 0.08],
-    inventoryRate: [0.02, 0.02, 0.02],
-    
-    // Cash Management - minimal balance requirement
-    minimumCashBalance: [5000, 5000, 5000],
-    
-    // Opening Cash (will be auto-calculated to balance)
-    openingCashY1: 15000 // Reasonable starting cash for pilot project
+    // Expenses (will be converted to negative outflows by normalizeOutflow)
+    feasibility_costs: [15000, 0, 0, 0, 0],
+    pdd_costs: [40000, 0, 0, 0, 0],
+    mrv_costs: [0, 20000, 20000, 20000, 20000], // MRV only after issuance starts
+    staff_costs: [60000, 65000, 70000, 75000, 80000], // Growing staff costs
+    capex: [50000, 0, 0, 0, 0], // Capital expenditure in Year 1
+    depreciation: [10000, 10000, 10000, 10000, 10000], // Straight-line depreciation
+
+    // Working capital & tax rates (as percentages for UI)
+    cogs_rate: 15, // 15% COGS rate
+    ar_rate: 10, // 10% accounts receivable rate
+    ap_rate: 8, // 8% accounts payable rate
+    income_tax_rate: 25, // 25% tax rate
+
+    // Financing
+    interest_rate: 7.5, // 7.5% interest rate
+    debt_duration_years: 4, // 4-year debt term (fits within 5-year horizon)
+    equity_injection: [50000, 0, 0, 0, 0], // Equity injection in Year 1
+    debt_draw: [80000, 0, 0, 0, 0], // Debt draw in Year 1
+
+    // Pre-purchase agreements
+    purchase_amount: [50000, 0, 0, 0, 0], // Single advance in Year 1
+    purchase_share: 30, // 30% of issued credits go to pre-purchase
+
+    // Other parameters
+    opening_cash_y1: 75000, // Opening cash = initial equity (balanced)
+    initial_equity_t0: 75000, // Initial equity at t₀
+    initial_ppe: 0, // No initial PPE (clean opening balance)
+    discount_rate: 12 // 12% discount rate
   }
 };
 
 // Helper function to validate array lengths
 export const validateTestData = () => {
-  const targetLength = 3;
+  const targetLength = 5;
   const errors: string[] = [];
   
-  // Check operational metrics arrays
-  Object.entries(comprehensiveTestData.operationalMetrics).forEach(([key, value]) => {
+  // Check UI data arrays
+  const { uiData } = comprehensiveTestData;
+  
+  // Check year-based arrays
+  const yearBasedFields = [
+    'credits_generated', 'price_per_credit', 'issue',
+    'feasibility_costs', 'pdd_costs', 'mrv_costs', 'staff_costs', 'capex', 'depreciation',
+    'equity_injection', 'debt_draw', 'purchase_amount'
+  ];
+  
+  yearBasedFields.forEach(field => {
+    const value = uiData[field];
     if (Array.isArray(value) && value.length !== targetLength) {
-      errors.push(`operationalMetrics.${key}: expected ${targetLength}, got ${value.length}`);
+      errors.push(`uiData.${field}: expected ${targetLength}, got ${value.length}`);
     }
   });
   
-  // Check expenses arrays
-  Object.entries(comprehensiveTestData.expenses).forEach(([key, value]) => {
-    if (Array.isArray(value) && value.length !== targetLength) {
-      errors.push(`expenses.${key}: expected ${targetLength}, got ${value.length}`);
-    }
-  });
-  
-  // Check financing arrays
-  Object.entries(comprehensiveTestData.financing).forEach(([key, value]) => {
-    if (Array.isArray(value) && value.length !== targetLength) {
-      errors.push(`financing.${key}: expected ${targetLength}, got ${value.length}`);
-    }
-  });
+  // Check years array specifically
+  if (uiData.years.length !== targetLength) {
+    errors.push(`uiData.years: expected ${targetLength}, got ${uiData.years.length}`);
+  }
   
   return errors;
 };
 
 // Export years array for consistency
-export const testYears = [2025, 2026, 2027];
+export const testYears = [2025, 2026, 2027, 2028, 2029];

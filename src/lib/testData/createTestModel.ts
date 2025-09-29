@@ -73,46 +73,8 @@ export const createComprehensiveTestModel = async (): Promise<TestModelResult> =
 
     console.log("Financial model created:", newModel.id);
 
-    // Step 3: Convert test data through UI adapter to get proper engine format
-    const uiPayload = {
-      years: testYears,
-      
-      // Operational metrics (positive as user would enter)
-      issue: comprehensiveTestData.operationalMetrics.issuanceFlag,
-      credits_generated: comprehensiveTestData.operationalMetrics.creditsGenerated,
-      price_per_credit: comprehensiveTestData.operationalMetrics.creditPrice,
-      
-      // Expenses (positive as user would enter - adapter will convert to negative)
-      feasibility_costs: comprehensiveTestData.expenses.feasibilityStudies,
-      pdd_costs: comprehensiveTestData.expenses.pddPreparation,
-      mrv_costs: comprehensiveTestData.expenses.mrvCosts,
-      staff_costs: comprehensiveTestData.expenses.staffCosts,
-      capex: comprehensiveTestData.expenses.equipmentPurchases,
-      depreciation: comprehensiveTestData.expenses.depreciation,
-      
-      // Financing (positive as inflows)
-      equity_injection: comprehensiveTestData.financing.contributedCapital,
-      debt_draw: comprehensiveTestData.financing.debtDraws,
-      purchase_amount: comprehensiveTestData.financing.purchaseAgreements,
-      
-      // Rates (as percentages - adapter will convert to decimals)
-      ar_rate: 12, // 12%
-      ap_rate: 8, // 8%
-      cogs_rate: 15, // 15%
-      income_tax_rate: 25, // 25%
-      interest_rate: 7, // 7%
-      purchase_share: 40, // 40%
-      discount_rate: 12, // 12%
-      
-      // Other parameters
-      debt_duration_years: 7,
-      opening_cash_y1: 50000,
-      initial_equity_t0: 200000,
-      initial_ppe: 0
-    };
-
-    // Convert UI format to engine format (expenses become negative, rates become decimals)
-    const engineInputs = toEngineInputs(uiPayload);
+    // Step 3: Use the comprehensive UI data structure directly
+    const engineInputs = toEngineInputs(comprehensiveTestData.uiData);
 
     // Step 4: Populate model inputs using converted engine format
     const model_inputs = [];
