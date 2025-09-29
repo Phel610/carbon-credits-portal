@@ -872,18 +872,24 @@ export class FinancialCalculationEngine {
     const totalCosts = totalCapex + totalDevelopmentCosts;
     
     // Calculate comprehensive metrics
-    const comprehensiveCalculator = new ComprehensiveMetricsCalculator(
-      this.incomeStatements,
-      this.balanceSheets,
-      this.cashFlows,
-      this.debtSchedule,
-      this.carbonStream,
-      this.freeCashFlow,
-      this.inputs
-    );
-    
-    const comprehensiveMetrics = comprehensiveCalculator.calculate();
-    console.log('Comprehensive metrics calculated successfully');
+    let comprehensiveMetrics = null;
+    try {
+      const comprehensiveCalculator = new ComprehensiveMetricsCalculator(
+        this.incomeStatements,
+        this.balanceSheets,
+        this.cashFlows,
+        this.debtSchedule,
+        this.carbonStream,
+        this.freeCashFlow,
+        this.inputs
+      );
+      
+      comprehensiveMetrics = comprehensiveCalculator.calculate();
+      console.log('Comprehensive metrics calculated successfully');
+    } catch (error) {
+      console.error('Failed to calculate comprehensive metrics:', error);
+      // Continue with legacy metrics only
+    }
     
     const metrics: FinancialMetrics = {
       // Revenue and profitability
