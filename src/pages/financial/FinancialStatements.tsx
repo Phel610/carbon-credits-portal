@@ -89,19 +89,36 @@ const FinancialStatements = () => {
 
       if (inputsError) throw inputsError;
 
+      console.log('=== DEBUGGING FINANCIAL CALCULATION START ===');
+      console.log('Raw inputs data from database:', inputsData);
+      console.log('Model data:', modelData);
+
+      console.log('STEP 1: Transform inputs into calculation format');
       // Transform inputs into calculation format
       const inputs = transformInputsForCalculation(inputsData, modelData);
+      console.log('Transformed inputs:', JSON.stringify(inputs, null, 2));
 
+      console.log('STEP 2: Create FinancialCalculationEngine');
       // Calculate financial statements
       const engine = new FinancialCalculationEngine(inputs);
+      
+      console.log('STEP 3: Calculate financial statements');
       const calculatedStatements = engine.calculateFinancialStatements();
+      console.log('Calculated statements:', calculatedStatements);
 
+      console.log('STEP 4: Save calculated statements to database');
       // Save calculated statements to database
       await saveStatementsToDatabase(modelData.id, calculatedStatements);
 
+      console.log('STEP 5: Set statements in state');
       setStatements(calculatedStatements);
+      
+      console.log('=== DEBUGGING FINANCIAL CALCULATION SUCCESS ===');
     } catch (error) {
+      console.error('=== DEBUGGING FINANCIAL CALCULATION ERROR ===');
       console.error('Error calculating statements:', error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       toast({
         title: "Calculation error",
         description: "Failed to calculate financial statements. Please check your inputs.",

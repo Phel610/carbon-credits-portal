@@ -202,20 +202,50 @@ export class FinancialCalculationEngine {
   private prepRevenue: number[];
 
   constructor(inputs: ModelInputData) {
-    // Validate inputs
-    this.inputs = InputSchema.parse(inputs);
-    this.validateInputs();
-    this.validateArrayLengths();
-    this.validateOpeningBalance();
-    this.years = inputs.years;
+    console.log('=== FINANCIAL CALCULATION ENGINE DEBUG START ===');
+    console.log('Raw inputs received:', JSON.stringify(inputs, null, 2));
     
-    // Precompute values once for consistency (Fix 9)
-    this.issuedCredits = this.calculateIssuedCredits();
-    const revenueData = this.calculateRevenue(this.issuedCredits);
-    this.purchasedCreditsDelivered = revenueData.purchasedCreditsDelivered;
-    this.impliedPurchasePrice = revenueData.impliedPurchasePrice;
-    this.spotRevenue = revenueData.spotRev;
-    this.prepRevenue = revenueData.prepRev;
+    try {
+      console.log('VALIDATION STEP 1: Parse inputs with Zod schema');
+      // Validate inputs
+      this.inputs = InputSchema.parse(inputs);
+      console.log('Zod validation passed');
+      
+      console.log('VALIDATION STEP 2: Custom input validation');
+      this.validateInputs();
+      console.log('Custom validation passed');
+      
+      console.log('VALIDATION STEP 3: Array length validation');
+      this.validateArrayLengths();
+      console.log('Array length validation passed');
+      
+      console.log('VALIDATION STEP 4: Opening balance validation');
+      this.validateOpeningBalance();
+      console.log('Opening balance validation passed');
+      
+      this.years = inputs.years;
+      console.log('Years set:', this.years);
+      
+      console.log('PRECOMPUTATION STEP 1: Calculate issued credits');
+      // Precompute values once for consistency (Fix 9)
+      this.issuedCredits = this.calculateIssuedCredits();
+      console.log('Issued credits calculated:', this.issuedCredits);
+      
+      console.log('PRECOMPUTATION STEP 2: Calculate revenue data');
+      const revenueData = this.calculateRevenue(this.issuedCredits);
+      this.purchasedCreditsDelivered = revenueData.purchasedCreditsDelivered;
+      this.impliedPurchasePrice = revenueData.impliedPurchasePrice;
+      this.spotRevenue = revenueData.spotRev;
+      this.prepRevenue = revenueData.prepRev;
+      console.log('Revenue data calculated:', revenueData);
+      
+      console.log('=== FINANCIAL CALCULATION ENGINE CONSTRUCTOR SUCCESS ===');
+    } catch (error) {
+      console.error('=== FINANCIAL CALCULATION ENGINE CONSTRUCTOR ERROR ===');
+      console.error('Error in constructor:', error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      throw error;
+    }
   }
 
   private validateInputs() {
@@ -336,39 +366,72 @@ export class FinancialCalculationEngine {
   }
 
   calculateFinancialStatements() {
-    // Calculate in order of dependencies
-    const debtSchedule = this.calculateDebtSchedule();
-    const incomeStatements = this.calculateIncomeStatements(debtSchedule);
+    console.log('=== CALCULATE FINANCIAL STATEMENTS DEBUG START ===');
     
-    // Update DSCR in debt schedule after income statements are calculated (Fix 7)
-    this.updateDSCR(debtSchedule, incomeStatements);
-    
-    const balanceSheets = this.calculateBalanceSheets(incomeStatements, debtSchedule);
-    const cashFlowStatements = this.calculateCashFlowStatements(incomeStatements, balanceSheets, debtSchedule);
-    const carbonStream = this.calculateCarbonStream();
-    const freeCashFlow = this.calculateFreeCashFlow(incomeStatements, balanceSheets, debtSchedule);
-    
-    // Set instance variables before calculating metrics so comprehensive metrics can access them
-    this.incomeStatements = incomeStatements;
-    this.balanceSheets = balanceSheets;
-    this.cashFlows = cashFlowStatements;
-    this.debtSchedule = debtSchedule;
-    this.carbonStream = carbonStream;
-    this.freeCashFlow = freeCashFlow;
-    
-    const metrics = this.calculateFinancialMetrics();
-
-    return {
-      schema_version: ENGINE_SCHEMA_VERSION,
-      inputs: this.inputs,
-      incomeStatements,
-      balanceSheets,
-      cashFlowStatements,
-      debtSchedule,
-      carbonStream,
-      freeCashFlow,
-      metrics,
-    };
+    try {
+      console.log('CALC STEP 1: Calculate debt schedule');
+      // Calculate in order of dependencies
+      const debtSchedule = this.calculateDebtSchedule();
+      console.log('Debt schedule calculated:', debtSchedule);
+      
+      console.log('CALC STEP 2: Calculate income statements');
+      const incomeStatements = this.calculateIncomeStatements(debtSchedule);
+      console.log('Income statements calculated:', incomeStatements);
+      
+      console.log('CALC STEP 3: Update DSCR in debt schedule');
+      // Update DSCR in debt schedule after income statements are calculated (Fix 7)
+      this.updateDSCR(debtSchedule, incomeStatements);
+      console.log('DSCR updated');
+      
+      console.log('CALC STEP 4: Calculate balance sheets');
+      const balanceSheets = this.calculateBalanceSheets(incomeStatements, debtSchedule);
+      console.log('Balance sheets calculated:', balanceSheets);
+      
+      console.log('CALC STEP 5: Calculate cash flow statements');
+      const cashFlowStatements = this.calculateCashFlowStatements(incomeStatements, balanceSheets, debtSchedule);
+      console.log('Cash flow statements calculated:', cashFlowStatements);
+      
+      console.log('CALC STEP 6: Calculate carbon stream');
+      const carbonStream = this.calculateCarbonStream();
+      console.log('Carbon stream calculated:', carbonStream);
+      
+      console.log('CALC STEP 7: Calculate free cash flow');
+      const freeCashFlow = this.calculateFreeCashFlow(incomeStatements, balanceSheets, debtSchedule);
+      console.log('Free cash flow calculated:', freeCashFlow);
+      
+      console.log('CALC STEP 8: Set instance variables');
+      // Set instance variables before calculating metrics so comprehensive metrics can access them
+      this.incomeStatements = incomeStatements;
+      this.balanceSheets = balanceSheets;
+      this.cashFlows = cashFlowStatements;
+      this.debtSchedule = debtSchedule;
+      this.carbonStream = carbonStream;
+      this.freeCashFlow = freeCashFlow;
+      
+      console.log('CALC STEP 9: Calculate financial metrics');
+      const calculatedMetrics = this.calculateFinancialMetrics();
+      console.log('Financial metrics calculated:', calculatedMetrics);
+      
+      console.log('=== CALCULATE FINANCIAL STATEMENTS SUCCESS ===');
+      
+      return {
+        schema_version: ENGINE_SCHEMA_VERSION,
+        inputs: this.inputs,
+        incomeStatements: this.incomeStatements,
+        balanceSheets: this.balanceSheets,
+        cashFlowStatements: this.cashFlows,
+        debtSchedule: this.debtSchedule,
+        carbonStream: this.carbonStream,
+        freeCashFlow: this.freeCashFlow,
+        metrics: calculatedMetrics,
+      };
+      
+    } catch (error) {
+      console.error('=== CALCULATE FINANCIAL STATEMENTS ERROR ===');
+      console.error('Error in calculation step:', error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      throw error;
+    }
   }
 
   private calculateIncomeStatements(debtSchedule: DebtSchedule[]): IncomeStatement[] {
