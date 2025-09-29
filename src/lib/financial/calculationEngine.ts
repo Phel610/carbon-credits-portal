@@ -467,21 +467,22 @@ export class FinancialCalculationEngine {
       const begBalance = t === 0 ? 0 : schedule[t - 1].ending_balance;
       const draw = this.inputs.debt_draw[t] || 0;
       
-      // Only calculate principal payments if we have outstanding debt and are within the loan term
+      // Calculate principal payments using constant payment method
       const firstDraw = this.inputs.debt_draw[0] || 0;
       let principal_payment = 0;
       
       // Find which period we're in relative to the debt start
-      // If debt was drawn in year 0, then year 1 is period 1, year 2 is period 2, etc.
       const debtDrawYear = this.inputs.debt_draw.findIndex(draw => (draw || 0) > 0);
       const periodsSinceDrawStart = t - debtDrawYear;
       
-      // Only pay principal if: 1) there was an initial draw, 2) we're past draw year, 3) within loan term, 4) debt balance exists
-      if (firstDraw > 0 && periodsSinceDrawStart > 0 && periodsSinceDrawStart <= this.inputs.debt_duration_years && (begBalance + draw) > 0) {
-        principal_payment = this.calculatePrincipalPayment(periodsSinceDrawStart);
-        // Ensure we don't pay more than the outstanding balance after adding any new draw
-        const balanceAfterDraw = begBalance + draw;
-        principal_payment = Math.max(principal_payment, -balanceAfterDraw);
+      // Only calculate principal if: 1) there was debt drawn, 2) we're past draw year, 3) within loan term, 4) debt balance exists
+      if (firstDraw > 0 && periodsSinceDrawStart > 0 && periodsSinceDrawStart <= this.inputs.debt_duration_years && begBalance > 0) {
+        const constantPayment = this.calculateConstantPayment(firstDraw);
+        const interest_expense = begBalance * this.inputs.interest_rate;
+        principal_payment = -(constantPayment - interest_expense); // Negative because it's a payment
+        
+        // Ensure we don't pay more than the outstanding balance
+        principal_payment = Math.max(principal_payment, -begBalance);
       }
       
       const ending_balance = Math.max(0, begBalance + draw + principal_payment); // Ensure debt doesn't go negative
@@ -824,25 +825,17 @@ export class FinancialCalculationEngine {
   // Helper methods
   // Fix 1: Deleted old calculateInterestExpense helper - using debt schedule only
 
-  private calculatePrincipalPayment(period: number): number {
-    // PPMT calculation for first draw only (Excel parity)
-    const firstDraw = this.inputs.debt_draw[0] || 0;
-    if (firstDraw <= 0 || period > this.inputs.debt_duration_years) return 0;
+  private calculateConstantPayment(pv: number): number {
+    // Calculate the constant payment amount (PMT) for the entire loan term
+    const rate = this.inputs.interest_rate;
+    const nper = this.inputs.debt_duration_years;
     
-    const ppmt_result = -this.ppmt(this.inputs.interest_rate, period, this.inputs.debt_duration_years, firstDraw);
-    console.log(`PPMT Period ${period}: Rate=${this.inputs.interest_rate}, NPer=${this.inputs.debt_duration_years}, PV=${firstDraw}, Result=${ppmt_result.toFixed(0)}`);
-    return ppmt_result;
-  }
-
-  private ppmt(rate: number, per: number, nper: number, pv: number): number {
-    if (rate === 0) return -pv / nper;
+    if (rate === 0) {
+      return pv / nper; // Simple division if no interest
+    }
     
-    // Excel PPMT formula
-    const pmt = pv * (rate * Math.pow(1 + rate, nper)) / (Math.pow(1 + rate, nper) - 1);
-    const fv = 0;
-    const ipmt = (pv * rate) - (pmt - pv * rate) * ((Math.pow(1 + rate, per - 1) - 1) / rate);
-    
-    return pmt - ipmt;
+    const factor = Math.pow(1 + rate, nper);
+    return (pv * rate * factor) / (factor - 1);
   }
 
   private calculateNPV(cashFlows: number[], discountRate: number, initialInvestment: number): number {
