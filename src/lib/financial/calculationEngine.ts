@@ -469,14 +469,19 @@ export class FinancialCalculationEngine {
       
       // Only calculate principal payments if we have outstanding debt and are within the loan term
       const firstDraw = this.inputs.debt_draw[0] || 0;
-      const per = t + 1;
       let principal_payment = 0;
       
-      // Only pay principal if: 1) there was an initial draw, 2) we're within loan term, 3) we have outstanding balance
-      if (firstDraw > 0 && per <= this.inputs.debt_duration_years && begBalance > 0) {
-        principal_payment = this.calculatePrincipalPayment(per);
-        // Ensure we don't pay more than the outstanding balance
-        principal_payment = Math.max(principal_payment, -begBalance);
+      // Find which period we're in relative to the debt start
+      // If debt was drawn in year 0, then year 1 is period 1, year 2 is period 2, etc.
+      const debtDrawYear = this.inputs.debt_draw.findIndex(draw => (draw || 0) > 0);
+      const periodsSinceDrawStart = t - debtDrawYear;
+      
+      // Only pay principal if: 1) there was an initial draw, 2) we're past draw year, 3) within loan term, 4) debt balance exists
+      if (firstDraw > 0 && periodsSinceDrawStart > 0 && periodsSinceDrawStart <= this.inputs.debt_duration_years && (begBalance + draw) > 0) {
+        principal_payment = this.calculatePrincipalPayment(periodsSinceDrawStart);
+        // Ensure we don't pay more than the outstanding balance after adding any new draw
+        const balanceAfterDraw = begBalance + draw;
+        principal_payment = Math.max(principal_payment, -balanceAfterDraw);
       }
       
       const ending_balance = Math.max(0, begBalance + draw + principal_payment); // Ensure debt doesn't go negative

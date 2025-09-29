@@ -66,8 +66,8 @@ const CashFlowStatementTable = ({ statements, metadata }: CashFlowStatementTable
               {/* Operating Activities Section */}
               <TableRow className="bg-trust/10">
                 <TableCell className="font-bold">OPERATING ACTIVITIES</TableCell>
-                {statements.map(() => (
-                  <TableCell key="operating-header"></TableCell>
+                {statements.map((stmt, index) => (
+                  <TableCell key={`operating-header-${stmt.year}-${index}`}></TableCell>
                 ))}
                 <TableCell></TableCell>
               </TableRow>
@@ -136,8 +136,8 @@ const CashFlowStatementTable = ({ statements, metadata }: CashFlowStatementTable
               {/* Investing Activities Section */}
               <TableRow className="bg-trust/10">
                 <TableCell className="font-bold">INVESTING ACTIVITIES</TableCell>
-                {statements.map(() => (
-                  <TableCell key="investing-header"></TableCell>
+                {statements.map((stmt, index) => (
+                  <TableCell key={`investing-header-${stmt.year}-${index}`}></TableCell>
                 ))}
                 <TableCell></TableCell>
               </TableRow>
@@ -169,8 +169,8 @@ const CashFlowStatementTable = ({ statements, metadata }: CashFlowStatementTable
               {/* Financing Activities Section */}
               <TableRow className="bg-trust/10">
                 <TableCell className="font-bold">FINANCING ACTIVITIES</TableCell>
-                {statements.map(() => (
-                  <TableCell key="financing-header"></TableCell>
+                {statements.map((stmt, index) => (
+                  <TableCell key={`financing-header-${stmt.year}-${index}`}></TableCell>
                 ))}
                 <TableCell></TableCell>
               </TableRow>
@@ -238,8 +238,8 @@ const CashFlowStatementTable = ({ statements, metadata }: CashFlowStatementTable
               {/* Cash Position */}
               <TableRow className="bg-muted/50">
                 <TableCell className="font-semibold">CASH POSITION</TableCell>
-                {statements.map(() => (
-                  <TableCell key="cash-header"></TableCell>
+                {statements.map((stmt, index) => (
+                  <TableCell key={`cash-header-${stmt.year}-${index}`}></TableCell>
                 ))}
                 <TableCell></TableCell>
               </TableRow>
