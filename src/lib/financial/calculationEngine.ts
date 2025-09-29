@@ -614,13 +614,15 @@ export class FinancialCalculationEngine {
       const prevBalance = t > 0 ? balanceSheets[t - 1] : null;
       const debt = debtSchedule[t];
       
-      // Operating cash flow - working capital changes only (no unearned revenue)
+      // Operating cash flow - working capital changes including unearned revenue
       const net_income = income.net_income;
       const depreciation_addback = -income.depreciation; // Add back negative depreciation
       const change_ar = prevBalance ? balance.accounts_receivable - prevBalance.accounts_receivable : balance.accounts_receivable;
       const change_ap = prevBalance ? balance.accounts_payable - prevBalance.accounts_payable : balance.accounts_payable;
+      const change_unearned = prevBalance ? balance.unearned_revenue - prevBalance.unearned_revenue : balance.unearned_revenue;
+      const interest_addback = income.interest_expense; // Add back since cash interest is in Financing CF
       
-      const operating_cash_flow = net_income + depreciation_addback + change_ap - change_ar;
+      const operating_cash_flow = net_income + depreciation_addback + change_ap - change_ar + change_unearned + interest_addback;
       
       // Financing cash flow - build correctly with all components
       const debt_draw = debt.draw; // Cash inflow (positive)
