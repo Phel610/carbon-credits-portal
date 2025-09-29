@@ -635,7 +635,7 @@ export class FinancialCalculationEngine {
       const equity_injection = this.inputs.equity_injection[t] || 0; // Cash inflow (positive)
       
       // Unearned revenue flows (financing activities)
-      const unearned_inflow = this.inputs.purchase_amount[t] || 0; // Cash inflow from purchases
+      const unearned_inflow = 0; // Pre-purchase treated as operating activity via change_unearned
       const unearned_release = 0; // No cash impact - just revenue recognition
       
       // Investing cash flow
