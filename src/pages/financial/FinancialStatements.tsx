@@ -312,15 +312,30 @@ const FinancialStatements = () => {
         .delete()
         .eq('model_id', modelId);
 
-      const metricsRows = Object.entries(statements.metrics).map(([key, value]) => ({
-        model_id: modelId,
-        metric_name: key,
-        value: value as number,
-      }));
+      // Save legacy metrics (for backward compatibility)
+      const legacyMetricsRows = Object.entries(statements.metrics)
+        .filter(([key]) => key !== 'comprehensive_metrics') // Exclude comprehensive from legacy
+        .map(([key, value]) => ({
+          model_id: modelId,
+          metric_name: key,
+          value: value as number,
+        }));
 
+      // Save comprehensive metrics as JSON
+      const comprehensiveMetricsRows = [];
+      if (statements.metrics.comprehensive_metrics) {
+        comprehensiveMetricsRows.push({
+          model_id: modelId,
+          metric_name: 'comprehensive_metrics',
+          value: JSON.stringify(statements.metrics.comprehensive_metrics),
+        });
+      }
+
+      // Insert all metrics
+      const allMetricsRows = [...legacyMetricsRows, ...comprehensiveMetricsRows];
       const { error: metricsError } = await supabase
         .from('financial_metrics')
-        .insert(metricsRows);
+        .insert(allMetricsRows);
 
       if (metricsError) throw metricsError;
 
