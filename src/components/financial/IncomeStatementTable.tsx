@@ -255,7 +255,7 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               </TableRow>
 
               <TableRow>
-                <TableCell className="font-semibold">Interest payments</TableCell>
+                <TableCell className="font-semibold">Interest expense</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={stmt.year} className="text-right">
                     {formatExpense(stmt.interest_expense)}

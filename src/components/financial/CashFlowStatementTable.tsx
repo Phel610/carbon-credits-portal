@@ -199,6 +199,7 @@ const CashFlowStatementTable = ({ statements, metadata }: CashFlowStatementTable
                 </TableCell>
               </TableRow>
 
+
               <TableRow>
                 <TableCell className="pl-4">Change in unearned revenue (prepurchase) account</TableCell>
                 {statements.map((stmt) => (

@@ -17,6 +17,15 @@ const CarbonStreamTable = ({ statements, investorIRR }: CarbonStreamTableProps) 
     }).format(amount);
   };
 
+  const formatImpliedPrice = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
   const formatPercentage = (value: number) => {
     if (!isFinite(value) || isNaN(value)) return 'N/A';
     return `${(value * 100).toFixed(1)}%`;
@@ -104,11 +113,11 @@ const CarbonStreamTable = ({ statements, investorIRR }: CarbonStreamTableProps) 
                 </TableCell>
               </TableRow>
               
-              <TableRow className="bg-muted/30">
+                <TableRow className="bg-muted/30">
                 <TableCell className="font-semibold">Implied Purchase Price</TableCell>
                 {statements.map((stmt) => (
                   <TableCell key={`${stmt.year}-price`} className="text-right">
-                    {formatCurrency(stmt.implied_purchase_price)}
+                    {formatImpliedPrice(stmt.implied_purchase_price)}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-semibold">
