@@ -321,13 +321,14 @@ const FinancialStatements = () => {
           value: value as number,
         }));
 
-      // Save comprehensive metrics as JSON
+      // Save comprehensive metrics as JSON in dedicated column
       const comprehensiveMetricsRows = [];
       if (statements.metrics.comprehensive) {
         comprehensiveMetricsRows.push({
           model_id: modelId,
           metric_name: 'comprehensive_metrics',
-          value: JSON.stringify(statements.metrics.comprehensive),
+          value: null, // No numeric value for comprehensive metrics
+          comprehensive_data: statements.metrics.comprehensive,
         });
       }
 

@@ -47,6 +47,7 @@ interface FinancialModel {
 interface MetricData {
   metric_name: string;
   value: number | string;
+  comprehensive_data?: any; // JSONB data for comprehensive metrics
 }
 
 const FinancialMetrics = () => {
@@ -93,7 +94,8 @@ const FinancialMetrics = () => {
       metricsData?.forEach((metric: MetricData) => {
         if (metric.metric_name === 'comprehensive_metrics') {
           try {
-            comprehensive = JSON.parse(metric.value as string);
+            // Read from the new comprehensive_data JSONB column
+            comprehensive = metric.comprehensive_data as ComprehensiveMetrics || null;
           } catch (e) {
             console.error('Failed to parse comprehensive metrics:', e);
           }
