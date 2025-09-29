@@ -346,6 +346,15 @@ export class FinancialCalculationEngine {
     const cashFlowStatements = this.calculateCashFlowStatements(incomeStatements, balanceSheets, debtSchedule);
     const carbonStream = this.calculateCarbonStream();
     const freeCashFlow = this.calculateFreeCashFlow(incomeStatements, balanceSheets, debtSchedule);
+    
+    // Set instance variables before calculating metrics so comprehensive metrics can access them
+    this.incomeStatements = incomeStatements;
+    this.balanceSheets = balanceSheets;
+    this.cashFlows = cashFlowStatements;
+    this.debtSchedule = debtSchedule;
+    this.carbonStream = carbonStream;
+    this.freeCashFlow = freeCashFlow;
+    
     const metrics = this.calculateFinancialMetrics();
 
     return {
