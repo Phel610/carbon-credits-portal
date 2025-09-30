@@ -17,6 +17,7 @@ import AssessmentDetail from "./pages/AssessmentDetail";
 import AdditionalityAssessment from "./pages/AdditionalityAssessment";
 import FinancialDashboard from "./pages/financial/FinancialDashboard";
 import FinancialModels from "./pages/financial/FinancialModels";
+import FinancialModelsTrash from "./pages/financial/FinancialModelsTrash";
 import NewFinancialModel from "./pages/financial/NewFinancialModel";
 import FinancialModelDetail from "./pages/financial/FinancialModelDetail";
 import ModelInputs from "./pages/financial/ModelInputs";
@@ -98,6 +99,11 @@ const App = () => (
             <Route path="/financial/models" element={
               <ProtectedRoute>
                 <FinancialModels />
+              </ProtectedRoute>
+            } />
+            <Route path="/financial/models/trash" element={
+              <ProtectedRoute>
+                <FinancialModelsTrash />
               </ProtectedRoute>
             } />
             <Route path="/financial/models/new" element={

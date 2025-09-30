@@ -35,6 +35,7 @@ interface FinancialModel {
   status: string;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
 const FinancialModels = () => {
@@ -90,54 +91,33 @@ const FinancialModels = () => {
 
   const handleDeleteModel = async (modelId: string, modelName: string) => {
     const confirmed = window.confirm(
-      `Are you sure you want to delete "${modelName}"?\n\n` +
-      `This will permanently delete:\n` +
-      `• All inputs\n` +
-      `• All financial statements\n` +
-      `• All metrics\n` +
-      `• All scenarios\n` +
-      `• All sensitivity analyses\n\n` +
-      `This action cannot be undone.`
+      `Move "${modelName}" to trash?\n\n` +
+      `The model will be kept in trash for 30 days.\n` +
+      `You can restore it anytime within this period.\n\n` +
+      `After 30 days, it will be permanently deleted.`
     );
 
     if (!confirmed) return;
 
     try {
-      const tables = [
-        'sensitivity_analyses',
-        'model_scenarios', 
-        'financial_metrics',
-        'financial_statements',
-        'model_inputs'
-      ] as const;
-
-      for (const table of tables) {
-        const { error } = await supabase
-          .from(table as any)
-          .delete()
-          .eq('model_id', modelId);
-        
-        if (error) throw error;
-      }
-
-      const { error: modelError } = await supabase
+      const { error } = await supabase
         .from('financial_models')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', modelId);
 
-      if (modelError) throw modelError;
+      if (error) throw error;
 
       setModels(models.filter(m => m.id !== modelId));
       
       toast({
-        title: "Model deleted",
-        description: `"${modelName}" and all its data have been permanently deleted.`,
+        title: "Model moved to trash",
+        description: `"${modelName}" has been moved to trash. You have 30 days to restore it.`,
       });
     } catch (error) {
       console.error('Error deleting model:', error);
       toast({
         title: "Delete failed",
-        description: error instanceof Error ? error.message : "Failed to delete the model. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to move model to trash.",
         variant: "destructive",
       });
     }

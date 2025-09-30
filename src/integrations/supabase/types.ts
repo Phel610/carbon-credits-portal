@@ -209,6 +209,7 @@ export type Database = {
       financial_metrics: {
         Row: {
           calculation_date: string
+          comprehensive_data: Json | null
           created_at: string
           id: string
           metric_name: string
@@ -217,6 +218,7 @@ export type Database = {
         }
         Insert: {
           calculation_date?: string
+          comprehensive_data?: Json | null
           created_at?: string
           id?: string
           metric_name: string
@@ -225,6 +227,7 @@ export type Database = {
         }
         Update: {
           calculation_date?: string
+          comprehensive_data?: Json | null
           created_at?: string
           id?: string
           metric_name?: string
@@ -237,6 +240,7 @@ export type Database = {
         Row: {
           country: string | null
           created_at: string
+          deleted_at: string | null
           description: string | null
           end_year: number
           id: string
@@ -250,6 +254,7 @@ export type Database = {
         Insert: {
           country?: string | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           end_year: number
           id?: string
@@ -263,6 +268,7 @@ export type Database = {
         Update: {
           country?: string | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           end_year?: number
           id?: string
