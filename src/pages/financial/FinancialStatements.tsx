@@ -89,36 +89,19 @@ const FinancialStatements = () => {
 
       if (inputsError) throw inputsError;
 
-      console.log('=== DEBUGGING FINANCIAL CALCULATION START ===');
-      console.log('Raw inputs data from database:', inputsData);
-      console.log('Model data:', modelData);
-
-      console.log('STEP 1: Transform inputs into calculation format');
       // Transform inputs into calculation format
       const inputs = transformInputsForCalculation(inputsData, modelData);
-      console.log('Transformed inputs:', JSON.stringify(inputs, null, 2));
 
-      console.log('STEP 2: Create FinancialCalculationEngine');
       // Calculate financial statements
       const engine = new FinancialCalculationEngine(inputs);
-      
-      console.log('STEP 3: Calculate financial statements');
       const calculatedStatements = engine.calculateFinancialStatements();
-      console.log('Calculated statements:', calculatedStatements);
 
-      console.log('STEP 4: Save calculated statements to database');
       // Save calculated statements to database
       await saveStatementsToDatabase(modelData.id, calculatedStatements);
 
-      console.log('STEP 5: Set statements in state');
       setStatements(calculatedStatements);
-      
-      console.log('=== DEBUGGING FINANCIAL CALCULATION SUCCESS ===');
     } catch (error) {
-      console.error('=== DEBUGGING FINANCIAL CALCULATION ERROR ===');
       console.error('Error calculating statements:', error);
-      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
-      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       toast({
         title: "Calculation error",
         description: "Failed to calculate financial statements. Please check your inputs.",
@@ -329,31 +312,15 @@ const FinancialStatements = () => {
         .delete()
         .eq('model_id', modelId);
 
-      // Save legacy metrics (for backward compatibility)
-      const legacyMetricsRows = Object.entries(statements.metrics)
-        .filter(([key]) => key !== 'comprehensive_metrics') // Exclude comprehensive from legacy
-        .map(([key, value]) => ({
-          model_id: modelId,
-          metric_name: key,
-          value: value as number,
-        }));
+      const metricsRows = Object.entries(statements.metrics).map(([key, value]) => ({
+        model_id: modelId,
+        metric_name: key,
+        value: value as number,
+      }));
 
-      // Save comprehensive metrics as JSON in dedicated column
-      const comprehensiveMetricsRows = [];
-      if (statements.metrics.comprehensive) {
-        comprehensiveMetricsRows.push({
-          model_id: modelId,
-          metric_name: 'comprehensive_metrics',
-          value: null, // No numeric value for comprehensive metrics
-          comprehensive_data: statements.metrics.comprehensive,
-        });
-      }
-
-      // Insert all metrics
-      const allMetricsRows = [...legacyMetricsRows, ...comprehensiveMetricsRows];
       const { error: metricsError } = await supabase
         .from('financial_metrics')
-        .insert(allMetricsRows);
+        .insert(metricsRows);
 
       if (metricsError) throw metricsError;
 

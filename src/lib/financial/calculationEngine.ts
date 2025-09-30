@@ -2,7 +2,6 @@
 // Implements exact Excel formulas and logic as specified
 
 import { z } from 'zod';
-import { ComprehensiveMetricsCalculator } from './comprehensiveMetrics';
 
 const ENGINE_SCHEMA_VERSION = "1.0.0";
 
@@ -148,51 +147,19 @@ export interface FreeCashFlow {
 }
 
 export interface FinancialMetrics {
-  // Revenue and profitability  
-  total_revenue: number;
-  total_ebitda: number;
-  total_net_income: number;
-  ebitda_margin: number;
-  net_margin: number;
-  
-  // Investment metrics
-  total_capex: number;
-  total_development_costs_abs: number;
-  total_costs: number;
-  peak_funding_required: number;
-  
-  // Balance sheet
   total_equity: number;
   total_debt: number;
-  ending_cash: number;
   prepurchase_advances: number;
-  
-  // Returns
-  irr_equity: number | null;
-  npv_equity: number;
-  payback_period: number;
-  
-  // Risk metrics
+  total_development_costs_abs: number;
   min_dscr: number;
-  dscr_minimum: number;
-  
-  // Legacy naming compatibility
-  irr: number | null;
-  npv: number;
-  discount_rate: number;
+  ending_cash: number;
+  npv_equity: number;
+  irr_equity: number | null;
 }
 
 export class FinancialCalculationEngine {
   private inputs: ModelInputData;
   private years: number[];
-  
-  // Statement results - made public for comprehensive metrics access
-  public incomeStatements: IncomeStatement[] = [];
-  public balanceSheets: BalanceSheet[] = [];
-  public cashFlows: CashFlowStatement[] = [];
-  public debtSchedule: DebtSchedule[] = [];
-  public carbonStream: CarbonStream[] = [];
-  public freeCashFlow: FreeCashFlow[] = [];
   
   // Precomputed values for consistency
   private issuedCredits: number[];
@@ -202,50 +169,20 @@ export class FinancialCalculationEngine {
   private prepRevenue: number[];
 
   constructor(inputs: ModelInputData) {
-    console.log('=== FINANCIAL CALCULATION ENGINE DEBUG START ===');
-    console.log('Raw inputs received:', JSON.stringify(inputs, null, 2));
+    // Validate inputs
+    this.inputs = InputSchema.parse(inputs);
+    this.validateInputs();
+    this.validateArrayLengths();
+    this.validateOpeningBalance();
+    this.years = inputs.years;
     
-    try {
-      console.log('VALIDATION STEP 1: Parse inputs with Zod schema');
-      // Validate inputs
-      this.inputs = InputSchema.parse(inputs);
-      console.log('Zod validation passed');
-      
-      console.log('VALIDATION STEP 2: Custom input validation');
-      this.validateInputs();
-      console.log('Custom validation passed');
-      
-      console.log('VALIDATION STEP 3: Array length validation');
-      this.validateArrayLengths();
-      console.log('Array length validation passed');
-      
-      console.log('VALIDATION STEP 4: Opening balance validation');
-      this.validateOpeningBalance();
-      console.log('Opening balance validation passed');
-      
-      this.years = inputs.years;
-      console.log('Years set:', this.years);
-      
-      console.log('PRECOMPUTATION STEP 1: Calculate issued credits');
-      // Precompute values once for consistency (Fix 9)
-      this.issuedCredits = this.calculateIssuedCredits();
-      console.log('Issued credits calculated:', this.issuedCredits);
-      
-      console.log('PRECOMPUTATION STEP 2: Calculate revenue data');
-      const revenueData = this.calculateRevenue(this.issuedCredits);
-      this.purchasedCreditsDelivered = revenueData.purchasedCreditsDelivered;
-      this.impliedPurchasePrice = revenueData.impliedPurchasePrice;
-      this.spotRevenue = revenueData.spotRev;
-      this.prepRevenue = revenueData.prepRev;
-      console.log('Revenue data calculated:', revenueData);
-      
-      console.log('=== FINANCIAL CALCULATION ENGINE CONSTRUCTOR SUCCESS ===');
-    } catch (error) {
-      console.error('=== FINANCIAL CALCULATION ENGINE CONSTRUCTOR ERROR ===');
-      console.error('Error in constructor:', error);
-      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
-      throw error;
-    }
+    // Precompute values once for consistency (Fix 9)
+    this.issuedCredits = this.calculateIssuedCredits();
+    const revenueData = this.calculateRevenue(this.issuedCredits);
+    this.purchasedCreditsDelivered = revenueData.purchasedCreditsDelivered;
+    this.impliedPurchasePrice = revenueData.impliedPurchasePrice;
+    this.spotRevenue = revenueData.spotRev;
+    this.prepRevenue = revenueData.prepRev;
   }
 
   private validateInputs() {
@@ -366,72 +303,30 @@ export class FinancialCalculationEngine {
   }
 
   calculateFinancialStatements() {
-    console.log('=== CALCULATE FINANCIAL STATEMENTS DEBUG START ===');
+    // Calculate in order of dependencies
+    const debtSchedule = this.calculateDebtSchedule();
+    const incomeStatements = this.calculateIncomeStatements(debtSchedule);
     
-    try {
-      console.log('CALC STEP 1: Calculate debt schedule');
-      // Calculate in order of dependencies
-      const debtSchedule = this.calculateDebtSchedule();
-      console.log('Debt schedule calculated:', debtSchedule);
-      
-      console.log('CALC STEP 2: Calculate income statements');
-      const incomeStatements = this.calculateIncomeStatements(debtSchedule);
-      console.log('Income statements calculated:', incomeStatements);
-      
-      console.log('CALC STEP 3: Update DSCR in debt schedule');
-      // Update DSCR in debt schedule after income statements are calculated (Fix 7)
-      this.updateDSCR(debtSchedule, incomeStatements);
-      console.log('DSCR updated');
-      
-      console.log('CALC STEP 4: Calculate balance sheets');
-      const balanceSheets = this.calculateBalanceSheets(incomeStatements, debtSchedule);
-      console.log('Balance sheets calculated:', balanceSheets);
-      
-      console.log('CALC STEP 5: Calculate cash flow statements');
-      const cashFlowStatements = this.calculateCashFlowStatements(incomeStatements, balanceSheets, debtSchedule);
-      console.log('Cash flow statements calculated:', cashFlowStatements);
-      
-      console.log('CALC STEP 6: Calculate carbon stream');
-      const carbonStream = this.calculateCarbonStream();
-      console.log('Carbon stream calculated:', carbonStream);
-      
-      console.log('CALC STEP 7: Calculate free cash flow');
-      const freeCashFlow = this.calculateFreeCashFlow(incomeStatements, balanceSheets, debtSchedule);
-      console.log('Free cash flow calculated:', freeCashFlow);
-      
-      console.log('CALC STEP 8: Set instance variables');
-      // Set instance variables before calculating metrics so comprehensive metrics can access them
-      this.incomeStatements = incomeStatements;
-      this.balanceSheets = balanceSheets;
-      this.cashFlows = cashFlowStatements;
-      this.debtSchedule = debtSchedule;
-      this.carbonStream = carbonStream;
-      this.freeCashFlow = freeCashFlow;
-      
-      console.log('CALC STEP 9: Calculate financial metrics');
-      const calculatedMetrics = this.calculateFinancialMetrics();
-      console.log('Financial metrics calculated:', calculatedMetrics);
-      
-      console.log('=== CALCULATE FINANCIAL STATEMENTS SUCCESS ===');
-      
-      return {
-        schema_version: ENGINE_SCHEMA_VERSION,
-        inputs: this.inputs,
-        incomeStatements: this.incomeStatements,
-        balanceSheets: this.balanceSheets,
-        cashFlowStatements: this.cashFlows,
-        debtSchedule: this.debtSchedule,
-        carbonStream: this.carbonStream,
-        freeCashFlow: this.freeCashFlow,
-        metrics: calculatedMetrics,
-      };
-      
-    } catch (error) {
-      console.error('=== CALCULATE FINANCIAL STATEMENTS ERROR ===');
-      console.error('Error in calculation step:', error);
-      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
-      throw error;
-    }
+    // Update DSCR in debt schedule after income statements are calculated (Fix 7)
+    this.updateDSCR(debtSchedule, incomeStatements);
+    
+    const balanceSheets = this.calculateBalanceSheets(incomeStatements, debtSchedule);
+    const cashFlowStatements = this.calculateCashFlowStatements(incomeStatements, balanceSheets, debtSchedule);
+    const carbonStream = this.calculateCarbonStream();
+    const freeCashFlow = this.calculateFreeCashFlow(incomeStatements, balanceSheets, debtSchedule);
+    const metrics = this.calculateFinancialMetrics(incomeStatements, cashFlowStatements, freeCashFlow, carbonStream, debtSchedule);
+
+    return {
+      schema_version: ENGINE_SCHEMA_VERSION,
+      inputs: this.inputs,
+      incomeStatements,
+      balanceSheets,
+      cashFlowStatements,
+      debtSchedule,
+      carbonStream,
+      freeCashFlow,
+      metrics,
+    };
   }
 
   private calculateIncomeStatements(debtSchedule: DebtSchedule[]): IncomeStatement[] {
@@ -882,120 +777,51 @@ export class FinancialCalculationEngine {
     return fcf;
   }
 
-  calculateFinancialMetrics(): FinancialMetrics {
-    console.log('=== Starting Financial Metrics Calculation ===');
+  private calculateFinancialMetrics(
+    incomeStatements: IncomeStatement[],
+    cashFlowStatements: CashFlowStatement[],
+    freeCashFlow: FreeCashFlow[],
+    carbonStream: CarbonStream[],
+    debtSchedule: DebtSchedule[]
+  ): FinancialMetrics {
+    // Operational metrics
+    const total_revenue = incomeStatements.reduce((sum, stmt) => sum + stmt.total_revenue, 0);
+    const total_ebitda = incomeStatements.reduce((sum, stmt) => sum + stmt.ebitda, 0);
+    const total_net_income = incomeStatements.reduce((sum, stmt) => sum + stmt.net_income, 0);
+    const ebitda_margin = total_revenue > 0 ? (total_ebitda / total_revenue) * 100 : 0;
+    const net_margin = total_revenue > 0 ? (total_net_income / total_revenue) * 100 : 0;
     
-    // Calculate total metrics across the horizon
-    const totalRevenue = this.incomeStatements.reduce((sum, is) => sum + is.total_revenue, 0);
-    const totalEbitda = this.incomeStatements.reduce((sum, is) => sum + is.ebitda, 0);
-    const totalNetIncome = this.incomeStatements.reduce((sum, is) => sum + is.net_income, 0);
-    const totalCapex = this.inputs.capex.reduce((sum, capex) => sum + Math.abs(capex), 0);
+    // Investment metrics
+    const total_capex = this.inputs.capex.reduce((sum, val) => sum + Math.abs(val || 0), 0);
+    const peak_funding_required = Math.min(...cashFlowStatements.map(stmt => stmt.cash_end));
     
-    // Development costs (absolute values since they're typically stored as negative)
-    const totalDevelopmentCosts = this.inputs.feasibility_costs.reduce((sum, cost) => sum + Math.abs(cost), 0) +
-                                  this.inputs.pdd_costs.reduce((sum, cost) => sum + Math.abs(cost), 0) +
-                                  this.inputs.mrv_costs.reduce((sum, cost) => sum + Math.abs(cost), 0) +
-                                  this.inputs.staff_costs.reduce((sum, cost) => sum + Math.abs(cost), 0);
+    // Returns
+    const fcfSeries = [-this.inputs.initial_equity_t0, ...freeCashFlow.map(f => f.fcf_to_equity)];
+    const npv = this.calculateNPV(fcfSeries.slice(1), this.inputs.discount_rate, this.inputs.initial_equity_t0);
+    const company_irr = this.calculateIRR(fcfSeries);
     
-    // Calculate margins based on total revenue
-    const ebitdaMargin = totalRevenue > 0 ? (totalEbitda / totalRevenue) * 100 : 0;
-    const netMargin = totalRevenue > 0 ? (totalNetIncome / totalRevenue) * 100 : 0;
+    const investorCFs = carbonStream.map(c => c.investor_cash_flow);
+    const investor_irr = this.calculateIRR(investorCFs);
     
-    // Balance sheet totals (final year)
-    const finalBS = this.balanceSheets[this.balanceSheets.length - 1];
-    const totalEquity = finalBS.total_equity;
-    const totalDebt = finalBS.debt_balance;
-    const endingCash = finalBS.cash;
-    const prepurchaseAdvances = finalBS.unearned_revenue;
+    const payback_period = this.calculatePaybackPeriod(fcfSeries);
     
-    // Calculate IRR and NPV using FCF to Equity
-    const equityCashFlows = this.freeCashFlow.map(fcf => fcf.fcf_to_equity);
-    const irrEquity = this.calculateIRR(equityCashFlows);
-    const npvEquity = this.calculateNPV(equityCashFlows, this.inputs.discount_rate, 0);
-    const paybackPeriod = this.calculatePaybackPeriod(equityCashFlows);
+    // Debt metrics
+    const dscrValues = debtSchedule.map(d => d.dscr).filter(d => d > 0);
+    const dscr_minimum = dscrValues.length > 0 ? Math.min(...dscrValues) : 0;
     
-    // Calculate minimum DSCR
-    const validDSCRs = this.debtSchedule
-      .map(ds => ds.dscr)
-      .filter(dscr => dscr > 0 && isFinite(dscr));
-    const minDscr = validDSCRs.length > 0 ? Math.min(...validDSCRs) : 0;
-    
-    // Peak funding calculation
-    let cumulativeCash = this.inputs.opening_cash_y1;
-    let minCash = cumulativeCash;
-    
-    this.cashFlows.forEach(cf => {
-      cumulativeCash += cf.net_change_cash;
-      minCash = Math.min(minCash, cumulativeCash);
-    });
-    
-    const peakFundingRequired = Math.max(0, -minCash);
-    
-    // Total costs (CAPEX + Development Costs)
-    const totalCosts = totalCapex + totalDevelopmentCosts;
-    
-    // Calculate comprehensive metrics
-    let comprehensiveMetrics = null;
-    try {
-      const comprehensiveCalculator = new ComprehensiveMetricsCalculator(
-        this.incomeStatements,
-        this.balanceSheets,
-        this.cashFlows,
-        this.debtSchedule,
-        this.carbonStream,
-        this.freeCashFlow,
-        this.inputs
-      );
-      
-      comprehensiveMetrics = comprehensiveCalculator.calculate();
-      console.log('Comprehensive metrics calculated successfully');
-    } catch (error) {
-      console.error('Failed to calculate comprehensive metrics:', error);
-      // Continue with legacy metrics only
-    }
-    
-    const metrics: FinancialMetrics = {
-      // Revenue and profitability
-      total_revenue: totalRevenue,
-      total_ebitda: totalEbitda,
-      total_net_income: totalNetIncome,
-      ebitda_margin: ebitdaMargin,
-      net_margin: netMargin,
-      
-      // Investment metrics
-      total_capex: totalCapex,
-      total_development_costs_abs: totalDevelopmentCosts,
-      total_costs: totalCosts,
-      peak_funding_required: peakFundingRequired,
-      
-      // Balance sheet
-      total_equity: totalEquity,
-      total_debt: totalDebt,
-      ending_cash: endingCash,
-      prepurchase_advances: prepurchaseAdvances,
-      
-      // Returns
-      irr_equity: irrEquity || 0,
-      npv_equity: npvEquity,
-      payback_period: paybackPeriod,
-      
-      // Risk metrics
-      min_dscr: minDscr,
-      dscr_minimum: minDscr,
-      
-      // Additional calculated metrics
-      irr: irrEquity || 0, // Keep legacy naming for compatibility
-      npv: npvEquity, // Keep legacy naming for compatibility
-      discount_rate: this.inputs.discount_rate * 100, // Store as percentage for display
+    return {
+      total_equity: this.inputs.initial_equity_t0 + this.inputs.equity_injection.reduce((sum, val) => sum + (val || 0), 0),
+      total_debt: this.inputs.debt_draw.reduce((sum, val) => sum + (val || 0), 0),
+      prepurchase_advances: this.inputs.purchase_amount.reduce((sum, val) => sum + (val || 0), 0),
+      total_development_costs_abs: Math.abs(this.inputs.feasibility_costs.reduce((sum, val) => sum + (val || 0), 0)) +
+                                   Math.abs(this.inputs.pdd_costs.reduce((sum, val) => sum + (val || 0), 0)) +
+                                   Math.abs(this.inputs.mrv_costs.reduce((sum, val) => sum + (val || 0), 0)) +
+                                   Math.abs(this.inputs.staff_costs.reduce((sum, val) => sum + (val || 0), 0)),
+      min_dscr: dscr_minimum,
+      ending_cash: cashFlowStatements[cashFlowStatements.length - 1]?.cash_end || 0,
+      npv_equity: npv,
+      irr_equity: company_irr,
     };
-    
-    // Store comprehensive metrics if available
-    if (comprehensiveMetrics) {
-      (metrics as any).comprehensive = comprehensiveMetrics;
-    }
-    
-    console.log('Calculated Financial Metrics:', metrics);
-    return metrics;
   }
 
   // Helper methods

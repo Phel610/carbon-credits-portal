@@ -43,15 +43,7 @@ function mustLen<T>(arr: T[], name: string, L: number): T[] {
 
 // Map UI form state -> engine inputs (strict schema)
 export function toEngineInputs(ui: any) {
-  console.log('=== UI ADAPTER DEBUG START ===');
-  console.log('Input UI data:', JSON.stringify(ui, null, 2));
-  
-  if (!ui.years || !Array.isArray(ui.years)) {
-    throw new Error('UI input missing years array');
-  }
-  
   const L = ui.years.length;
-  console.log('Years length:', L);
 
   const issue = mustLen(ui.issue, 'issuance_flag', L).map(normalizeFlag);
   const credits_generated = mustLen(ui.credits_generated, 'credits_generated', L).map(parseNumberLoose);
@@ -68,7 +60,7 @@ export function toEngineInputs(ui: any) {
   const debt_draw        = mustLen(ui.debt_draw,        'debt_draw',        L).map(parseNumberLoose); // inflow: positive
   const purchase_amount  = mustLen(ui.purchase_amount,  'purchase_amount',  L).map(parseNumberLoose); // inflow: positive
 
-  const result = {
+  return {
     years: ui.years,
 
     // operational
@@ -106,11 +98,6 @@ export function toEngineInputs(ui: any) {
     initial_equity_t0: parseNumberLoose(ui.initial_equity_t0),
     initial_ppe: parseNumberLoose(ui.initial_ppe),
   };
-  
-  console.log('Final transformed result:', JSON.stringify(result, null, 2));
-  console.log('=== UI ADAPTER DEBUG END ===');
-  
-  return result;
 }
 
 // Ensure array has correct length, fill with defaults if missing/wrong length

@@ -209,7 +209,6 @@ export type Database = {
       financial_metrics: {
         Row: {
           calculation_date: string
-          comprehensive_data: Json | null
           created_at: string
           id: string
           metric_name: string
@@ -218,7 +217,6 @@ export type Database = {
         }
         Insert: {
           calculation_date?: string
-          comprehensive_data?: Json | null
           created_at?: string
           id?: string
           metric_name: string
@@ -227,7 +225,6 @@ export type Database = {
         }
         Update: {
           calculation_date?: string
-          comprehensive_data?: Json | null
           created_at?: string
           id?: string
           metric_name?: string
