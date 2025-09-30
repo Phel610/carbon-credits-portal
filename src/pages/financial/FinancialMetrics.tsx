@@ -919,7 +919,7 @@ export default function FinancialMetrics() {
                   <Bar 
                     dataKey="prepurchaseRevenue" 
                     name="Pre-purchase Revenue" 
-                    fill="hsl(152, 60%, 42%)" 
+                    fill="hsl(210, 70%, 50%)" 
                     stackId="a" 
                     radius={[8, 8, 0, 0]}
                     animationDuration={1000}
@@ -1044,6 +1044,7 @@ export default function FinancialMetrics() {
                     stroke="hsl(var(--muted-foreground))"
                     tick={{ fill: 'hsl(var(--muted-foreground))' }}
                     tickFormatter={(value) => `${value.toFixed(1)}x`}
+                    domain={[0, 'auto']}
                   />
                   <Tooltip 
                     formatter={(value: any) => formatNumber(value, 2)}
