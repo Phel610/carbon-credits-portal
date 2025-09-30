@@ -24,6 +24,7 @@ export default function FinancialMetrics() {
   const [yearlyData, setYearlyData] = useState<YearlyFinancials[]>([]);
   const [metrics, setMetrics] = useState<ComprehensiveMetrics | null>(null);
   const [discountRate, setDiscountRate] = useState(15);
+  const [scenariosExist, setScenariosExist] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -59,6 +60,14 @@ export default function FinancialMetrics() {
         .eq("model_id", id);
 
       if (inputsError) throw inputsError;
+
+      // Check if scenarios exist
+      const { data: scenarios } = await supabase
+        .from('model_scenarios')
+        .select('id')
+        .eq('model_id', id)
+        .limit(1);
+      setScenariosExist(scenarios && scenarios.length > 0);
 
       // Transform statements into yearly data structure
       const years = [...new Set(statements.map(s => s.year))].sort();
@@ -987,7 +996,7 @@ export default function FinancialMetrics() {
           onClick={() => navigate(`/financial/models/${id}/scenarios`)}
         >
           <BarChart3 className="mr-2 h-4 w-4" />
-          View Scenarios
+          {scenariosExist ? 'Review Scenarios' : 'Create Scenarios'}
         </Button>
       </div>
     </div>

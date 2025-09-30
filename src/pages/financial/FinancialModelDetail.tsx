@@ -338,7 +338,7 @@ const FinancialModelDetail = () => {
                     >
                       <Link to={`/financial/models/${id}/statements`}>
                         <BarChart3 className="mr-2 h-4 w-4" />
-                        View Statements
+                        {completionStatus.statements ? 'Review Statements' : 'Generate Statements'}
                       </Link>
                     </Button>
                   </div>
@@ -374,7 +374,7 @@ const FinancialModelDetail = () => {
                     >
                       <Link to={`/financial/models/${id}/metrics`}>
                         <TrendingUp className="mr-2 h-4 w-4" />
-                        View Metrics
+                        {completionStatus.metrics ? 'Review Metrics' : 'Calculate Metrics'}
                       </Link>
                     </Button>
                   </div>
@@ -410,7 +410,7 @@ const FinancialModelDetail = () => {
                     >
                       <Link to={`/financial/models/${id}/scenarios`}>
                         <Settings className="mr-2 h-4 w-4" />
-                        Create Scenarios
+                        {completionStatus.scenarios ? 'Review Scenarios' : 'Create Scenarios'}
                       </Link>
                     </Button>
                   </div>
@@ -446,7 +446,7 @@ const FinancialModelDetail = () => {
                     >
                       <Link to={`/financial/models/${id}/reports`}>
                         <Download className="mr-2 h-4 w-4" />
-                        Generate Reports
+                        View Reports
                       </Link>
                     </Button>
                   </div>

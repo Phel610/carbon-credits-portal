@@ -43,6 +43,7 @@ const FinancialStatements = () => {
   const [calculating, setCalculating] = useState(false);
   const [activeTab, setActiveTab] = useState('income');
   const [statements, setStatements] = useState<any>(null);
+  const [metricsExist, setMetricsExist] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -64,6 +65,14 @@ const FinancialStatements = () => {
 
       if (modelError) throw modelError;
       setModel(modelData);
+
+      // Check if metrics exist
+      const { data: metrics } = await supabase
+        .from('financial_metrics')
+        .select('id')
+        .eq('model_id', id)
+        .limit(1);
+      setMetricsExist(metrics && metrics.length > 0);
 
       // Fetch and calculate statements
       await calculateStatements(modelData);
@@ -543,7 +552,7 @@ const FinancialStatements = () => {
                 onClick={() => navigate(`/financial/models/${id}/metrics`)}
               >
                 <Target className="mr-2 h-4 w-4" />
-                View Metrics
+                {metricsExist ? 'Review Metrics' : 'Calculate Metrics'}
               </Button>
             </div>
           </>

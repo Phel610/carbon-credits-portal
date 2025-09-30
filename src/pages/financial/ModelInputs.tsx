@@ -43,6 +43,7 @@ const ModelInputs = () => {
     expenses: false,
     financing: false,
   });
+  const [statementsExist, setStatementsExist] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -70,6 +71,15 @@ const ModelInputs = () => {
       }
 
       setModel(data);
+      
+      // Check if statements exist
+      const { data: statements } = await supabase
+        .from('financial_statements')
+        .select('id')
+        .eq('model_id', id)
+        .limit(1);
+      setStatementsExist(statements && statements.length > 0);
+      
       // TODO: Check completion status based on existing inputs
     } catch (error) {
       console.error('Error fetching model:', error);
@@ -225,7 +235,7 @@ const ModelInputs = () => {
             onClick={() => navigate(`/financial/models/${id}/statements`)}
           >
             <TrendingUp className="mr-2 h-4 w-4" />
-            Generate Statements
+            {statementsExist ? 'Review Statements' : 'Generate Statements'}
           </Button>
         </div>
       </div>
