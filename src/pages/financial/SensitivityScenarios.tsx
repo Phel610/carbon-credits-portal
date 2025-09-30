@@ -555,6 +555,7 @@ const SensitivityScenarios = () => {
     }
   };
 
+  // Validation helper - checks scenario for potential issues
   const validateScenario = (variables: SensitivityVariable[]): string[] => {
     const warnings: string[] = [];
     
@@ -593,7 +594,7 @@ const SensitivityScenarios = () => {
     return warnings;
   };
 
-  const calculateMetrics = async (variables: SensitivityVariable[]) => {
+  const calculateMetrics = useCallback(async (variables: SensitivityVariable[]) => {
     try {
       setCalculating(true);
       setValidationWarnings([]);
@@ -716,14 +717,14 @@ const SensitivityScenarios = () => {
     } finally {
       setCalculating(false);
     }
-  };
+  }, [baseMetrics, modelId]); // Add dependencies
 
   // Debounced version of calculateMetrics
   const debouncedCalculateMetrics = useCallback(
     debounce((variables: SensitivityVariable[]) => {
       calculateMetrics(variables);
     }, 500),
-    []
+    [calculateMetrics]
   );
 
   const fetchScenarios = async () => {
