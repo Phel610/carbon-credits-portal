@@ -12,6 +12,7 @@ import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, Cartesia
 import type { YearlyFinancials, ComprehensiveMetrics } from "@/lib/financial/metricsTypes";
 import { calculateComprehensiveMetrics } from "@/lib/financial/metricsCalculator";
 import { useToast } from "@/hooks/use-toast";
+import { TransposedTable } from "@/components/ui/transposed-table";
 
 export default function FinancialMetrics() {
   const { id } = useParams();
@@ -524,59 +525,70 @@ export default function FinancialMetrics() {
               <CardDescription>Income statement metrics by year</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Year</th>
-                      <th className="text-right py-2">Revenue</th>
-                      <th className="text-right py-2">COGS</th>
-                      <th className="text-right py-2">Gross Profit</th>
-                      <th className="text-right py-2">OPEX</th>
-                      <th className="text-right py-2">EBITDA</th>
-                      <th className="text-right py-2">Depreciation</th>
-                      <th className="text-right py-2">Interest</th>
-                      <th className="text-right py-2">EBT</th>
-                      <th className="text-right py-2">Tax</th>
-                      <th className="text-right py-2">Net Income</th>
-                      <th className="text-right py-2">Gross %</th>
-                      <th className="text-right py-2">EBITDA %</th>
-                      <th className="text-right py-2">Net %</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.profitability.yearly.map(y => (
-                      <tr key={y.year} className="border-b">
-                        <td className="py-2 font-medium">{y.year}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.revenue)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.cogs)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.grossProfit)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.opex)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.ebitda)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.depreciation)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.interest)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.ebt)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.tax)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.netIncome)}</td>
-                        <td className="text-right font-mono">{formatPercent(y.grossMargin)}</td>
-                        <td className="text-right font-mono">{formatPercent(y.ebitdaMargin)}</td>
-                        <td className="text-right font-mono">{formatPercent(y.netMargin)}</td>
-                      </tr>
-                    ))}
-                    <tr className="font-bold">
-                      <td className="py-2">Total</td>
-                      <td className="text-right font-mono">{formatCurrency(metrics.profitability.total.revenue)}</td>
-                      <td className="text-right font-mono">{formatCurrency(metrics.profitability.total.cogs)}</td>
-                      <td className="text-right font-mono">{formatCurrency(metrics.profitability.total.grossProfit)}</td>
-                      <td className="text-right font-mono">{formatCurrency(metrics.profitability.total.opex)}</td>
-                      <td className="text-right font-mono">{formatCurrency(metrics.profitability.total.ebitda)}</td>
-                      <td colSpan={3}></td>
-                      <td className="text-right font-mono">{formatCurrency(metrics.profitability.total.netIncome)}</td>
-                      <td colSpan={3}></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <TransposedTable
+                years={metrics.profitability.yearly.map(y => y.year)}
+                showTotal
+                rows={[
+                  {
+                    metric: 'Revenue',
+                    values: metrics.profitability.yearly.map(y => formatCurrency(y.revenue)),
+                    total: formatCurrency(metrics.profitability.total.revenue)
+                  },
+                  {
+                    metric: 'COGS',
+                    values: metrics.profitability.yearly.map(y => formatCurrency(y.cogs)),
+                    total: formatCurrency(metrics.profitability.total.cogs)
+                  },
+                  {
+                    metric: 'Gross Profit',
+                    values: metrics.profitability.yearly.map(y => formatCurrency(y.grossProfit)),
+                    total: formatCurrency(metrics.profitability.total.grossProfit)
+                  },
+                  {
+                    metric: 'OPEX',
+                    values: metrics.profitability.yearly.map(y => formatCurrency(y.opex)),
+                    total: formatCurrency(metrics.profitability.total.opex)
+                  },
+                  {
+                    metric: 'EBITDA',
+                    values: metrics.profitability.yearly.map(y => formatCurrency(y.ebitda)),
+                    total: formatCurrency(metrics.profitability.total.ebitda)
+                  },
+                  {
+                    metric: 'Depreciation',
+                    values: metrics.profitability.yearly.map(y => formatCurrency(y.depreciation)),
+                  },
+                  {
+                    metric: 'Interest',
+                    values: metrics.profitability.yearly.map(y => formatCurrency(y.interest)),
+                  },
+                  {
+                    metric: 'EBT',
+                    values: metrics.profitability.yearly.map(y => formatCurrency(y.ebt)),
+                  },
+                  {
+                    metric: 'Tax',
+                    values: metrics.profitability.yearly.map(y => formatCurrency(y.tax)),
+                  },
+                  {
+                    metric: 'Net Income',
+                    values: metrics.profitability.yearly.map(y => formatCurrency(y.netIncome)),
+                    total: formatCurrency(metrics.profitability.total.netIncome)
+                  },
+                  {
+                    metric: 'Gross Margin %',
+                    values: metrics.profitability.yearly.map(y => formatPercent(y.grossMargin)),
+                  },
+                  {
+                    metric: 'EBITDA Margin %',
+                    values: metrics.profitability.yearly.map(y => formatPercent(y.ebitdaMargin)),
+                  },
+                  {
+                    metric: 'Net Margin %',
+                    values: metrics.profitability.yearly.map(y => formatPercent(y.netMargin)),
+                  },
+                ]}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -589,36 +601,39 @@ export default function FinancialMetrics() {
               <CardDescription>AR, AP, and cash conversion metrics by year</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Year</th>
-                      <th className="text-right py-2">AR</th>
-                      <th className="text-right py-2">AP</th>
-                      <th className="text-right py-2">NWC</th>
-                      <th className="text-right py-2">Revenue</th>
-                      <th className="text-right py-2">DSO (days)</th>
-                      <th className="text-right py-2">DPO (days)</th>
-                      <th className="text-right py-2">NWC % Rev</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.workingCapital.yearly.map(y => (
-                      <tr key={y.year} className="border-b">
-                        <td className="py-2 font-medium">{y.year}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.ar)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.ap)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.nwc)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.revenue)}</td>
-                        <td className="text-right font-mono">{formatNumber(y.dso, 0)}</td>
-                        <td className="text-right font-mono">{formatNumber(y.dpo, 0)}</td>
-                        <td className="text-right font-mono">{formatPercent(y.nwcPct)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TransposedTable
+                years={metrics.workingCapital.yearly.map(y => y.year)}
+                rows={[
+                  {
+                    metric: 'AR',
+                    values: metrics.workingCapital.yearly.map(y => formatCurrency(y.ar)),
+                  },
+                  {
+                    metric: 'AP',
+                    values: metrics.workingCapital.yearly.map(y => formatCurrency(y.ap)),
+                  },
+                  {
+                    metric: 'NWC',
+                    values: metrics.workingCapital.yearly.map(y => formatCurrency(y.nwc)),
+                  },
+                  {
+                    metric: 'Revenue',
+                    values: metrics.workingCapital.yearly.map(y => formatCurrency(y.revenue)),
+                  },
+                  {
+                    metric: 'DSO (days)',
+                    values: metrics.workingCapital.yearly.map(y => formatNumber(y.dso, 0)),
+                  },
+                  {
+                    metric: 'DPO (days)',
+                    values: metrics.workingCapital.yearly.map(y => formatNumber(y.dpo, 0)),
+                  },
+                  {
+                    metric: 'NWC % Rev',
+                    values: metrics.workingCapital.yearly.map(y => formatPercent(y.nwcPct)),
+                  },
+                ]}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -631,45 +646,45 @@ export default function FinancialMetrics() {
               <CardDescription>Cost and revenue per issued carbon credit</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Year</th>
-                      <th className="text-right py-2">Issued</th>
-                      <th className="text-right py-2">WA Price</th>
-                      <th className="text-right py-2">COGS/Credit</th>
-                      <th className="text-right py-2">GP/Credit</th>
-                      <th className="text-right py-2">OPEX/Credit</th>
-                      <th className="text-right py-2">LCOC</th>
-                      <th className="text-right py-2">All-in Cost</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.unitEconomics.yearly.map(y => (
-                      <tr key={y.year} className="border-b">
-                        <td className="py-2 font-medium">{y.year}</td>
-                        <td className="text-right font-mono">{formatNumber(y.issuedCredits, 0)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.waPrice)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.cogsPerCredit)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.gpPerCredit)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.opexPerCredit)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.lcoc)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.allInCostPerCredit)}</td>
-                      </tr>
-                    ))}
-                    <tr className="font-bold">
-                      <td className="py-2">Average</td>
-                      <td className="text-right font-mono">{formatNumber(metrics.unitEconomics.total.totalIssued, 0)}</td>
-                      <td className="text-right font-mono">{formatCurrency(metrics.unitEconomics.total.avgWaPrice)}</td>
-                      <td className="text-right font-mono">{formatCurrency(metrics.unitEconomics.total.avgCogsPerCredit)}</td>
-                      <td colSpan={2}></td>
-                      <td className="text-right font-mono">{formatCurrency(metrics.unitEconomics.total.avgLcoc)}</td>
-                      <td></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <TransposedTable
+                years={metrics.unitEconomics.yearly.map(y => y.year)}
+                showTotal
+                totalLabel="Average"
+                rows={[
+                  {
+                    metric: 'Issued Credits',
+                    values: metrics.unitEconomics.yearly.map(y => formatNumber(y.issuedCredits, 0)),
+                    total: formatNumber(metrics.unitEconomics.total.totalIssued, 0)
+                  },
+                  {
+                    metric: 'WA Price',
+                    values: metrics.unitEconomics.yearly.map(y => formatCurrency(y.waPrice)),
+                    total: formatCurrency(metrics.unitEconomics.total.avgWaPrice)
+                  },
+                  {
+                    metric: 'COGS/Credit',
+                    values: metrics.unitEconomics.yearly.map(y => formatCurrency(y.cogsPerCredit)),
+                    total: formatCurrency(metrics.unitEconomics.total.avgCogsPerCredit)
+                  },
+                  {
+                    metric: 'GP/Credit',
+                    values: metrics.unitEconomics.yearly.map(y => formatCurrency(y.gpPerCredit)),
+                  },
+                  {
+                    metric: 'OPEX/Credit',
+                    values: metrics.unitEconomics.yearly.map(y => formatCurrency(y.opexPerCredit)),
+                  },
+                  {
+                    metric: 'LCOC',
+                    values: metrics.unitEconomics.yearly.map(y => formatCurrency(y.lcoc)),
+                    total: formatCurrency(metrics.unitEconomics.total.avgLcoc)
+                  },
+                  {
+                    metric: 'All-in Cost',
+                    values: metrics.unitEconomics.yearly.map(y => formatCurrency(y.allInCostPerCredit)),
+                  },
+                ]}
+              />
             </CardContent>
           </Card>
 
@@ -680,34 +695,31 @@ export default function FinancialMetrics() {
               <CardDescription>Price and volume thresholds for profitability</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Year</th>
-                      <th className="text-right py-2">BE Price (Oper)</th>
-                      <th className="text-right py-2">Realized Price</th>
-                      <th className="text-right py-2">Safety Spread</th>
-                      <th className="text-right py-2">BE Volume</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.breakEven.yearly.map(y => (
-                      <tr key={y.year} className="border-b">
-                        <td className="py-2 font-medium">{y.year}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.bePriceOper)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.realizedPrice)}</td>
-                        <td className="text-right font-mono">
-                          <span className={y.safetySpread && y.safetySpread > 0 ? "text-green-600" : "text-red-600"}>
-                            {formatCurrency(y.safetySpread)}
-                          </span>
-                        </td>
-                        <td className="text-right font-mono">{formatNumber(y.beVolumeOper, 0)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TransposedTable
+                years={metrics.breakEven.yearly.map(y => y.year)}
+                rows={[
+                  {
+                    metric: 'BE Price (Oper)',
+                    values: metrics.breakEven.yearly.map(y => formatCurrency(y.bePriceOper)),
+                  },
+                  {
+                    metric: 'Realized Price',
+                    values: metrics.breakEven.yearly.map(y => formatCurrency(y.realizedPrice)),
+                  },
+                  {
+                    metric: 'Safety Spread',
+                    values: metrics.breakEven.yearly.map(y => (
+                      <span className={y.safetySpread && y.safetySpread > 0 ? "text-green-600" : "text-red-600"}>
+                        {formatCurrency(y.safetySpread)}
+                      </span>
+                    )),
+                  },
+                  {
+                    metric: 'BE Volume',
+                    values: metrics.breakEven.yearly.map(y => formatNumber(y.beVolumeOper, 0)),
+                  },
+                ]}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -720,34 +732,35 @@ export default function FinancialMetrics() {
               <CardDescription>Balance sheet health and solvency metrics</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Year</th>
-                      <th className="text-right py-2">Cash</th>
-                      <th className="text-right py-2">Current Ratio</th>
-                      <th className="text-right py-2">Cash Ratio</th>
-                      <th className="text-right py-2">D/E</th>
-                      <th className="text-right py-2">Net Debt/EBITDA</th>
-                      <th className="text-right py-2">Int Coverage</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.liquidity.yearly.map(y => (
-                      <tr key={y.year} className="border-b">
-                        <td className="py-2 font-medium">{y.year}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.cash)}</td>
-                        <td className="text-right font-mono">{formatNumber(y.currentRatio)}</td>
-                        <td className="text-right font-mono">{formatNumber(y.cashRatio)}</td>
-                        <td className="text-right font-mono">{formatNumber(y.debtToEquity)}</td>
-                        <td className="text-right font-mono">{formatNumber(y.netDebtToEbitda)}</td>
-                        <td className="text-right font-mono">{formatNumber(y.interestCoverage)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TransposedTable
+                years={metrics.liquidity.yearly.map(y => y.year)}
+                rows={[
+                  {
+                    metric: 'Cash',
+                    values: metrics.liquidity.yearly.map(y => formatCurrency(y.cash)),
+                  },
+                  {
+                    metric: 'Current Ratio',
+                    values: metrics.liquidity.yearly.map(y => formatNumber(y.currentRatio)),
+                  },
+                  {
+                    metric: 'Cash Ratio',
+                    values: metrics.liquidity.yearly.map(y => formatNumber(y.cashRatio)),
+                  },
+                  {
+                    metric: 'D/E',
+                    values: metrics.liquidity.yearly.map(y => formatNumber(y.debtToEquity)),
+                  },
+                  {
+                    metric: 'Net Debt/EBITDA',
+                    values: metrics.liquidity.yearly.map(y => formatNumber(y.netDebtToEbitda)),
+                  },
+                  {
+                    metric: 'Interest Coverage',
+                    values: metrics.liquidity.yearly.map(y => formatNumber(y.interestCoverage)),
+                  },
+                ]}
+              />
             </CardContent>
           </Card>
 
@@ -757,40 +770,43 @@ export default function FinancialMetrics() {
               <CardDescription>Debt schedule and DSCR by year</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Year</th>
-                      <th className="text-right py-2">Beg Balance</th>
-                      <th className="text-right py-2">Draw</th>
-                      <th className="text-right py-2">Principal</th>
-                      <th className="text-right py-2">End Balance</th>
-                      <th className="text-right py-2">Interest</th>
-                      <th className="text-right py-2">Debt Service</th>
-                      <th className="text-right py-2">DSCR</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.debt.yearly.map(y => (
-                      <tr key={y.year} className="border-b">
-                        <td className="py-2 font-medium">{y.year}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.beginning)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.draw)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.principal)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.ending)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.interest)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.debtService)}</td>
-                        <td className="text-right font-mono">
-                          <span className={y.dscr && y.dscr < 1.2 ? "text-red-600" : "text-green-600"}>
-                            {formatNumber(y.dscr)}x
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TransposedTable
+                years={metrics.debt.yearly.map(y => y.year)}
+                rows={[
+                  {
+                    metric: 'Beg Balance',
+                    values: metrics.debt.yearly.map(y => formatCurrency(y.beginning)),
+                  },
+                  {
+                    metric: 'Draw',
+                    values: metrics.debt.yearly.map(y => formatCurrency(y.draw)),
+                  },
+                  {
+                    metric: 'Principal',
+                    values: metrics.debt.yearly.map(y => formatCurrency(y.principal)),
+                  },
+                  {
+                    metric: 'End Balance',
+                    values: metrics.debt.yearly.map(y => formatCurrency(y.ending)),
+                  },
+                  {
+                    metric: 'Interest',
+                    values: metrics.debt.yearly.map(y => formatCurrency(y.interest)),
+                  },
+                  {
+                    metric: 'Debt Service',
+                    values: metrics.debt.yearly.map(y => formatCurrency(y.debtService)),
+                  },
+                  {
+                    metric: 'DSCR',
+                    values: metrics.debt.yearly.map(y => (
+                      <span className={y.dscr && y.dscr < 1.2 ? "text-red-600" : "text-green-600"}>
+                        {formatNumber(y.dscr)}x
+                      </span>
+                    )),
+                  },
+                ]}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -803,42 +819,42 @@ export default function FinancialMetrics() {
               <CardDescription>Generation, issuance, and pricing by year</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Year</th>
-                      <th className="text-right py-2">Generated</th>
-                      <th className="text-right py-2">Issued</th>
-                      <th className="text-right py-2">Issuance %</th>
-                      <th className="text-right py-2">PP Delivered</th>
-                      <th className="text-right py-2">PP Remaining</th>
-                      <th className="text-right py-2">WA Price</th>
-                      <th className="text-right py-2">Spot Price</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.carbonKPIs.yearly.map(y => (
-                      <tr key={y.year} className="border-b">
-                        <td className="py-2 font-medium">{y.year}</td>
-                        <td className="text-right font-mono">{formatNumber(y.generated, 0)}</td>
-                        <td className="text-right font-mono">{formatNumber(y.issued, 0)}</td>
-                        <td className="text-right font-mono">{formatPercent(y.issuanceRatio, 0)}</td>
-                        <td className="text-right font-mono">{formatNumber(y.purchasedDelivered, 0)}</td>
-                        <td className="text-right font-mono">{formatNumber(y.remainingPurchased, 0)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.waPrice)}</td>
-                        <td className="text-right font-mono">{formatCurrency(y.spotPrice)}</td>
-                      </tr>
-                    ))}
-                    <tr className="font-bold">
-                      <td className="py-2">Total</td>
-                      <td className="text-right font-mono">{formatNumber(metrics.carbonKPIs.totalGenerated, 0)}</td>
-                      <td className="text-right font-mono">{formatNumber(metrics.carbonKPIs.totalIssued, 0)}</td>
-                      <td colSpan={5}></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <TransposedTable
+                years={metrics.carbonKPIs.yearly.map(y => y.year)}
+                showTotal
+                rows={[
+                  {
+                    metric: 'Generated',
+                    values: metrics.carbonKPIs.yearly.map(y => formatNumber(y.generated, 0)),
+                    total: formatNumber(metrics.carbonKPIs.totalGenerated, 0)
+                  },
+                  {
+                    metric: 'Issued',
+                    values: metrics.carbonKPIs.yearly.map(y => formatNumber(y.issued, 0)),
+                    total: formatNumber(metrics.carbonKPIs.totalIssued, 0)
+                  },
+                  {
+                    metric: 'Issuance %',
+                    values: metrics.carbonKPIs.yearly.map(y => formatPercent(y.issuanceRatio, 0)),
+                  },
+                  {
+                    metric: 'PP Delivered',
+                    values: metrics.carbonKPIs.yearly.map(y => formatNumber(y.purchasedDelivered, 0)),
+                  },
+                  {
+                    metric: 'PP Remaining',
+                    values: metrics.carbonKPIs.yearly.map(y => formatNumber(y.remainingPurchased, 0)),
+                  },
+                  {
+                    metric: 'WA Price',
+                    values: metrics.carbonKPIs.yearly.map(y => formatCurrency(y.waPrice)),
+                  },
+                  {
+                    metric: 'Spot Price',
+                    values: metrics.carbonKPIs.yearly.map(y => formatCurrency(y.spotPrice)),
+                  },
+                ]}
+              />
               {metrics.carbonKPIs.impliedPPPrice !== null && (
                 <div className="mt-4 p-4 bg-muted rounded-lg">
                   <p className="text-sm">
