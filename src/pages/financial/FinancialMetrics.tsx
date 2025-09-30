@@ -407,7 +407,7 @@ export default function FinancialMetrics() {
 
       {/* Detailed Metrics Tabs */}
       <Tabs defaultValue="returns" className="space-y-4">
-        <TabsList>
+        <TabsList className="w-full grid grid-cols-7">
           <TabsTrigger value="returns">Returns & NPV</TabsTrigger>
           <TabsTrigger value="profitability">Profitability</TabsTrigger>
           <TabsTrigger value="unit">Unit Economics</TabsTrigger>
