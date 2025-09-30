@@ -174,7 +174,7 @@ const SensitivityScenarios = () => {
     
     const equityVal = getInputValue('financing', 'equity_injection', Array(L).fill(0));
     const debtVal = getInputValue('financing', 'debt_draw', Array(L).fill(0));
-    const purchaseAmountVal = getInputValue('purchase_agreements', 'purchase_amount', Array(L).fill(0));
+    const purchaseAmountVal = getInputValue('financing', 'purchase_amount', Array(L).fill(0));
 
     // Return in the exact format toEngineInputs expects
     return {
@@ -207,7 +207,7 @@ const SensitivityScenarios = () => {
       
       // Pre-purchase - array and scalar
       purchase_amount: ensureArray(purchaseAmountVal, L, 0),
-      purchase_share: getInputValue('purchase_agreements', 'purchase_share', 0),
+      purchase_share: getInputValue('financing', 'purchase_share', 0),
       
       // Other scalars
       opening_cash_y1: getInputValue('financing', 'opening_cash_y1', 0),
