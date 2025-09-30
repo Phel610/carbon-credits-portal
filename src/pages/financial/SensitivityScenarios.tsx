@@ -74,6 +74,7 @@ const SensitivityScenarios = () => {
   const [sensitivities, setSensitivities] = useState<SensitivityVariable[]>([]);
   const [baseMetrics, setBaseMetrics] = useState<any>(null);
   const [currentMetrics, setCurrentMetrics] = useState<any>(null);
+  const [comprehensiveMetrics, setComprehensiveMetrics] = useState<any>(null);
   
   // Scenario Management State
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
@@ -644,6 +645,7 @@ const SensitivityScenarios = () => {
         setBaseMetrics(metrics);
       }
       setCurrentMetrics(metrics);
+      setComprehensiveMetrics(comprehensiveMetrics);
 
     } catch (error) {
       console.error('Error calculating metrics:', error);
@@ -968,6 +970,87 @@ const SensitivityScenarios = () => {
                   </Card>
                 );
               })}
+            </div>
+          )}
+
+          {/* Detailed Metrics Tables */}
+          {comprehensiveMetrics && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Profitability Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm text-muted-foreground">Total Revenue</span>
+                      <span className="font-semibold">${(comprehensiveMetrics.profitability.total.revenue || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm text-muted-foreground">EBITDA</span>
+                      <span className="font-semibold">${(comprehensiveMetrics.profitability.total.ebitda || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm text-muted-foreground">Net Income</span>
+                      <span className="font-semibold">${(comprehensiveMetrics.profitability.total.netIncome || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm text-muted-foreground">Avg Gross Margin</span>
+                      <span className="font-semibold">
+                        {comprehensiveMetrics.profitability.yearly.length 
+                          ? (comprehensiveMetrics.profitability.yearly.reduce((sum: number, y: any) => sum + (y.grossMargin || 0), 0) / comprehensiveMetrics.profitability.yearly.length * 100).toFixed(1) 
+                          : 0}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-sm text-muted-foreground">Avg Net Margin</span>
+                      <span className="font-semibold">
+                        {comprehensiveMetrics.profitability.yearly.length 
+                          ? (comprehensiveMetrics.profitability.yearly.reduce((sum: number, y: any) => sum + (y.netMargin || 0), 0) / comprehensiveMetrics.profitability.yearly.length * 100).toFixed(1) 
+                          : 0}%
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Carbon Credit KPIs</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm text-muted-foreground">Total Generated</span>
+                      <span className="font-semibold">{(comprehensiveMetrics.carbonKPIs.totalGenerated || 0).toLocaleString()} credits</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm text-muted-foreground">Total Issued</span>
+                      <span className="font-semibold">{(comprehensiveMetrics.carbonKPIs.totalIssued || 0).toLocaleString()} credits</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm text-muted-foreground">Issuance Ratio</span>
+                      <span className="font-semibold">
+                        {comprehensiveMetrics.carbonKPIs.totalGenerated 
+                          ? ((comprehensiveMetrics.carbonKPIs.totalIssued / comprehensiveMetrics.carbonKPIs.totalGenerated) * 100).toFixed(1) 
+                          : 0}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm text-muted-foreground">Avg Credit Price</span>
+                      <span className="font-semibold">
+                        ${comprehensiveMetrics.carbonKPIs.yearly.length 
+                          ? (comprehensiveMetrics.carbonKPIs.yearly.reduce((sum: number, y: any) => sum + (y.waPrice || 0), 0) / comprehensiveMetrics.carbonKPIs.yearly.length).toFixed(2) 
+                          : 0}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-sm text-muted-foreground">Implied PP Price</span>
+                      <span className="font-semibold">${(comprehensiveMetrics.carbonKPIs.impliedPPPrice || 0).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 
