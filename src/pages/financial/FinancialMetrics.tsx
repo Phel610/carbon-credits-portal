@@ -150,12 +150,18 @@ export default function FinancialMetrics() {
         hasCarbonStream: statements.some(s => s.statement_type === 'carbon_stream'),
       };
 
-      if (!validation.hasDebtSchedule || !validation.hasFreeCashFlow) {
-        console.warn('⚠️ Model missing statement types. Recalculate model to generate complete data.');
+      if (!validation.hasDebtSchedule || !validation.hasFreeCashFlow || !validation.hasCarbonStream) {
+        const missingTypes = [];
+        if (!validation.hasDebtSchedule) missingTypes.push('Debt Schedule');
+        if (!validation.hasFreeCashFlow) missingTypes.push('Free Cash Flow');
+        if (!validation.hasCarbonStream) missingTypes.push('Carbon Stream');
+        
+        console.warn('⚠️ Model missing statement types:', missingTypes.join(', '));
         toast({
-          title: "Incomplete Data",
-          description: "Some metrics unavailable. Please recalculate this model to generate complete financial statements.",
-          variant: "default",
+          title: "Incomplete Financial Data",
+          description: `Missing: ${missingTypes.join(', ')}. Click "Recalculate" in Statements to generate complete metrics.`,
+          variant: "destructive",
+          duration: 10000,
         });
       }
 

@@ -191,8 +191,7 @@ export function calculateWorkingCapitalMetrics(yearlyData: YearlyFinancials[]) {
       const ap = y.accountsPayable;
       const nwc = ar - ap;
       const revenue = y.totalRevenue;
-      // Use already calculated opex from engine
-      const opex = Math.abs(y.opex);
+      const cogs = Math.abs(y.cogs);
       
       return {
         year: y.year,
@@ -201,7 +200,7 @@ export function calculateWorkingCapitalMetrics(yearlyData: YearlyFinancials[]) {
         nwc,
         revenue,
         dso: revenue !== 0 ? (365 * ar) / revenue : null,
-        dpo: opex !== 0 ? (365 * ap) / opex : null,
+        dpo: cogs !== 0 ? (365 * ap) / cogs : null, // Use COGS for DPO calculation
         nwcPct: revenue !== 0 ? (nwc / revenue) * 100 : null,
       };
     }),
@@ -250,6 +249,30 @@ export function calculateLiquidityMetrics(yearlyData: YearlyFinancials[]) {
 // ============================================================================
 
 export function calculateDebtMetrics(yearlyData: YearlyFinancials[]) {
+  // Check if any debt data exists
+  const hasDebtData = yearlyData.some(y => 
+    y.debtBeginning !== 0 || y.debtDraw !== 0 || y.debtEnding !== 0
+  );
+
+  if (!hasDebtData) {
+    // Return empty structure if no debt data
+    return {
+      yearly: yearlyData.map(y => ({
+        year: y.year,
+        beginning: 0,
+        draw: 0,
+        principal: 0,
+        ending: 0,
+        interest: 0,
+        debtService: 0,
+        dscr: null,
+      })),
+      minDSCR: null,
+      minDSCRYear: null,
+      debtAmortizesBy: null,
+    };
+  }
+
   const yearly = yearlyData.map(y => {
     const principal = Math.abs(y.debtPrincipal);
     const interest = Math.abs(y.debtInterest);
