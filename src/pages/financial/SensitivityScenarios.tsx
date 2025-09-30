@@ -28,6 +28,9 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { FinancialCalculationEngine, ModelInputData } from '@/lib/financial/calculationEngine';
+import { calculateComprehensiveMetrics } from '@/lib/financial/metricsCalculator';
+import { YearlyFinancials } from '@/lib/financial/metricsTypes';
+import { toEngineInputs } from '@/lib/financial/uiAdapter';
 
 interface SensitivityVariable {
   key: string;
@@ -47,10 +50,14 @@ interface Scenario {
   isBaseCase: boolean;
   variables: Record<string, number>;
   metrics?: {
-    npv: number;
-    irr: number;
+    equityNPV: number;
+    equityIRR: number;
+    projectNPV: number;
+    projectIRR: number;
     paybackPeriod: number;
     peakFunding: number;
+    minDSCR: number;
+    ebitdaMargin: number;
   };
 }
 
@@ -131,13 +138,46 @@ const SensitivityScenarios = () => {
 
       if (error) throw error;
 
-      // Transform inputs to sensitivity variables
+      const { data: model } = await supabase
+        .from('financial_models')
+        .select('start_year, end_year')
+        .eq('id', modelId)
+        .single();
+
+      if (!model) throw new Error('Model not found');
+
+      const numYears = model.end_year - model.start_year + 1;
+
+      // Helper to get first year value from array or single value
+      const getFirstYearValue = (inputs: any[], category: string, key: string): number => {
+        const val = getInputValue(inputs, category, key);
+        if (Array.isArray(val) && val.length > 0) return val[0];
+        return val || 0;
+      };
+
+      // Helper to calculate depreciation period (CAPEX / annual depreciation)
+      const calculateDepreciationPeriod = (): number => {
+        const capexVal = Math.abs(getFirstYearValue(inputs, 'expenses', 'capex'));
+        const depreciationVal = Math.abs(getFirstYearValue(inputs, 'expenses', 'depreciation'));
+        if (capexVal > 0 && depreciationVal > 0) {
+          return Math.round(capexVal / depreciationVal);
+        }
+        return 5; // default
+      };
+
+      // Helper to convert AR/AP rate to days
+      const rateToDays = (rate: number): number => {
+        return Math.round(rate * 365);
+      };
+
+      // Transform inputs to sensitivity variables - ALL 19 VARIABLES
       const sensitivityVars: SensitivityVariable[] = [
+        // Revenue & Pricing
         {
-          key: 'carbonCreditPrice',
+          key: 'price_per_credit',
           name: 'Carbon Credit Price',
-          baseValue: getInputValue(inputs, 'operational_metrics', 'carbon_credit_price') || 15,
-          currentValue: getInputValue(inputs, 'operational_metrics', 'carbon_credit_price') || 15,
+          baseValue: getFirstYearValue(inputs, 'operational_metrics', 'price_per_credit') || 15,
+          currentValue: getFirstYearValue(inputs, 'operational_metrics', 'price_per_credit') || 15,
           unit: '$/tCO2e',
           min: 5,
           max: 50,
@@ -145,10 +185,10 @@ const SensitivityScenarios = () => {
           format: 'currency'
         },
         {
-          key: 'creditsVolume',
+          key: 'credits_generated',
           name: 'Volume of Credits Generated',
-          baseValue: getInputValue(inputs, 'operational_metrics', 'annual_credits_generated') || 10000,
-          currentValue: getInputValue(inputs, 'operational_metrics', 'annual_credits_generated') || 10000,
+          baseValue: getFirstYearValue(inputs, 'operational_metrics', 'credits_generated') || 10000,
+          currentValue: getFirstYearValue(inputs, 'operational_metrics', 'credits_generated') || 10000,
           unit: 'tCO2e/year',
           min: 1000,
           max: 100000,
@@ -156,10 +196,22 @@ const SensitivityScenarios = () => {
           format: 'number'
         },
         {
-          key: 'cogsPercentage',
+          key: 'purchase_share',
+          name: 'Pre-purchase Agreement %',
+          baseValue: (getInputValue(inputs, 'operational_metrics', 'purchase_share') || 0) * 100,
+          currentValue: (getInputValue(inputs, 'operational_metrics', 'purchase_share') || 0) * 100,
+          unit: '%',
+          min: 0,
+          max: 100,
+          step: 5,
+          format: 'percentage'
+        },
+        // Operating Costs
+        {
+          key: 'cogs_rate',
           name: 'COGS Percentage',
-          baseValue: 35,
-          currentValue: 35,
+          baseValue: (getInputValue(inputs, 'expenses', 'cogs_rate') || 0.35) * 100,
+          currentValue: (getInputValue(inputs, 'expenses', 'cogs_rate') || 0.35) * 100,
           unit: '%',
           min: 10,
           max: 80,
@@ -167,10 +219,55 @@ const SensitivityScenarios = () => {
           format: 'percentage'
         },
         {
-          key: 'capexAmount',
+          key: 'staff_costs',
+          name: 'Annual Staff Costs',
+          baseValue: Math.abs(getFirstYearValue(inputs, 'expenses', 'staff_costs') || 50000),
+          currentValue: Math.abs(getFirstYearValue(inputs, 'expenses', 'staff_costs') || 50000),
+          unit: '$',
+          min: 10000,
+          max: 500000,
+          step: 10000,
+          format: 'currency'
+        },
+        {
+          key: 'mrv_costs',
+          name: 'Annual MRV Costs',
+          baseValue: Math.abs(getFirstYearValue(inputs, 'expenses', 'mrv_costs') || 20000),
+          currentValue: Math.abs(getFirstYearValue(inputs, 'expenses', 'mrv_costs') || 20000),
+          unit: '$',
+          min: 5000,
+          max: 200000,
+          step: 5000,
+          format: 'currency'
+        },
+        {
+          key: 'pdd_costs',
+          name: 'PDD Development Costs',
+          baseValue: Math.abs(getFirstYearValue(inputs, 'expenses', 'pdd_costs') || 30000),
+          currentValue: Math.abs(getFirstYearValue(inputs, 'expenses', 'pdd_costs') || 30000),
+          unit: '$',
+          min: 10000,
+          max: 200000,
+          step: 5000,
+          format: 'currency'
+        },
+        {
+          key: 'feasibility_costs',
+          name: 'Feasibility Study Costs',
+          baseValue: Math.abs(getFirstYearValue(inputs, 'expenses', 'feasibility_costs') || 25000),
+          currentValue: Math.abs(getFirstYearValue(inputs, 'expenses', 'feasibility_costs') || 25000),
+          unit: '$',
+          min: 10000,
+          max: 150000,
+          step: 5000,
+          format: 'currency'
+        },
+        // Capital & Development
+        {
+          key: 'capex',
           name: 'CAPEX Amount',
-          baseValue: getInputValue(inputs, 'expenses', 'capital_expenditure') || 500000,
-          currentValue: getInputValue(inputs, 'expenses', 'capital_expenditure') || 500000,
+          baseValue: Math.abs(getFirstYearValue(inputs, 'expenses', 'capex') || 500000),
+          currentValue: Math.abs(getFirstYearValue(inputs, 'expenses', 'capex') || 500000),
           unit: '$',
           min: 100000,
           max: 5000000,
@@ -178,10 +275,67 @@ const SensitivityScenarios = () => {
           format: 'currency'
         },
         {
-          key: 'taxRate',
+          key: 'depreciation_period',
+          name: 'Depreciation Period',
+          baseValue: calculateDepreciationPeriod(),
+          currentValue: calculateDepreciationPeriod(),
+          unit: 'years',
+          min: 3,
+          max: 20,
+          step: 1,
+          format: 'number'
+        },
+        // Financing
+        {
+          key: 'debt_draw',
+          name: 'Debt Amount',
+          baseValue: getFirstYearValue(inputs, 'financing', 'debt_draw') || 0,
+          currentValue: getFirstYearValue(inputs, 'financing', 'debt_draw') || 0,
+          unit: '$',
+          min: 0,
+          max: 3000000,
+          step: 50000,
+          format: 'currency'
+        },
+        {
+          key: 'interest_rate',
+          name: 'Interest Rate',
+          baseValue: (getInputValue(inputs, 'financing', 'interest_rate') || 0.10) * 100,
+          currentValue: (getInputValue(inputs, 'financing', 'interest_rate') || 0.10) * 100,
+          unit: '%',
+          min: 3,
+          max: 20,
+          step: 0.25,
+          format: 'percentage'
+        },
+        {
+          key: 'debt_duration_years',
+          name: 'Debt Tenor',
+          baseValue: getInputValue(inputs, 'financing', 'debt_duration_years') || 5,
+          currentValue: getInputValue(inputs, 'financing', 'debt_duration_years') || 5,
+          unit: 'years',
+          min: 2,
+          max: 15,
+          step: 1,
+          format: 'number'
+        },
+        {
+          key: 'equity_injection',
+          name: 'Equity Investment',
+          baseValue: getFirstYearValue(inputs, 'financing', 'equity_injection') || 0,
+          currentValue: getFirstYearValue(inputs, 'financing', 'equity_injection') || 0,
+          unit: '$',
+          min: 0,
+          max: 2000000,
+          step: 50000,
+          format: 'currency'
+        },
+        // Financial Assumptions
+        {
+          key: 'income_tax_rate',
           name: 'Tax Rate',
-          baseValue: getInputValue(inputs, 'investor_assumptions', 'tax_rate') || 25,
-          currentValue: getInputValue(inputs, 'investor_assumptions', 'tax_rate') || 25,
+          baseValue: (getInputValue(inputs, 'expenses', 'income_tax_rate') || 0.25) * 100,
+          currentValue: (getInputValue(inputs, 'expenses', 'income_tax_rate') || 0.25) * 100,
           unit: '%',
           min: 0,
           max: 50,
@@ -189,15 +343,49 @@ const SensitivityScenarios = () => {
           format: 'percentage'
         },
         {
-          key: 'discountRate',
+          key: 'discount_rate',
           name: 'Discount Rate (WACC)',
-          baseValue: getInputValue(inputs, 'investor_assumptions', 'discount_rate') || 12,
-          currentValue: getInputValue(inputs, 'investor_assumptions', 'discount_rate') || 12,
+          baseValue: (getInputValue(inputs, 'financial_assumptions', 'discount_rate') || 0.12) * 100,
+          currentValue: (getInputValue(inputs, 'financial_assumptions', 'discount_rate') || 0.12) * 100,
           unit: '%',
           min: 5,
           max: 25,
           step: 0.25,
           format: 'percentage'
+        },
+        {
+          key: 'initial_equity_t0',
+          name: 'Opening Cash Balance',
+          baseValue: getInputValue(inputs, 'financing', 'initial_equity_t0') || 0,
+          currentValue: getInputValue(inputs, 'financing', 'initial_equity_t0') || 0,
+          unit: '$',
+          min: 0,
+          max: 1000000,
+          step: 10000,
+          format: 'currency'
+        },
+        // Working Capital
+        {
+          key: 'ar_days',
+          name: 'Accounts Receivable Days',
+          baseValue: rateToDays(getInputValue(inputs, 'financial_assumptions', 'ar_rate') || 0.05),
+          currentValue: rateToDays(getInputValue(inputs, 'financial_assumptions', 'ar_rate') || 0.05),
+          unit: 'days',
+          min: 0,
+          max: 180,
+          step: 5,
+          format: 'number'
+        },
+        {
+          key: 'ap_days',
+          name: 'Accounts Payable Days',
+          baseValue: rateToDays(getInputValue(inputs, 'financial_assumptions', 'ap_rate') || 0.10),
+          currentValue: rateToDays(getInputValue(inputs, 'financial_assumptions', 'ap_rate') || 0.10),
+          unit: 'days',
+          min: 0,
+          max: 180,
+          step: 5,
+          format: 'number'
         }
       ];
 
@@ -211,31 +399,259 @@ const SensitivityScenarios = () => {
     }
   };
 
-  const getInputValue = (inputs: any[], category: string, key: string): number | null => {
+  const getInputValue = (inputs: any[], category: string, key: string): any => {
     const input = inputs.find(i => i.category === category && i.input_key === key);
-    return input?.input_value || null;
+    if (!input) return null;
+    
+    // Extract .value from JSONB structure
+    const inputValue = input.input_value;
+    if (inputValue && typeof inputValue === 'object' && 'value' in inputValue) {
+      return inputValue.value;
+    }
+    
+    return inputValue;
+  };
+
+  const transformInputsToEngine = async (variables: SensitivityVariable[]): Promise<ModelInputData | null> => {
+    try {
+      // Fetch all model inputs from database
+      const { data: inputs, error: inputsError } = await supabase
+        .from('model_inputs')
+        .select('*')
+        .eq('model_id', modelId);
+
+      if (inputsError) throw inputsError;
+
+      const { data: model, error: modelError } = await supabase
+        .from('financial_models')
+        .select('start_year, end_year')
+        .eq('id', modelId)
+        .single();
+
+      if (modelError) throw modelError;
+
+      // Build years array
+      const years: number[] = [];
+      for (let year = model.start_year; year <= model.end_year; year++) {
+        years.push(year);
+      }
+
+      // Helper to get array from inputs
+      const getArray = (category: string, key: string, defaultValue: number = 0): number[] => {
+        const input = inputs?.find(i => i.category === category && i.input_key === key);
+        if (!input) return years.map(() => defaultValue);
+        
+        const inputValue = input.input_value;
+        const value = (inputValue && typeof inputValue === 'object' && 'value' in inputValue) 
+          ? (inputValue as any).value 
+          : inputValue;
+        
+        if (Array.isArray(value)) {
+          // Pad to match years length
+          return [...value, ...Array(Math.max(0, years.length - value.length)).fill(defaultValue)];
+        }
+        // Single value - repeat for all years
+        return years.map(() => value ?? defaultValue);
+      };
+
+      // Helper to get scalar from inputs
+      const getScalar = (category: string, key: string, defaultValue: number = 0): number => {
+        const input = inputs?.find(i => i.category === category && i.input_key === key);
+        if (!input) return defaultValue;
+        
+        const inputValue = input.input_value;
+        const value = (inputValue && typeof inputValue === 'object' && 'value' in inputValue) 
+          ? (inputValue as any).value 
+          : inputValue;
+        
+        if (Array.isArray(value)) return value[0] ?? defaultValue;
+        return value ?? defaultValue;
+      };
+
+      // Create sensitivity overrides map
+      const overrides: Record<string, number> = {};
+      variables.forEach(v => {
+        overrides[v.key] = v.currentValue;
+      });
+
+      // Apply overrides with proper conversions
+      const applyOverride = (key: string, baseValue: number, isPercentage: boolean = false, isNegative: boolean = false): number => {
+        let value = overrides[key] !== undefined ? overrides[key] : baseValue;
+        if (isPercentage) value = value / 100; // Convert percentage to decimal
+        if (isNegative) value = -Math.abs(value); // Make negative for costs
+        return value;
+      };
+
+      // Build ModelInputData with sensitivity overrides
+      const pricePerCredit = overrides['price_per_credit'] ?? getArray('operational_metrics', 'price_per_credit', 15)[0];
+      const creditsGenerated = overrides['credits_generated'] ?? getArray('operational_metrics', 'credits_generated', 10000)[0];
+      const purchaseShare = applyOverride('purchase_share', getScalar('operational_metrics', 'purchase_share', 0), true);
+      
+      const cogsRate = applyOverride('cogs_rate', getScalar('expenses', 'cogs_rate', 0.35), true);
+      const staffCosts = applyOverride('staff_costs', Math.abs(getArray('expenses', 'staff_costs', 50000)[0]), false, true);
+      const mrvCosts = applyOverride('mrv_costs', Math.abs(getArray('expenses', 'mrv_costs', 20000)[0]), false, true);
+      const pddCosts = applyOverride('pdd_costs', Math.abs(getArray('expenses', 'pdd_costs', 30000)[0]), false, true);
+      const feasibilityCosts = applyOverride('feasibility_costs', Math.abs(getArray('expenses', 'feasibility_costs', 25000)[0]), false, true);
+      
+      const capexAmount = applyOverride('capex', Math.abs(getArray('expenses', 'capex', 500000)[0]), false, true);
+      const depreciationPeriod = overrides['depreciation_period'] ?? 5;
+      const annualDepreciation = capexAmount / depreciationPeriod; // Already negative from capexAmount
+      
+      const debtDraw = overrides['debt_draw'] ?? getArray('financing', 'debt_draw', 0)[0];
+      const interestRate = applyOverride('interest_rate', getScalar('financing', 'interest_rate', 0.10), true);
+      const debtDuration = overrides['debt_duration_years'] ?? getScalar('financing', 'debt_duration_years', 5);
+      const equityInjection = overrides['equity_injection'] ?? getArray('financing', 'equity_injection', 0)[0];
+      
+      const incomeTaxRate = applyOverride('income_tax_rate', getScalar('expenses', 'income_tax_rate', 0.25), true);
+      const discountRate = applyOverride('discount_rate', getScalar('financial_assumptions', 'discount_rate', 0.12), true);
+      const initialEquity = overrides['initial_equity_t0'] ?? getScalar('financing', 'initial_equity_t0', 0);
+      
+      const arDays = overrides['ar_days'] ?? Math.round((getScalar('financial_assumptions', 'ar_rate', 0.05)) * 365);
+      const apDays = overrides['ap_days'] ?? Math.round((getScalar('financial_assumptions', 'ap_rate', 0.10)) * 365);
+      const arRate = arDays / 365;
+      const apRate = apDays / 365;
+
+      // Get purchase_amount and issuance_flag from database (not sensitized)
+      const purchaseAmount = getArray('operational_metrics', 'purchase_amount', 0);
+      const issuanceFlag = getArray('operational_metrics', 'issuance_flag', 1);
+
+      const modelInputs: ModelInputData = {
+        years,
+        credits_generated: years.map(() => creditsGenerated),
+        price_per_credit: years.map(() => pricePerCredit),
+        issuance_flag: issuanceFlag,
+        cogs_rate: cogsRate,
+        feasibility_costs: years.map((_, i) => i === 0 ? feasibilityCosts : 0),
+        pdd_costs: years.map((_, i) => i === 0 ? pddCosts : 0),
+        mrv_costs: years.map(() => mrvCosts),
+        staff_costs: years.map(() => staffCosts),
+        depreciation: years.map(() => annualDepreciation),
+        income_tax_rate: incomeTaxRate,
+        ar_rate: arRate,
+        ap_rate: apRate,
+        capex: years.map((_, i) => i === 0 ? capexAmount : 0),
+        equity_injection: years.map((_, i) => i === 0 ? equityInjection : 0),
+        interest_rate: interestRate,
+        debt_duration_years: Math.round(debtDuration),
+        debt_draw: years.map((_, i) => i === 0 ? debtDraw : 0),
+        purchase_amount: purchaseAmount,
+        purchase_share: purchaseShare,
+        discount_rate: discountRate,
+        initial_equity_t0: initialEquity,
+        opening_cash_y1: initialEquity, // Set opening cash equal to initial equity for balance
+        initial_ppe: 0
+      };
+
+      return modelInputs;
+
+    } catch (error) {
+      console.error('Error transforming inputs:', error);
+      return null;
+    }
   };
 
   const calculateMetrics = async (variables: SensitivityVariable[]) => {
     try {
       setCalculating(true);
       
-      // This is a simplified calculation - in a real implementation,
-      // you would apply the sensitivity changes and recalculate the full model
-      const mockMetrics = {
-        npv: Math.random() * 1000000 + 500000,
-        irr: Math.random() * 20 + 10,
-        paybackPeriod: Math.random() * 5 + 2,
-        peakFunding: Math.random() * 2000000 + 500000,
+      // Transform inputs to engine format with sensitivity overrides
+      const engineInputs = await transformInputsToEngine(variables);
+      if (!engineInputs) {
+        throw new Error('Failed to transform inputs');
+      }
+
+      // Run calculation engine
+      const engine = new FinancialCalculationEngine(engineInputs);
+      const results = engine.calculateFinancialStatements();
+
+      // Transform to YearlyFinancials format
+      const yearlyData: YearlyFinancials[] = engineInputs.years.map((year, index) => ({
+        year,
+        // Income Statement
+        spotRevenue: results.incomeStatements[index].spot_revenue,
+        prepurchaseRevenue: results.incomeStatements[index].pre_purchase_revenue,
+        totalRevenue: results.incomeStatements[index].total_revenue,
+        cogs: results.incomeStatements[index].cogs,
+        grossProfit: results.incomeStatements[index].total_revenue - results.incomeStatements[index].cogs,
+        feasibility: results.incomeStatements[index].feasibility_costs,
+        pdd: results.incomeStatements[index].pdd_costs,
+        mrv: results.incomeStatements[index].mrv_costs,
+        staff: results.incomeStatements[index].staff_costs,
+        opex: results.incomeStatements[index].opex_total,
+        ebitda: results.incomeStatements[index].ebitda,
+        depreciation: results.incomeStatements[index].depreciation,
+        interest: results.incomeStatements[index].interest_expense,
+        ebt: results.incomeStatements[index].earnings_before_tax,
+        incomeTax: results.incomeStatements[index].income_tax,
+        netIncome: results.incomeStatements[index].net_income,
+        // Balance Sheet
+        cash: results.balanceSheets[index].cash,
+        accountsReceivable: results.balanceSheets[index].accounts_receivable,
+        ppe: results.balanceSheets[index].ppe_net,
+        totalAssets: results.balanceSheets[index].total_assets,
+        accountsPayable: results.balanceSheets[index].accounts_payable,
+        unearnedRevenue: results.balanceSheets[index].unearned_revenue,
+        debt: results.balanceSheets[index].debt_balance,
+        totalLiabilities: results.balanceSheets[index].total_liabilities,
+        equity: results.balanceSheets[index].total_equity,
+        retainedEarnings: results.balanceSheets[index].retained_earnings,
+        contributedCapital: results.balanceSheets[index].contributed_capital,
+        // Cash Flow
+        operatingCF: results.cashFlowStatements[index].operating_cash_flow,
+        capex: results.cashFlowStatements[index].capex,
+        investingCF: results.cashFlowStatements[index].investing_cash_flow,
+        financingCF: results.cashFlowStatements[index].financing_cash_flow,
+        netChangeCash: results.cashFlowStatements[index].net_change_cash,
+        cashEnd: results.cashFlowStatements[index].cash_end,
+        changeAR: results.cashFlowStatements[index].change_ar,
+        changeAP: results.cashFlowStatements[index].change_ap,
+        changeUnearned: results.cashFlowStatements[index].unearned_inflow - results.cashFlowStatements[index].unearned_release,
+        // Debt Schedule
+        debtBeginning: results.debtSchedule[index].beginning_balance,
+        debtDraw: results.debtSchedule[index].draw,
+        debtPrincipal: results.debtSchedule[index].principal_payment,
+        debtEnding: results.debtSchedule[index].ending_balance,
+        debtInterest: results.debtSchedule[index].interest_expense,
+        dscr: results.debtSchedule[index].dscr,
+        // Carbon
+        creditsGenerated: results.incomeStatements[index].credits_generated,
+        creditsIssued: results.incomeStatements[index].credits_issued,
+        purchasedCreditsDelivered: results.incomeStatements[index].purchased_credits,
+        // Free Cash Flow
+        fcfe: results.freeCashFlow[index].fcf_to_equity
+      }));
+
+      // Calculate comprehensive metrics
+      const comprehensiveMetrics = calculateComprehensiveMetrics(
+        yearlyData,
+        engineInputs.discount_rate,
+        engineInputs
+      );
+
+      // Extract key metrics for display
+      const metrics = {
+        equityNPV: comprehensiveMetrics.returns.equity.npv,
+        equityIRR: (comprehensiveMetrics.returns.equity.irr ?? 0) * 100,
+        projectNPV: comprehensiveMetrics.returns.project.npv,
+        projectIRR: (comprehensiveMetrics.returns.project.irr ?? 0) * 100,
+        paybackPeriod: comprehensiveMetrics.returns.equity.payback ?? 0,
+        peakFunding: Math.abs(comprehensiveMetrics.cashHealth.peakFunding),
+        minDSCR: comprehensiveMetrics.debt.minDSCR ?? 0,
+        ebitdaMargin: comprehensiveMetrics.profitability.yearly[0]?.ebitdaMargin ?? 0
       };
 
       if (!baseMetrics) {
-        setBaseMetrics(mockMetrics);
+        setBaseMetrics(metrics);
       }
-      setCurrentMetrics(mockMetrics);
+      setCurrentMetrics(metrics);
 
     } catch (error) {
       console.error('Error calculating metrics:', error);
+      toast({
+        title: "Calculation Error",
+        description: "Failed to calculate financial metrics. Please check your inputs.",
+        variant: "destructive",
+      });
     } finally {
       setCalculating(false);
     }
@@ -467,10 +883,10 @@ const SensitivityScenarios = () => {
           {currentMetrics && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {[
-                { key: 'npv', label: 'NPV', value: currentMetrics.npv, format: 'currency', icon: DollarSign },
-                { key: 'irr', label: 'IRR', value: currentMetrics.irr, format: 'percentage', icon: Percent },
-                { key: 'paybackPeriod', label: 'Payback Period', value: currentMetrics.paybackPeriod, format: 'years', icon: Target },
-                { key: 'peakFunding', label: 'Peak Funding', value: currentMetrics.peakFunding, format: 'currency', icon: BarChart3 },
+                { key: 'equityNPV', label: 'Equity NPV', value: currentMetrics.equityNPV, format: 'currency', icon: DollarSign },
+                { key: 'equityIRR', label: 'Equity IRR', value: currentMetrics.equityIRR, format: 'percentage', icon: Percent },
+                { key: 'projectNPV', label: 'Project NPV', value: currentMetrics.projectNPV, format: 'currency', icon: DollarSign },
+                { key: 'projectIRR', label: 'Project IRR', value: currentMetrics.projectIRR, format: 'percentage', icon: Percent },
               ].map(({ key, label, value, format, icon: Icon }) => {
                 const baseValue = baseMetrics?.[key] || 0;
                 const change = getMetricChange(value, baseValue);
@@ -498,6 +914,53 @@ const SensitivityScenarios = () => {
                             : format === 'percentage'
                             ? `${value.toFixed(1)}%`
                             : `${value.toFixed(1)} years`
+                          }
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Additional Key Metrics */}
+          {currentMetrics && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[
+                { key: 'paybackPeriod', label: 'Payback Period', value: currentMetrics.paybackPeriod, format: 'years', icon: Target },
+                { key: 'peakFunding', label: 'Peak Funding', value: currentMetrics.peakFunding, format: 'currency', icon: BarChart3 },
+                { key: 'minDSCR', label: 'Min DSCR', value: currentMetrics.minDSCR, format: 'number', icon: Calculator },
+                { key: 'ebitdaMargin', label: 'EBITDA Margin', value: currentMetrics.ebitdaMargin, format: 'percentage', icon: Percent },
+              ].map(({ key, label, value, format, icon: Icon }) => {
+                const baseValue = baseMetrics?.[key] || 0;
+                const change = getMetricChange(value, baseValue);
+                return (
+                  <Card key={key}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">{label}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {getMetricChangeIcon(change)}
+                          {Math.abs(change) > 0.1 && (
+                            <span className={`text-xs ${change > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {change > 0 ? '+' : ''}{change.toFixed(1)}%
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <span className="text-2xl font-bold">
+                          {format === 'currency' 
+                            ? `$${(value / 1000000).toFixed(1)}M`
+                            : format === 'percentage'
+                            ? `${value.toFixed(1)}%`
+                            : format === 'years'
+                            ? `${value.toFixed(1)} years`
+                            : `${value.toFixed(2)}x`
                           }
                         </span>
                       </div>
@@ -632,8 +1095,8 @@ const SensitivityScenarios = () => {
                         </div>
                         {scenario.metrics && (
                           <div className="text-sm text-muted-foreground">
-                            NPV: ${(scenario.metrics.npv / 1000000).toFixed(1)}M | 
-                            IRR: {scenario.metrics.irr.toFixed(1)}%
+                            Equity NPV: ${(scenario.metrics.equityNPV / 1000000).toFixed(1)}M | 
+                            Equity IRR: {scenario.metrics.equityIRR.toFixed(1)}%
                           </div>
                         )}
                       </div>
@@ -696,24 +1159,30 @@ const SensitivityScenarios = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {['npv', 'irr', 'paybackPeriod', 'peakFunding'].map(metric => (
+                      {['equityNPV', 'equityIRR', 'projectNPV', 'projectIRR', 'paybackPeriod', 'peakFunding', 'minDSCR', 'ebitdaMargin'].map(metric => (
                         <tr key={metric} className="border-b">
                           <td className="p-3 font-medium capitalize">
-                            {metric === 'npv' ? 'NPV' : 
-                             metric === 'irr' ? 'IRR' : 
+                            {metric === 'equityNPV' ? 'Equity NPV' : 
+                             metric === 'equityIRR' ? 'Equity IRR' : 
+                             metric === 'projectNPV' ? 'Project NPV' : 
+                             metric === 'projectIRR' ? 'Project IRR' : 
                              metric === 'paybackPeriod' ? 'Payback Period' : 
-                             'Peak Funding'}
+                             metric === 'peakFunding' ? 'Peak Funding' :
+                             metric === 'minDSCR' ? 'Min DSCR' :
+                             'EBITDA Margin'}
                           </td>
                           {comparedScenarios.map(scenarioId => {
                             const scenario = scenarios.find(s => s.id === scenarioId);
                             const value = scenario?.metrics?.[metric] || 0;
                             return (
                               <td key={scenarioId} className="p-3 text-center">
-                                {metric === 'npv' || metric === 'peakFunding' 
+                                {metric === 'equityNPV' || metric === 'projectNPV' || metric === 'peakFunding' 
                                   ? `$${(value / 1000000).toFixed(1)}M`
-                                  : metric === 'irr'
+                                  : metric === 'equityIRR' || metric === 'projectIRR' || metric === 'ebitdaMargin'
                                   ? `${value.toFixed(1)}%`
-                                  : `${value.toFixed(1)} years`
+                                  : metric === 'paybackPeriod'
+                                  ? `${value.toFixed(1)} years`
+                                  : `${value.toFixed(2)}x`
                                 }
                               </td>
                             );
@@ -735,9 +1204,9 @@ const SensitivityScenarios = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                  { name: 'Conservative Case', desc: 'Lower prices, higher costs', multipliers: { carbonCreditPrice: 0.8, creditsVolume: 0.9, cogsPercentage: 1.2 } },
-                  { name: 'Optimistic Case', desc: 'Higher prices, lower costs', multipliers: { carbonCreditPrice: 1.3, creditsVolume: 1.1, cogsPercentage: 0.8 } },
-                  { name: 'High Volume Case', desc: 'Focus on scale advantages', multipliers: { creditsVolume: 1.5, cogsPercentage: 0.9, capexAmount: 1.2 } },
+                  { name: 'Conservative Case', desc: 'Lower prices, higher costs', multipliers: { price_per_credit: 0.8, credits_generated: 0.9, cogs_rate: 1.2 } },
+                  { name: 'Optimistic Case', desc: 'Higher prices, lower costs', multipliers: { price_per_credit: 1.3, credits_generated: 1.1, cogs_rate: 0.8 } },
+                  { name: 'High Volume Case', desc: 'Focus on scale advantages', multipliers: { credits_generated: 1.5, cogs_rate: 0.9, capex: 1.2 } },
                 ].map((template) => (
                   <Card key={template.name} className="cursor-pointer hover:bg-muted/50" onClick={() => {
                     // Apply template multipliers to sensitivities
