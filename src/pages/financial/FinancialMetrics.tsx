@@ -464,7 +464,7 @@ export default function FinancialMetrics() {
                   <span className="font-mono font-bold">{formatIRR(metrics.returns.equity.irr)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">NPV @ {discountRate}%:</span>
+                  <span className="text-muted-foreground">NPV @ {(discountRate * 100).toFixed(1)}%:</span>
                   <span className="font-mono">{formatCurrency(metrics.returns.equity.npv)}</span>
                 </div>
                 <div className="flex justify-between">
@@ -493,7 +493,7 @@ export default function FinancialMetrics() {
                   <span className="font-mono font-bold">{formatIRR(metrics.returns.project.irr)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">NPV @ {discountRate}%:</span>
+                  <span className="text-muted-foreground">NPV @ {(discountRate * 100).toFixed(1)}%:</span>
                   <span className="font-mono">{formatCurrency(metrics.returns.project.npv)}</span>
                 </div>
                 <div className="flex justify-between">
@@ -522,7 +522,7 @@ export default function FinancialMetrics() {
                   <span className="font-mono font-bold">{formatIRR(metrics.returns.investor.irr)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">NPV @ {discountRate}%:</span>
+                  <span className="text-muted-foreground">NPV @ {(discountRate * 100).toFixed(1)}%:</span>
                   <span className="font-mono">{formatCurrency(metrics.returns.investor.npv)}</span>
                 </div>
               </CardContent>
