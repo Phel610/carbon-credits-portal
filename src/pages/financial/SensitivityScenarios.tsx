@@ -818,7 +818,11 @@ const SensitivityScenarios = () => {
     setActiveTab('sensitivity');
   };
 
-  const formatValue = (value: number, format: 'currency' | 'percentage' | 'number', unit?: string) => {
+  const formatValue = (value: number | undefined, format: 'currency' | 'percentage' | 'number', unit?: string) => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return 'N/A';
+    }
+    
     switch (format) {
       case 'currency':
         return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
