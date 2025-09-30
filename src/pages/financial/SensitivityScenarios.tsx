@@ -475,15 +475,15 @@ const SensitivityScenarios = () => {
     setSensitivities(sensitivityVars);
     
     // Calculate base case metrics
-    await calculateMetrics(sensitivityVars, true);
+    await calculateMetrics(sensitivityVars, modelInputs, true);
   };
 
-  const calculateMetrics = async (variables: SensitivityVariable[], isBaseCase = false) => {
+  const calculateMetrics = async (variables: SensitivityVariable[], sourceModelData: any, isBaseCase = false) => {
     try {
       setCalculating(true);
       
-      // Build updated model inputs
-      const updatedInputs = { ...modelData };
+      // Build updated model inputs from the passed source data
+      const updatedInputs = { ...sourceModelData };
       
       variables.forEach(v => {
         const value = v.currentValue;
@@ -491,10 +491,10 @@ const SensitivityScenarios = () => {
         // Handle different variable types
         if (v.key === 'carbonCreditPrice' || v.key === 'annualCreditsGenerated') {
           // Array values - apply to all years
-          updatedInputs[v.key] = Array(modelData.years.length).fill(value);
+          updatedInputs[v.key] = Array(sourceModelData.years.length).fill(value);
         } else if (v.key === 'staffCosts' || v.key === 'mrvCosts' || v.key === 'otherOpex') {
           // Operating costs - negative values
-          updatedInputs[v.key] = Array(modelData.years.length).fill(-Math.abs(value));
+          updatedInputs[v.key] = Array(sourceModelData.years.length).fill(-Math.abs(value));
         } else if (v.key === 'capitalExpenditure' || v.key === 'pddCost' || v.key === 'feasibilityCost' || v.key === 'equityInjection') {
           // One-time costs - negative
           updatedInputs[v.key] = -Math.abs(value);
@@ -627,7 +627,7 @@ const SensitivityScenarios = () => {
     setSensitivities(updatedSensitivities);
     
     // Recalculate metrics
-    await calculateMetrics(updatedSensitivities);
+    await calculateMetrics(updatedSensitivities, modelData);
   };
 
   const resetSensitivities = () => {
@@ -636,7 +636,7 @@ const SensitivityScenarios = () => {
       currentValue: s.baseValue
     }));
     setSensitivities(resetSensitivities);
-    calculateMetrics(resetSensitivities);
+    calculateMetrics(resetSensitivities, modelData);
   };
 
   const saveScenario = async () => {
@@ -700,7 +700,7 @@ const SensitivityScenarios = () => {
     setSelectedScenario(scenarioId);
     
     // Always recalculate to ensure latest engine logic
-    await calculateMetrics(updatedSensitivities);
+    await calculateMetrics(updatedSensitivities, modelData);
   };
 
   const deleteScenario = async (scenarioId: string) => {
@@ -788,7 +788,7 @@ const SensitivityScenarios = () => {
     });
 
     setSensitivities(updatedSensitivities);
-    await calculateMetrics(updatedSensitivities);
+    await calculateMetrics(updatedSensitivities, modelData);
     setActiveTab('sensitivity');
   };
 
