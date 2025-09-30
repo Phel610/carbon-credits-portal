@@ -139,7 +139,13 @@ const SensitivityScenarios = () => {
   const transformInputsToModel = (inputs: any[], model: any) => {
     const getInputValue = (category: string, key: string, defaultValue: any = null) => {
       const input = inputs.find(i => i.category === category && i.input_key === key);
-      return input?.input_value ?? defaultValue;
+      if (!input?.input_value) return defaultValue;
+      
+      // Extract the actual value from the {value: X} structure
+      const inputValue = input.input_value;
+      return typeof inputValue === 'object' && 'value' in inputValue 
+        ? inputValue.value 
+        : inputValue;
     };
 
     const years = [];
