@@ -80,7 +80,7 @@ export default function FinancialMetrics() {
         // Get input values
         const getInput = (key: string) => {
           const inp = inputs.find(i => i.input_key === key);
-          return inp ? (inp.input_value as any) : 0;
+          return inp ? ((inp.input_value as any)?.value || 0) : 0;
         };
 
         return {
@@ -169,7 +169,7 @@ export default function FinancialMetrics() {
 
       // Get discount rate from inputs
       const discountInput = inputs.find(i => i.input_key === "discount_rate");
-      const rate = discountInput ? Number((discountInput.input_value as any) || 15) : 15;
+      const rate = discountInput ? Number((discountInput.input_value as any)?.value || 15) : 15;
       setDiscountRate(rate);
 
       // Build inputs object for calculations
@@ -182,7 +182,7 @@ export default function FinancialMetrics() {
 
       function getInput(key: string) {
         const inp = inputs.find(i => i.input_key === key);
-        return inp ? (inp.input_value as any) : 0;
+        return inp ? ((inp.input_value as any)?.value || 0) : 0;
       }
 
       // Calculate all metrics
