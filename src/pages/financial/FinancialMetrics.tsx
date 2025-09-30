@@ -117,14 +117,14 @@ export default function FinancialMetrics() {
           retainedEarnings: getVal("balance_sheet", "retained_earnings"),
           
           // Cash Flow - use exact field names from engine output
-          operatingCF: getVal("cash_flow", "operating_cash_flow"),
-          investingCF: getVal("cash_flow", "investing_cash_flow"),
-          financingCF: getVal("cash_flow", "financing_cash_flow"),
-          netChangeCash: getVal("cash_flow", "net_change_cash"),
-          cashEnd: getVal("cash_flow", "cash_end"),
-          capex: getVal("cash_flow", "capex"),
-          changeAR: getVal("cash_flow", "change_ar"),
-          changeAP: getVal("cash_flow", "change_ap"),
+          operatingCF: getVal("cashflow_statement", "operating_cash_flow"),
+          investingCF: getVal("cashflow_statement", "investing_cash_flow"),
+          financingCF: getVal("cashflow_statement", "financing_cash_flow"),
+          netChangeCash: getVal("cashflow_statement", "net_change_cash"),
+          cashEnd: getVal("cashflow_statement", "cash_end"),
+          capex: getVal("cashflow_statement", "capex"),
+          changeAR: getVal("cashflow_statement", "change_ar"),
+          changeAP: getVal("cashflow_statement", "change_ap"),
           changeUnearned: 0, // Not directly in cash flow statement
           
           // Debt Schedule - use exact field names from engine output
@@ -142,6 +142,22 @@ export default function FinancialMetrics() {
           fcfe: getVal("free_cash_flow", "fcf_to_equity"),
         };
       });
+
+      // Validate statement types exist
+      const validation = {
+        hasDebtSchedule: statements.some(s => s.statement_type === 'debt_schedule'),
+        hasFreeCashFlow: statements.some(s => s.statement_type === 'free_cash_flow'),
+        hasCarbonStream: statements.some(s => s.statement_type === 'carbon_stream'),
+      };
+
+      if (!validation.hasDebtSchedule || !validation.hasFreeCashFlow) {
+        console.warn('⚠️ Model missing statement types. Recalculate model to generate complete data.');
+        toast({
+          title: "Incomplete Data",
+          description: "Some metrics unavailable. Please recalculate this model to generate complete financial statements.",
+          variant: "default",
+        });
+      }
 
       setYearlyData(yearly);
 

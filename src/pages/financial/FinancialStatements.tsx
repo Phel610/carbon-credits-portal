@@ -309,6 +309,51 @@ const FinancialStatements = () => {
         });
       });
 
+      // Debt Schedule
+      statements.debtSchedule.forEach((stmt: any) => {
+        Object.entries(stmt).forEach(([key, value]) => {
+          if (key !== 'year') {
+            statementRows.push({
+              model_id: modelId,
+              statement_type: 'debt_schedule',
+              year: stmt.year,
+              line_item: key,
+              value: value as number,
+            });
+          }
+        });
+      });
+
+      // Carbon Stream
+      statements.carbonStream.forEach((stmt: any) => {
+        Object.entries(stmt).forEach(([key, value]) => {
+          if (key !== 'year') {
+            statementRows.push({
+              model_id: modelId,
+              statement_type: 'carbon_stream',
+              year: stmt.year,
+              line_item: key,
+              value: value as number,
+            });
+          }
+        });
+      });
+
+      // Free Cash Flow
+      statements.freeCashFlows.forEach((stmt: any) => {
+        Object.entries(stmt).forEach(([key, value]) => {
+          if (key !== 'year') {
+            statementRows.push({
+              model_id: modelId,
+              statement_type: 'free_cash_flow',
+              year: stmt.year,
+              line_item: key,
+              value: value as number,
+            });
+          }
+        });
+      });
+
       // Insert statements
       const { error: statementsError } = await supabase
         .from('financial_statements')

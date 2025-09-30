@@ -442,7 +442,7 @@ export function calculateBreakEvenMetrics(yearlyData: YearlyFinancials[]) {
     yearly: yearlyData.map(y => {
       const issued = y.creditsIssued;
       const cogs = Math.abs(y.cogs);
-      const opex = Math.abs(y.feasibility) + Math.abs(y.pdd) + Math.abs(y.mrv) + Math.abs(y.staff);
+      const opex = Math.abs(y.opex); // Use already calculated opex
       const waPrice = issued !== 0 ? y.totalRevenue / issued : null;
       const bePriceOper = issued !== 0 ? (cogs + opex) / issued : null;
       const safetySpread = waPrice !== null && bePriceOper !== null ? waPrice - bePriceOper : null;
