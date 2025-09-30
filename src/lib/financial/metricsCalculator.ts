@@ -467,17 +467,22 @@ export function validateFinancialIdentities(yearlyData: YearlyFinancials[]) {
     const equityIdentity = Math.abs(y.equity - (y.contributedCapital + y.retainedEarnings)) < 0.01;
     const liabilitySigns = y.accountsPayable >= 0 && y.unearnedRevenue >= 0 && y.debt >= 0;
     
+    // Debt schedule consistency checks
+    const debtBalance = Math.abs(y.debtBeginning + y.debtDraw + y.debtPrincipal - y.debtEnding) < 0.01;
+    // Note: Interest validation would need debt interest rate from inputs, skipping for now as we lack that data in YearlyFinancials
+    
     return {
       year: y.year,
       balanceIdentity,
       cashTieOut,
       equityIdentity,
       liabilitySigns,
+      debtBalance,
     };
   });
   
   const overallPass = yearly.every(y => 
-    y.balanceIdentity && y.cashTieOut && y.equityIdentity && y.liabilitySigns
+    y.balanceIdentity && y.cashTieOut && y.equityIdentity && y.liabilitySigns && y.debtBalance
   );
   
   return { yearly, overallPass };

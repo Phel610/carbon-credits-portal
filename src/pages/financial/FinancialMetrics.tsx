@@ -203,6 +203,74 @@ export default function FinancialMetrics() {
     return `${pb.toFixed(1)} years`;
   };
 
+  const handleExport = () => {
+    if (!metrics || !yearlyData.length) return;
+
+    // Generate CSV export
+    const csvContent = generateCSVExport();
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${modelName}_financial_metrics_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "Export Complete",
+      description: "Financial metrics exported to CSV",
+    });
+  };
+
+  const generateCSVExport = () => {
+    let csv = `Financial Metrics Report - ${modelName}\n`;
+    csv += `Generated: ${new Date().toISOString()}\n\n`;
+
+    // Executive Summary
+    csv += "EXECUTIVE SUMMARY\n";
+    csv += `Equity IRR,${metrics?.returns.equity.irr ? (metrics.returns.equity.irr * 100).toFixed(1) + '%' : 'n/a'}\n`;
+    csv += `Equity NPV @ ${discountRate}%,${formatCurrency(metrics?.returns.equity.npv)}\n`;
+    csv += `Payback Period,${formatPayback(metrics?.returns.equity.payback)}\n`;
+    csv += `Total Revenue,${formatCurrency(metrics?.profitability.total.revenue)}\n`;
+    csv += `Min DSCR,${formatNumber(metrics?.debt.minDSCR)}x\n\n`;
+
+    // Profitability Table
+    csv += "PROFITABILITY & MARGINS\n";
+    csv += "Year,Revenue,COGS,Gross Profit,OPEX,EBITDA,Depreciation,Interest,EBT,Tax,Net Income,Gross %,EBITDA %,Net %\n";
+    metrics?.profitability.yearly.forEach(y => {
+      csv += `${y.year},${y.revenue},${y.cogs},${y.grossProfit},${y.opex},${y.ebitda},${y.depreciation},${y.interest},${y.ebt},${y.tax},${y.netIncome},${y.grossMargin?.toFixed(1) || ''},${y.ebitdaMargin?.toFixed(1) || ''},${y.netMargin?.toFixed(1) || ''}\n`;
+    });
+    csv += "\n";
+
+    // Unit Economics
+    csv += "UNIT ECONOMICS (PER CREDIT)\n";
+    csv += "Year,Issued,WA Price,COGS/Credit,GP/Credit,OPEX/Credit,LCOC,All-in Cost\n";
+    metrics?.unitEconomics.yearly.forEach(y => {
+      csv += `${y.year},${y.issuedCredits},${y.waPrice || ''},${y.cogsPerCredit || ''},${y.gpPerCredit || ''},${y.opexPerCredit || ''},${y.lcoc || ''},${y.allInCostPerCredit || ''}\n`;
+    });
+    csv += "\n";
+
+    // Working Capital
+    csv += "WORKING CAPITAL\n";
+    csv += "Year,AR,AP,NWC,Revenue,DSO,DPO,NWC % Rev\n";
+    metrics?.workingCapital.yearly.forEach(y => {
+      csv += `${y.year},${y.ar},${y.ap},${y.nwc},${y.revenue},${y.dso?.toFixed(0) || ''},${y.dpo?.toFixed(0) || ''},${y.nwcPct?.toFixed(1) || ''}\n`;
+    });
+    csv += "\n";
+
+    // Returns
+    csv += "RETURNS\n";
+    csv += "Metric,Equity (Levered),Project (Unlevered)\n";
+    csv += `IRR,${metrics?.returns.equity.irr ? (metrics.returns.equity.irr * 100).toFixed(1) + '%' : 'n/a'},${metrics?.returns.project.irr ? (metrics.returns.project.irr * 100).toFixed(1) + '%' : 'n/a'}\n`;
+    csv += `NPV @ ${discountRate}%,${formatCurrency(metrics?.returns.equity.npv)},${formatCurrency(metrics?.returns.project.npv)}\n`;
+    csv += `MIRR,${metrics?.returns.equity.mirr ? (metrics.returns.equity.mirr * 100).toFixed(1) + '%' : 'n/a'},${metrics?.returns.project.mirr ? (metrics.returns.project.mirr * 100).toFixed(1) + '%' : 'n/a'}\n`;
+    csv += `Payback,${formatPayback(metrics?.returns.equity.payback)},${formatPayback(metrics?.returns.project.payback)}\n`;
+
+    return csv;
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto py-8 space-y-6">
@@ -243,7 +311,7 @@ export default function FinancialMetrics() {
           <h1 className="text-3xl font-bold mt-2">{modelName} – Financial Metrics</h1>
           <p className="text-muted-foreground">Comprehensive financial analysis and performance indicators</p>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" onClick={handleExport}>
           <Download className="mr-2 h-4 w-4" />
           Export Report
         </Button>
@@ -328,6 +396,7 @@ export default function FinancialMetrics() {
                   {!y.cashTieOut && <Badge variant="destructive">Cash {y.year}</Badge>}
                   {!y.equityIdentity && <Badge variant="destructive">Equity {y.year}</Badge>}
                   {!y.liabilitySigns && <Badge variant="destructive">Liabilities {y.year}</Badge>}
+                  {!(y as any).debtBalance && <Badge variant="destructive">Debt Sched {y.year}</Badge>}
                 </div>
               ))}
             </div>
@@ -341,6 +410,7 @@ export default function FinancialMetrics() {
           <TabsTrigger value="returns">Returns & NPV</TabsTrigger>
           <TabsTrigger value="profitability">Profitability</TabsTrigger>
           <TabsTrigger value="unit">Unit Economics</TabsTrigger>
+          <TabsTrigger value="working-capital">Working Capital</TabsTrigger>
           <TabsTrigger value="liquidity">Liquidity & Debt</TabsTrigger>
           <TabsTrigger value="carbon">Carbon KPIs</TabsTrigger>
           <TabsTrigger value="charts">Charts</TabsTrigger>
@@ -447,6 +517,10 @@ export default function FinancialMetrics() {
                       <th className="text-right py-2">Gross Profit</th>
                       <th className="text-right py-2">OPEX</th>
                       <th className="text-right py-2">EBITDA</th>
+                      <th className="text-right py-2">Depreciation</th>
+                      <th className="text-right py-2">Interest</th>
+                      <th className="text-right py-2">EBT</th>
+                      <th className="text-right py-2">Tax</th>
                       <th className="text-right py-2">Net Income</th>
                       <th className="text-right py-2">Gross %</th>
                       <th className="text-right py-2">EBITDA %</th>
@@ -462,6 +536,10 @@ export default function FinancialMetrics() {
                         <td className="text-right font-mono">{formatCurrency(y.grossProfit)}</td>
                         <td className="text-right font-mono">{formatCurrency(y.opex)}</td>
                         <td className="text-right font-mono">{formatCurrency(y.ebitda)}</td>
+                        <td className="text-right font-mono">{formatCurrency(y.depreciation)}</td>
+                        <td className="text-right font-mono">{formatCurrency(y.interest)}</td>
+                        <td className="text-right font-mono">{formatCurrency(y.ebt)}</td>
+                        <td className="text-right font-mono">{formatCurrency(y.tax)}</td>
                         <td className="text-right font-mono">{formatCurrency(y.netIncome)}</td>
                         <td className="text-right font-mono">{formatPercent(y.grossMargin)}</td>
                         <td className="text-right font-mono">{formatPercent(y.ebitdaMargin)}</td>
@@ -475,9 +553,52 @@ export default function FinancialMetrics() {
                       <td className="text-right font-mono">{formatCurrency(metrics.profitability.total.grossProfit)}</td>
                       <td className="text-right font-mono">{formatCurrency(metrics.profitability.total.opex)}</td>
                       <td className="text-right font-mono">{formatCurrency(metrics.profitability.total.ebitda)}</td>
+                      <td colSpan={3}></td>
                       <td className="text-right font-mono">{formatCurrency(metrics.profitability.total.netIncome)}</td>
                       <td colSpan={3}></td>
                     </tr>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Working Capital Tab */}
+        <TabsContent value="working-capital" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Working Capital Management</CardTitle>
+              <CardDescription>AR, AP, and cash conversion metrics by year</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2">Year</th>
+                      <th className="text-right py-2">AR</th>
+                      <th className="text-right py-2">AP</th>
+                      <th className="text-right py-2">NWC</th>
+                      <th className="text-right py-2">Revenue</th>
+                      <th className="text-right py-2">DSO (days)</th>
+                      <th className="text-right py-2">DPO (days)</th>
+                      <th className="text-right py-2">NWC % Rev</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metrics.workingCapital.yearly.map(y => (
+                      <tr key={y.year} className="border-b">
+                        <td className="py-2 font-medium">{y.year}</td>
+                        <td className="text-right font-mono">{formatCurrency(y.ar)}</td>
+                        <td className="text-right font-mono">{formatCurrency(y.ap)}</td>
+                        <td className="text-right font-mono">{formatCurrency(y.nwc)}</td>
+                        <td className="text-right font-mono">{formatCurrency(y.revenue)}</td>
+                        <td className="text-right font-mono">{formatNumber(y.dso, 0)}</td>
+                        <td className="text-right font-mono">{formatNumber(y.dpo, 0)}</td>
+                        <td className="text-right font-mono">{formatPercent(y.nwcPct)}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -793,6 +914,27 @@ export default function FinancialMetrics() {
                   <Bar dataKey="dscr" name="DSCR" fill="hsl(var(--chart-2))" />
                   <Line type="monotone" dataKey={() => 1.2} name="Covenant (1.20x)" stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="5 5" />
                 </ComposedChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Price Comparison Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Price Comparison</CardTitle>
+              <CardDescription>Weighted average realized price vs break-even price</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={metrics.breakEven.yearly}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="year" label={{ value: "Year", position: "insideBottom", offset: -5 }} />
+                  <YAxis label={{ value: "Price per Credit ($)", angle: -90, position: "insideLeft" }} />
+                  <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                  <Legend />
+                  <Line type="monotone" dataKey="realizedPrice" name="WA Realized Price" stroke="hsl(var(--chart-1))" strokeWidth={2} />
+                  <Line type="monotone" dataKey="bePriceOper" name="Break-even Price (Oper)" stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="5 5" />
+                </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
