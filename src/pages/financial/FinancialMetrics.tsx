@@ -170,6 +170,7 @@ export default function FinancialMetrics() {
 
   const formatCurrency = (value: number | null) => {
     if (value === null || value === undefined) return "–";
+    if (typeof value !== 'number' || isNaN(value)) return "–";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -180,23 +181,25 @@ export default function FinancialMetrics() {
 
   const formatPercent = (value: number | null, decimals: number = 1) => {
     if (value === null || value === undefined) return "–";
+    if (typeof value !== 'number' || isNaN(value)) return "–";
     if (value === Infinity) return "∞";
     return `${value.toFixed(decimals)}%`;
   };
 
   const formatNumber = (value: number | null, decimals: number = 2) => {
     if (value === null || value === undefined) return "–";
+    if (typeof value !== 'number' || isNaN(value)) return "–";
     if (value === Infinity) return "∞";
     return value.toFixed(decimals);
   };
 
   const formatIRR = (irr: number | null) => {
-    if (irr === null) return "n/a";
+    if (irr === null || typeof irr !== 'number' || isNaN(irr)) return "n/a";
     return formatPercent(irr * 100, 1);
   };
 
   const formatPayback = (pb: number | null) => {
-    if (pb === null) return "> horizon";
+    if (pb === null || typeof pb !== 'number' || isNaN(pb)) return "> horizon";
     return `${pb.toFixed(1)} years`;
   };
 
