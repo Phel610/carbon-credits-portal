@@ -256,27 +256,14 @@ const SensitivityScenarios = () => {
         key: 'prePurchaseShare',
         name: 'Pre-purchase Agreement %',
         category: 'Revenue & Pricing',
-        baseValue: modelInputs.purchase_share,
-        currentValue: modelInputs.purchase_share,
+        baseValue: modelInputs.purchase_share * 100,
+        currentValue: modelInputs.purchase_share * 100,
         unit: '%',
         min: 0,
         max: 100,
         step: 5,
         format: 'percentage',
         description: 'Percentage of credits sold via pre-purchase'
-      },
-      {
-        key: 'prePurchasePremium',
-        name: 'Pre-purchase Premium',
-        category: 'Revenue & Pricing',
-        baseValue: modelInputs.purchase_amount,
-        currentValue: modelInputs.purchase_amount,
-        unit: '%',
-        min: -50,
-        max: 50,
-        step: 5,
-        format: 'percentage',
-        description: 'Premium/discount for pre-purchase agreements'
       },
       
       // Operating Costs
@@ -351,8 +338,8 @@ const SensitivityScenarios = () => {
         key: 'depreciationYears',
         name: 'Depreciation Period',
         category: 'Capital & Development',
-        baseValue: modelInputs.depreciation,
-        currentValue: modelInputs.depreciation,
+        baseValue: Math.abs(getFirstValue(modelInputs.capex)) / Math.max(Math.abs(getFirstValue(modelInputs.depreciation)), 1),
+        currentValue: Math.abs(getFirstValue(modelInputs.capex)) / Math.max(Math.abs(getFirstValue(modelInputs.depreciation)), 1),
         unit: 'years',
         min: 3,
         max: 20,
@@ -379,8 +366,8 @@ const SensitivityScenarios = () => {
         key: 'debtInterestRate',
         name: 'Interest Rate',
         category: 'Financing',
-        baseValue: modelInputs.interest_rate,
-        currentValue: modelInputs.interest_rate,
+        baseValue: modelInputs.interest_rate * 100,
+        currentValue: modelInputs.interest_rate * 100,
         unit: '%',
         min: 0,
         max: 25,
@@ -420,8 +407,8 @@ const SensitivityScenarios = () => {
         key: 'discountRate',
         name: 'Discount Rate (WACC)',
         category: 'Financial Assumptions',
-        baseValue: modelInputs.discount_rate,
-        currentValue: modelInputs.discount_rate,
+        baseValue: modelInputs.discount_rate * 100,
+        currentValue: modelInputs.discount_rate * 100,
         unit: '%',
         min: 5,
         max: 30,
@@ -433,8 +420,8 @@ const SensitivityScenarios = () => {
         key: 'taxRate',
         name: 'Tax Rate',
         category: 'Financial Assumptions',
-        baseValue: modelInputs.income_tax_rate,
-        currentValue: modelInputs.income_tax_rate,
+        baseValue: modelInputs.income_tax_rate * 100,
+        currentValue: modelInputs.income_tax_rate * 100,
         unit: '%',
         min: 0,
         max: 50,
@@ -461,8 +448,8 @@ const SensitivityScenarios = () => {
         key: 'arRate',
         name: 'Accounts Receivable Days',
         category: 'Working Capital',
-        baseValue: modelInputs.ar_rate,
-        currentValue: modelInputs.ar_rate,
+        baseValue: Math.round(modelInputs.ar_rate * 365),
+        currentValue: Math.round(modelInputs.ar_rate * 365),
         unit: 'days',
         min: 0,
         max: 180,
@@ -474,8 +461,8 @@ const SensitivityScenarios = () => {
         key: 'apRate',
         name: 'Accounts Payable Days',
         category: 'Working Capital',
-        baseValue: modelInputs.ap_rate,
-        currentValue: modelInputs.ap_rate,
+        baseValue: Math.round(modelInputs.ap_rate * 365),
+        currentValue: Math.round(modelInputs.ap_rate * 365),
         unit: 'days',
         min: 0,
         max: 180,
@@ -499,7 +486,20 @@ const SensitivityScenarios = () => {
       const updatedInputs = { ...sourceModelData };
       
       variables.forEach(v => {
-        const value = v.currentValue;
+        let value = v.currentValue;
+        
+        // Convert UI values back to engine format
+        if (v.key === 'prePurchaseShare' || v.key === 'debtInterestRate' || v.key === 'discountRate' || v.key === 'taxRate') {
+          // Convert percentage back to decimal
+          value = value / 100;
+        } else if (v.key === 'arRate' || v.key === 'apRate') {
+          // Convert days back to rate
+          value = value / 365;
+        } else if (v.key === 'depreciationYears') {
+          // Convert years to annual depreciation amount
+          const capex = Math.abs(sourceModelData.capex?.[0] || 0);
+          value = capex / value;
+        }
         
         // Handle different variable types
         if (v.key === 'carbonCreditPrice' || v.key === 'annualCreditsGenerated') {
@@ -514,6 +514,9 @@ const SensitivityScenarios = () => {
         } else if (v.key === 'debtAmount') {
           // Debt can be zero or positive
           updatedInputs[v.key] = value;
+        } else if (v.key === 'depreciationYears') {
+          // Apply as depreciation expense (negative)
+          updatedInputs.depreciation = Array(sourceModelData.years.length).fill(-Math.abs(value));
         } else {
           // Direct values
           updatedInputs[v.key] = value;
