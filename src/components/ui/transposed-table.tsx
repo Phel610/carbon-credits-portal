@@ -20,7 +20,7 @@ export function TransposedTable({ years, rows, showTotal = false, totalLabel = '
       const numValue = parseFloat(value.replace(/[$,]/g, ''));
       if (!isNaN(numValue)) {
         if (numValue < 0) return <span className="text-destructive font-semibold">{value}</span>;
-        if (numValue > 0) return <span className="text-success font-semibold">{value}</span>;
+        if (numValue > 0) return <span className="text-success/70">{value}</span>;
         return <span className="text-muted-foreground">{value}</span>;
       }
     }
