@@ -660,12 +660,12 @@ const SensitivityScenarios = () => {
 
       const { error } = await supabase
         .from('model_scenarios')
-        .insert({
+        .insert([{
           model_id: modelId,
           scenario_name: newScenarioName,
-          scenario_data: scenarioData,
+          scenario_data: scenarioData as any,
           is_base_case: false
-        });
+        }]);
 
       if (error) throw error;
 
@@ -931,10 +931,10 @@ const SensitivityScenarios = () => {
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
-                      { label: 'Peak Funding', current: currentMetrics.cashHealth.peakFundingRequired, base: baseMetrics.cashHealth.peakFundingRequired, format: 'currency', higherBetter: false },
-                      { label: 'Min Cash Balance', current: currentMetrics.cashHealth.minimumCashBalance, base: baseMetrics.cashHealth.minimumCashBalance, format: 'currency', higherBetter: true },
-                      { label: 'Payback Period', current: currentMetrics.returns.equity.paybackPeriod, base: baseMetrics.returns.equity.paybackPeriod, format: 'years', higherBetter: false },
-                      { label: 'Discounted Payback', current: currentMetrics.returns.equity.discountedPaybackPeriod, base: baseMetrics.returns.equity.discountedPaybackPeriod, format: 'years', higherBetter: false },
+                      { label: 'Peak Funding', current: currentMetrics.cashHealth.peakFunding, base: baseMetrics.cashHealth.peakFunding, format: 'currency', higherBetter: false },
+                      { label: 'Min Cash Balance', current: currentMetrics.cashHealth.minCashEnd, base: baseMetrics.cashHealth.minCashEnd, format: 'currency', higherBetter: true },
+                      { label: 'Payback Period', current: currentMetrics.returns.equity.payback, base: baseMetrics.returns.equity.payback, format: 'years', higherBetter: false },
+                      { label: 'Discounted Payback', current: currentMetrics.returns.equity.discountedPayback, base: baseMetrics.returns.equity.discountedPayback, format: 'years', higherBetter: false },
                     ].map(({ label, current, base, format, higherBetter }) => {
                       const change = getMetricChange(current, base);
                       return (
@@ -965,9 +965,9 @@ const SensitivityScenarios = () => {
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
-                      { label: 'Gross Margin', current: currentMetrics.profitability.total.grossMargin, base: baseMetrics.profitability.total.grossMargin, format: 'percentage', higherBetter: true },
-                      { label: 'EBITDA Margin', current: currentMetrics.profitability.total.ebitdaMargin, base: baseMetrics.profitability.total.ebitdaMargin, format: 'percentage', higherBetter: true },
-                      { label: 'Net Margin', current: currentMetrics.profitability.total.netMargin, base: baseMetrics.profitability.total.netMargin, format: 'percentage', higherBetter: true },
+                      { label: 'Gross Margin', current: currentMetrics.profitability.yearly[0]?.grossMargin, base: baseMetrics.profitability.yearly[0]?.grossMargin, format: 'percentage', higherBetter: true },
+                      { label: 'EBITDA Margin', current: currentMetrics.profitability.yearly[0]?.ebitdaMargin, base: baseMetrics.profitability.yearly[0]?.ebitdaMargin, format: 'percentage', higherBetter: true },
+                      { label: 'Net Margin', current: currentMetrics.profitability.yearly[0]?.netMargin, base: baseMetrics.profitability.yearly[0]?.netMargin, format: 'percentage', higherBetter: true },
                       { label: 'Total Net Income', current: currentMetrics.profitability.total.netIncome, base: baseMetrics.profitability.total.netIncome, format: 'currency', higherBetter: true },
                     ].map(({ label, current, base, format, higherBetter }) => {
                       const change = getMetricChange(current, base);
@@ -999,10 +999,10 @@ const SensitivityScenarios = () => {
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
-                      { label: 'Total Credits Issued', current: currentMetrics.carbonKPIs.total.creditsIssued, base: baseMetrics.carbonKPIs.total.creditsIssued, format: 'number', higherBetter: true },
-                      { label: 'Avg Price Realized', current: currentMetrics.carbonKPIs.total.weightedAveragePrice, base: baseMetrics.carbonKPIs.total.weightedAveragePrice, format: 'currency', higherBetter: true },
-                      { label: 'Break-even Price', current: currentMetrics.breakEven.total.breakEvenPrice, base: baseMetrics.breakEven.total.breakEvenPrice, format: 'currency', higherBetter: false },
-                      { label: 'Break-even Volume', current: currentMetrics.breakEven.total.breakEvenVolume, base: baseMetrics.breakEven.total.breakEvenVolume, format: 'number', higherBetter: false },
+                      { label: 'Total Credits Issued', current: currentMetrics.carbonKPIs.totalIssued, base: baseMetrics.carbonKPIs.totalIssued, format: 'number', higherBetter: true },
+                      { label: 'Avg Price Realized', current: currentMetrics.carbonKPIs.yearly[0]?.waPrice, base: baseMetrics.carbonKPIs.yearly[0]?.waPrice, format: 'currency', higherBetter: true },
+                      { label: 'Break-even Price', current: currentMetrics.breakEven.yearly[0]?.bePriceOper, base: baseMetrics.breakEven.yearly[0]?.bePriceOper, format: 'currency', higherBetter: false },
+                      { label: 'Break-even Volume', current: currentMetrics.breakEven.yearly[0]?.beVolumeOper, base: baseMetrics.breakEven.yearly[0]?.beVolumeOper, format: 'number', higherBetter: false },
                     ].map(({ label, current, base, format, higherBetter }) => {
                       const change = getMetricChange(current, base);
                       return (
@@ -1023,7 +1023,7 @@ const SensitivityScenarios = () => {
               </Card>
 
               {/* Debt Metrics (if applicable) */}
-              {currentMetrics.debt.total.totalDebtDrawn > 0 && (
+              {currentMetrics.debt.yearly.some(y => y.draw > 0) && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -1034,10 +1034,10 @@ const SensitivityScenarios = () => {
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {[
-                        { label: 'Min DSCR', current: currentMetrics.debt.total.minDSCR, base: baseMetrics.debt.total.minDSCR, format: 'ratio', higherBetter: true },
-                        { label: 'Avg DSCR', current: currentMetrics.debt.total.avgDSCR, base: baseMetrics.debt.total.avgDSCR, format: 'ratio', higherBetter: true },
-                        { label: 'Total Interest', current: currentMetrics.debt.total.totalInterestPaid, base: baseMetrics.debt.total.totalInterestPaid, format: 'currency', higherBetter: false },
-                        { label: 'Debt-to-Equity', current: currentMetrics.liquidity.yearly[0]?.debtToEquityRatio || 0, base: baseMetrics.liquidity.yearly[0]?.debtToEquityRatio || 0, format: 'ratio', higherBetter: false },
+                        { label: 'Min DSCR', current: currentMetrics.debt.minDSCR, base: baseMetrics.debt.minDSCR, format: 'ratio', higherBetter: true },
+                        { label: 'Avg DSCR', current: currentMetrics.debt.yearly.reduce((sum, y) => sum + (y.dscr || 0), 0) / currentMetrics.debt.yearly.filter(y => y.dscr).length, base: baseMetrics.debt.yearly.reduce((sum, y) => sum + (y.dscr || 0), 0) / baseMetrics.debt.yearly.filter(y => y.dscr).length, format: 'ratio', higherBetter: true },
+                        { label: 'Total Interest', current: currentMetrics.debt.yearly.reduce((sum, y) => sum + y.interest, 0), base: baseMetrics.debt.yearly.reduce((sum, y) => sum + y.interest, 0), format: 'currency', higherBetter: false },
+                        { label: 'Debt-to-Equity', current: currentMetrics.liquidity.yearly[0]?.debtToEquity || 0, base: baseMetrics.liquidity.yearly[0]?.debtToEquity || 0, format: 'ratio', higherBetter: false },
                       ].map(({ label, current, base, format, higherBetter }) => {
                         const change = getMetricChange(current, base);
                         return (
@@ -1254,7 +1254,7 @@ const SensitivityScenarios = () => {
                             <div className="text-sm text-muted-foreground mt-1">
                               Equity NPV: {formatMetricValue(scenario.metrics.returns.equity.npv, 'currency')} | 
                               IRR: {formatMetricValue(scenario.metrics.returns.equity.irr, 'percentage')} |
-                              Payback: {formatMetricValue(scenario.metrics.returns.equity.paybackPeriod, 'years')}
+                              Payback: {formatMetricValue(scenario.metrics.returns.equity.payback, 'years')}
                             </div>
                           )}
                         </div>
@@ -1308,12 +1308,12 @@ const SensitivityScenarios = () => {
                         { key: 'equityNPV', label: 'Equity NPV', path: 'returns.equity.npv', format: 'currency' },
                         { key: 'equityIRR', label: 'Equity IRR', path: 'returns.equity.irr', format: 'percentage' },
                         { key: 'projectNPV', label: 'Project NPV', path: 'returns.project.npv', format: 'currency' },
-                        { key: 'payback', label: 'Payback Period', path: 'returns.equity.paybackPeriod', format: 'years' },
-                        { key: 'peakFunding', label: 'Peak Funding', path: 'cashHealth.peakFundingRequired', format: 'currency' },
-                        { key: 'grossMargin', label: 'Gross Margin', path: 'profitability.total.grossMargin', format: 'percentage' },
-                        { key: 'netMargin', label: 'Net Margin', path: 'profitability.total.netMargin', format: 'percentage' },
-                        { key: 'creditsIssued', label: 'Credits Issued', path: 'carbonKPIs.total.creditsIssued', format: 'number' },
-                        { key: 'breakEvenPrice', label: 'Break-even Price', path: 'breakEven.total.breakEvenPrice', format: 'currency' },
+                        { key: 'payback', label: 'Payback Period', path: 'returns.equity.payback', format: 'years' },
+                        { key: 'peakFunding', label: 'Peak Funding', path: 'cashHealth.peakFunding', format: 'currency' },
+                        { key: 'grossMargin', label: 'Gross Margin (Yr 1)', path: 'profitability.yearly.0.grossMargin', format: 'percentage' },
+                        { key: 'netMargin', label: 'Net Margin (Yr 1)', path: 'profitability.yearly.0.netMargin', format: 'percentage' },
+                        { key: 'creditsIssued', label: 'Credits Issued', path: 'carbonKPIs.totalIssued', format: 'number' },
+                        { key: 'breakEvenPrice', label: 'Break-even Price (Yr 1)', path: 'breakEven.yearly.0.bePriceOper', format: 'currency' },
                       ].map(({ key, label, path, format }) => (
                         <tr key={key} className="border-b">
                           <td className="p-3 font-medium">{label}</td>
