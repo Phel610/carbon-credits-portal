@@ -12,10 +12,17 @@ import {
   TrendingUp,
   Calendar,
   Globe,
-  MoreVertical
+  MoreVertical,
+  Trash2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface FinancialModel {
   id: string;
@@ -81,6 +88,61 @@ const FinancialModels = () => {
     }
   };
 
+  const handleDeleteModel = async (modelId: string, modelName: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${modelName}"?\n\n` +
+      `This will permanently delete:\n` +
+      `• All inputs\n` +
+      `• All financial statements\n` +
+      `• All metrics\n` +
+      `• All scenarios\n` +
+      `• All sensitivity analyses\n\n` +
+      `This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const tables = [
+        'sensitivity_analyses',
+        'model_scenarios', 
+        'financial_metrics',
+        'financial_statements',
+        'model_inputs'
+      ] as const;
+
+      for (const table of tables) {
+        const { error } = await supabase
+          .from(table as any)
+          .delete()
+          .eq('model_id', modelId);
+        
+        if (error) throw error;
+      }
+
+      const { error: modelError } = await supabase
+        .from('financial_models')
+        .delete()
+        .eq('id', modelId);
+
+      if (modelError) throw modelError;
+
+      setModels(models.filter(m => m.id !== modelId));
+      
+      toast({
+        title: "Model deleted",
+        description: `"${modelName}" and all its data have been permanently deleted.`,
+      });
+    } catch (error) {
+      console.error('Error deleting model:', error);
+      toast({
+        title: "Delete failed",
+        description: error instanceof Error ? error.message : "Failed to delete the model. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <FinancialPlatformLayout>
@@ -141,9 +203,27 @@ const FinancialModels = () => {
                         </CardDescription>
                       )}
                     </div>
-                    <Badge className={getStatusColor(model.status)}>
-                      {model.status.replace('_', ' ')}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className={getStatusColor(model.status)}>
+                        {model.status.replace('_', ' ')}
+                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleDeleteModel(model.id, model.name)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Model
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
