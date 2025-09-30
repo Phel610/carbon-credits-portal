@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import FinancialPlatformLayout from '@/components/layout/FinancialPlatformLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -21,7 +22,8 @@ import {
   Percent,
   Calculator,
   Copy,
-  Trash2
+  Trash2,
+  FileText
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -425,16 +427,19 @@ const SensitivityScenarios = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <FinancialPlatformLayout>
+        <div className="container mx-auto p-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
         </div>
-      </div>
+      </FinancialPlatformLayout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <FinancialPlatformLayout>
+      <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button 
@@ -758,7 +763,23 @@ const SensitivityScenarios = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between pt-6 border-t mt-6">
+        <Button variant="outline" onClick={() => navigate(`/financial/models/${modelId}/metrics`)}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Metrics
+        </Button>
+        <Button 
+          className="bg-trust hover:bg-trust/90"
+          onClick={() => navigate(`/financial/models/${modelId}/reports`)}
+        >
+          <FileText className="mr-2 h-4 w-4" />
+          Generate Reports
+        </Button>
+      </div>
     </div>
+    </FinancialPlatformLayout>
   );
 };
 

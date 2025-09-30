@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, Download, CheckCircle2, XCircle, Calculator, BarChart3 } from "lucide-react";
+import FinancialPlatformLayout from "@/components/layout/FinancialPlatformLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -301,7 +302,8 @@ export default function FinancialMetrics() {
   const latestLiquidity = metrics.liquidity.yearly[metrics.liquidity.yearly.length - 1];
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <FinancialPlatformLayout>
+      <div className="container mx-auto py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -973,6 +975,22 @@ export default function FinancialMetrics() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between pt-6 border-t mt-6">
+        <Button variant="outline" onClick={() => navigate(`/financial/models/${id}/statements`)}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Statements
+        </Button>
+        <Button 
+          className="bg-trust hover:bg-trust/90"
+          onClick={() => navigate(`/financial/models/${id}/scenarios`)}
+        >
+          <BarChart3 className="mr-2 h-4 w-4" />
+          View Scenarios
+        </Button>
+      </div>
     </div>
+    </FinancialPlatformLayout>
   );
 }

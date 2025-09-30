@@ -12,7 +12,8 @@ import {
   TrendingUp,
   BarChart3,
   Zap,
-  RefreshCw
+  RefreshCw,
+  Target
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -530,6 +531,21 @@ const FinancialStatements = () => {
                 <FreeCashFlowTable statements={statements.freeCashFlow} />
               </TabsContent>
             </Tabs>
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between pt-6 border-t mt-6">
+              <Button variant="outline" onClick={() => navigate(`/financial/models/${id}/inputs`)}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Inputs
+              </Button>
+              <Button 
+                className="bg-trust hover:bg-trust/90"
+                onClick={() => navigate(`/financial/models/${id}/metrics`)}
+              >
+                <Target className="mr-2 h-4 w-4" />
+                View Metrics
+              </Button>
+            </div>
           </>
         )}
 
