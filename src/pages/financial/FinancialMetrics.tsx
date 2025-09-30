@@ -322,6 +322,36 @@ export default function FinancialMetrics() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(metrics.profitability.total.revenue)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Across project lifetime</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">EBITDA (Latest)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(latest.ebitda)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Year {latest.year} operating performance</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Net Income (Latest)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(latest.netIncome)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Year {latest.year} bottom line</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Equity IRR</CardTitle>
           </CardHeader>
           <CardContent>
@@ -332,31 +362,11 @@ export default function FinancialMetrics() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">NPV @ {discountRate}%</CardTitle>
+            <CardTitle className="text-sm font-medium">Project IRR</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(metrics.returns.equity.npv)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Net present value (equity)</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Payback Period</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatPayback(metrics.returns.equity.payback)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Time to recover investment</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(metrics.profitability.total.revenue)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Across project lifetime</p>
+            <div className="text-2xl font-bold">{formatIRR(metrics.returns.project.irr)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Unlevered project return</p>
           </CardContent>
         </Card>
 
@@ -369,16 +379,6 @@ export default function FinancialMetrics() {
             <p className="text-xs text-muted-foreground mt-1">
               {metrics.debt.minDSCRYear && `In year ${metrics.debt.minDSCRYear}`}
             </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Cash Balance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(latest.cashEnd)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Latest year ending</p>
           </CardContent>
         </Card>
       </div>
