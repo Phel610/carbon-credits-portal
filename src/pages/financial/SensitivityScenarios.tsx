@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import FinancialPlatformLayout from '@/components/layout/FinancialPlatformLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +23,9 @@ import {
   Calculator,
   Copy,
   Trash2,
-  FileText
+  FileText,
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -31,6 +33,7 @@ import { FinancialCalculationEngine, ModelInputData } from '@/lib/financial/calc
 import { calculateComprehensiveMetrics } from '@/lib/financial/metricsCalculator';
 import { YearlyFinancials } from '@/lib/financial/metricsTypes';
 import { toEngineInputs } from '@/lib/financial/uiAdapter';
+import debounce from 'lodash.debounce';
 
 interface SensitivityVariable {
   key: string;
@@ -69,6 +72,7 @@ const SensitivityScenarios = () => {
   const [calculating, setCalculating] = useState(false);
   const [modelName, setModelName] = useState('');
   const [activeTab, setActiveTab] = useState('sensitivity');
+  const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
   
   // Sensitivity Analysis State
   const [sensitivities, setSensitivities] = useState<SensitivityVariable[]>([]);
@@ -551,9 +555,54 @@ const SensitivityScenarios = () => {
     }
   };
 
+  const validateScenario = (variables: SensitivityVariable[]): string[] => {
+    const warnings: string[] = [];
+    
+    // Get current values
+    const pricePerCredit = variables.find(v => v.key === 'price_per_credit')?.currentValue || 0;
+    const creditsGenerated = variables.find(v => v.key === 'credits_generated')?.currentValue || 0;
+    const cogsRate = variables.find(v => v.key === 'cogs_rate')?.currentValue || 0;
+    const capex = variables.find(v => v.key === 'capex')?.currentValue || 0;
+    const debtDraw = variables.find(v => v.key === 'debt_draw')?.currentValue || 0;
+    const interestRate = variables.find(v => v.key === 'interest_rate')?.currentValue || 0;
+    const staffCosts = variables.find(v => v.key === 'staff_costs')?.currentValue || 0;
+    const mrvCosts = variables.find(v => v.key === 'mrv_costs')?.currentValue || 0;
+    
+    // Check if revenue is too low relative to costs
+    const estimatedRevenue = pricePerCredit * creditsGenerated;
+    const estimatedCosts = (estimatedRevenue * cogsRate / 100) + staffCosts + mrvCosts;
+    if (estimatedRevenue < estimatedCosts * 0.8) {
+      warnings.push('Revenue may not cover operational costs - consider increasing price or volume');
+    }
+    
+    // Check if debt is too high relative to CAPEX
+    if (debtDraw > capex * 3) {
+      warnings.push('Debt amount significantly exceeds CAPEX - may indicate overleveraging');
+    }
+    
+    // Check if interest rate is unrealistically high
+    if (interestRate > 15) {
+      warnings.push('Interest rate above 15% may be unrealistic for carbon projects');
+    }
+    
+    // Check if COGS rate is extreme
+    if (cogsRate > 60) {
+      warnings.push('COGS above 60% may result in low profitability');
+    }
+    
+    return warnings;
+  };
+
   const calculateMetrics = async (variables: SensitivityVariable[]) => {
     try {
       setCalculating(true);
+      setValidationWarnings([]);
+      
+      // Validate scenario
+      const warnings = validateScenario(variables);
+      if (warnings.length > 0) {
+        setValidationWarnings(warnings);
+      }
       
       // Transform inputs to engine format with sensitivity overrides
       const engineInputs = await transformInputsToEngine(variables);
@@ -647,17 +696,35 @@ const SensitivityScenarios = () => {
       setCurrentMetrics(metrics);
       setComprehensiveMetrics(comprehensiveMetrics);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error calculating metrics:', error);
+      
+      let errorMessage = "Failed to calculate financial metrics";
+      if (error?.message?.includes('division by zero')) {
+        errorMessage = "Invalid scenario: Division by zero detected. Please adjust your inputs.";
+      } else if (error?.message?.includes('negative')) {
+        errorMessage = "Invalid scenario: Negative values detected in critical calculations.";
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Calculation Error",
-        description: "Failed to calculate financial metrics. Please check your inputs.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setCalculating(false);
     }
   };
+
+  // Debounced version of calculateMetrics
+  const debouncedCalculateMetrics = useCallback(
+    debounce((variables: SensitivityVariable[]) => {
+      calculateMetrics(variables);
+    }, 500),
+    []
+  );
 
   const fetchScenarios = async () => {
     try {
@@ -705,14 +772,14 @@ const SensitivityScenarios = () => {
     }
   };
 
-  const handleSensitivityChange = async (key: string, value: number[]) => {
+  const handleSensitivityChange = (key: string, value: number[]) => {
     const updatedSensitivities = sensitivities.map(s => 
       s.key === key ? { ...s, currentValue: value[0] } : s
     );
     setSensitivities(updatedSensitivities);
     
-    // Recalculate metrics with debouncing
-    await calculateMetrics(updatedSensitivities);
+    // Recalculate metrics with debouncing (500ms delay)
+    debouncedCalculateMetrics(updatedSensitivities);
   };
 
   const resetSensitivities = () => {
@@ -881,6 +948,44 @@ const SensitivityScenarios = () => {
         </TabsList>
 
         <TabsContent value="sensitivity" className="space-y-6">
+          {/* Validation Warnings */}
+          {validationWarnings.length > 0 && (
+            <Card className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                  <CardTitle className="text-base text-yellow-800 dark:text-yellow-200">
+                    Scenario Warnings
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-1 text-sm text-yellow-700 dark:text-yellow-300">
+                  {validationWarnings.map((warning, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="mt-1">•</span>
+                      <span>{warning}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Loading Overlay */}
+          {calculating && (
+            <Card className="border-blue-500 bg-blue-50 dark:bg-blue-950">
+              <CardContent className="py-6">
+                <div className="flex items-center justify-center gap-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                  <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    Recalculating financial metrics...
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Current Metrics Dashboard */}
           {currentMetrics && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
