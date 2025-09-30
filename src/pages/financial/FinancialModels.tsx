@@ -54,6 +54,7 @@ const FinancialModels = () => {
       const { data, error } = await supabase
         .from('financial_models')
         .select('*')
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -144,12 +145,20 @@ const FinancialModels = () => {
               Create and manage financial models for your carbon credit projects.
             </p>
           </div>
-          <Button asChild className="bg-trust hover:bg-trust/90">
-            <Link to="/financial/models/new">
-              <Plus className="mr-2 h-4 w-4" />
-              New Model
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link to="/financial/models/trash">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Trash
+              </Link>
+            </Button>
+            <Button asChild className="bg-trust hover:bg-trust/90">
+              <Link to="/financial/models/new">
+                <Plus className="mr-2 h-4 w-4" />
+                New Model
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Models Grid */}
