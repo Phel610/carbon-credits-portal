@@ -148,52 +148,72 @@ const SensitivityScenarios = () => {
         : inputValue;
     };
 
+    // Helper to ensure value is an array of correct length
+    const ensureArray = (value: any, length: number, defaultItem: any = 0) => {
+      if (Array.isArray(value) && value.length === length) return value;
+      if (Array.isArray(value)) return [...value, ...Array(length - value.length).fill(defaultItem)].slice(0, length);
+      return Array(length).fill(value ?? defaultItem);
+    };
+
     const years = [];
     for (let year = model.start_year; year <= model.end_year; year++) {
       years.push(year);
     }
+    const L = years.length;
 
+    // Get raw values from database
+    const creditsGenerated = getInputValue('operational_metrics', 'annual_credits_generated', Array(L).fill(10000));
+    const creditPrice = getInputValue('operational_metrics', 'carbon_credit_price', Array(L).fill(15));
+    const staffCostsVal = getInputValue('expenses', 'staff_costs', Array(L).fill(50000));
+    const mrvCostsVal = getInputValue('expenses', 'mrv_costs', Array(L).fill(20000));
+    const capexVal = getInputValue('expenses', 'capital_expenditure', Array(L).fill(0));
+    const pddVal = getInputValue('development_costs', 'pdd_cost', Array(L).fill(0));
+    const feasibilityVal = getInputValue('development_costs', 'feasibility_cost', Array(L).fill(0));
+    const depreciationVal = getInputValue('advanced', 'depreciation', Array(L).fill(0));
+    const issuanceVal = getInputValue('issuance', 'issuance_flags', Array(L).fill(1));
+    
+    const equityVal = getInputValue('financing', 'equity_injection', Array(L).fill(0));
+    const debtVal = getInputValue('financing', 'debt_amount', Array(L).fill(0));
+    const purchaseAmountVal = getInputValue('purchase_agreements', 'purchase_amount', Array(L).fill(0));
+
+    // Return in the exact format toEngineInputs expects
     return {
       years,
-      startYear: model.start_year,
-      endYear: model.end_year,
       
-      // Operational Metrics
-      annualCreditsGenerated: getInputValue('operational_metrics', 'annual_credits_generated', Array(years.length).fill(10000)),
-      carbonCreditPrice: getInputValue('operational_metrics', 'carbon_credit_price', Array(years.length).fill(15)),
+      // Operational - arrays
+      issue: ensureArray(issuanceVal, L, 1).map((v: any) => v === 1 || v === true),
+      credits_generated: ensureArray(creditsGenerated, L, 10000),
+      price_per_credit: ensureArray(creditPrice, L, 15),
       
-      // Expenses
-      staffCosts: getInputValue('expenses', 'staff_costs', Array(years.length).fill(50000)),
-      mrvCosts: getInputValue('expenses', 'mrv_costs', Array(years.length).fill(20000)),
-      otherOpex: getInputValue('expenses', 'other_opex', Array(years.length).fill(10000)),
-      capitalExpenditure: getInputValue('expenses', 'capital_expenditure', -500000),
+      // Expenses - arrays (UI shows as positive, will be negated by toEngineInputs)
+      feasibility_costs: ensureArray(feasibilityVal, L, 0),
+      pdd_costs: ensureArray(pddVal, L, 0),
+      mrv_costs: ensureArray(mrvCostsVal, L, 20000),
+      staff_costs: ensureArray(staffCostsVal, L, 50000),
+      depreciation: ensureArray(depreciationVal, L, 0),
+      capex: ensureArray(capexVal, L, 0),
       
-      // Financing
-      debtAmount: getInputValue('financing', 'debt_amount', 0),
-      debtInterestRate: getInputValue('financing', 'debt_interest_rate', 8),
-      debtTenor: getInputValue('financing', 'debt_tenor', 5),
-      equityInjection: getInputValue('financing', 'equity_injection', -1000000),
+      // Rates - scalars (as percentages for UI)
+      ar_rate: getInputValue('advanced', 'ar_rate', 5),
+      ap_rate: getInputValue('advanced', 'ap_rate', 10),
+      cogs_rate: getInputValue('advanced', 'cogs_rate', 10),
+      income_tax_rate: getInputValue('investor_assumptions', 'tax_rate', 20),
       
-      // Purchase Agreements
-      prePurchaseShare: getInputValue('purchase_agreements', 'pre_purchase_share', 0),
-      prePurchasePremium: getInputValue('purchase_agreements', 'pre_purchase_premium', 0),
+      // Financing - scalars and arrays
+      interest_rate: getInputValue('financing', 'debt_interest_rate', 10),
+      debt_duration_years: getInputValue('financing', 'debt_tenor', 5),
+      equity_injection: ensureArray(equityVal, L, 0),
+      debt_draw: ensureArray(debtVal, L, 0),
       
-      // Development Costs
-      pddCost: getInputValue('development_costs', 'pdd_cost', -50000),
-      feasibilityCost: getInputValue('development_costs', 'feasibility_cost', -30000),
+      // Pre-purchase - array and scalar
+      purchase_amount: ensureArray(purchaseAmountVal, L, 0),
+      purchase_share: getInputValue('purchase_agreements', 'pre_purchase_share', 0),
       
-      // Investor Assumptions
-      discountRate: getInputValue('investor_assumptions', 'discount_rate', 12),
-      taxRate: getInputValue('investor_assumptions', 'tax_rate', 25),
-      
-      // Advanced
-      depreciationYears: getInputValue('advanced', 'depreciation_years', 10),
-      openingCash: getInputValue('advanced', 'opening_cash', 100000),
-      arRate: getInputValue('advanced', 'ar_rate', 60),
-      apRate: getInputValue('advanced', 'ap_rate', 30),
-      
-      // Issuance
-      issuanceFlags: getInputValue('issuance', 'issuance_flags', Array(years.length).fill(1)),
+      // Other scalars
+      opening_cash_y1: getInputValue('advanced', 'opening_cash', 0),
+      discount_rate: getInputValue('investor_assumptions', 'discount_rate', 12),
+      initial_equity_t0: getInputValue('financing', 'initial_equity', 100000),
+      initial_ppe: getInputValue('advanced', 'initial_ppe', 0),
     };
   };
 
