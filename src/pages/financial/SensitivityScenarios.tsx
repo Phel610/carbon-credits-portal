@@ -169,7 +169,7 @@ const SensitivityScenarios = () => {
     const capexVal = getInputValue('expenses', 'capex', Array(L).fill(0));
     const pddVal = getInputValue('expenses', 'pdd_costs', Array(L).fill(0));
     const feasibilityVal = getInputValue('expenses', 'feasibility_costs', Array(L).fill(0));
-    const depreciationVal = getInputValue('advanced', 'depreciation', Array(L).fill(0));
+    const depreciationVal = getInputValue('expenses', 'depreciation', Array(L).fill(0));
     const issuanceVal = getInputValue('operational_metrics', 'issuance_flag', Array(L).fill(1));
     
     const equityVal = getInputValue('financing', 'equity_injection', Array(L).fill(0));
