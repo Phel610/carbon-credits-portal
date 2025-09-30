@@ -162,18 +162,18 @@ const SensitivityScenarios = () => {
     const L = years.length;
 
     // Get raw values from database
-    const creditsGenerated = getInputValue('operational_metrics', 'annual_credits_generated', Array(L).fill(10000));
-    const creditPrice = getInputValue('operational_metrics', 'carbon_credit_price', Array(L).fill(15));
+    const creditsGenerated = getInputValue('operational_metrics', 'credits_generated', Array(L).fill(10000));
+    const creditPrice = getInputValue('operational_metrics', 'price_per_credit', Array(L).fill(15));
     const staffCostsVal = getInputValue('expenses', 'staff_costs', Array(L).fill(50000));
     const mrvCostsVal = getInputValue('expenses', 'mrv_costs', Array(L).fill(20000));
-    const capexVal = getInputValue('expenses', 'capital_expenditure', Array(L).fill(0));
-    const pddVal = getInputValue('development_costs', 'pdd_cost', Array(L).fill(0));
-    const feasibilityVal = getInputValue('development_costs', 'feasibility_cost', Array(L).fill(0));
+    const capexVal = getInputValue('expenses', 'capex', Array(L).fill(0));
+    const pddVal = getInputValue('expenses', 'pdd_costs', Array(L).fill(0));
+    const feasibilityVal = getInputValue('expenses', 'feasibility_costs', Array(L).fill(0));
     const depreciationVal = getInputValue('advanced', 'depreciation', Array(L).fill(0));
-    const issuanceVal = getInputValue('issuance', 'issuance_flags', Array(L).fill(1));
+    const issuanceVal = getInputValue('operational_metrics', 'issuance_flag', Array(L).fill(1));
     
     const equityVal = getInputValue('financing', 'equity_injection', Array(L).fill(0));
-    const debtVal = getInputValue('financing', 'debt_amount', Array(L).fill(0));
+    const debtVal = getInputValue('financing', 'debt_draw', Array(L).fill(0));
     const purchaseAmountVal = getInputValue('purchase_agreements', 'purchase_amount', Array(L).fill(0));
 
     // Return in the exact format toEngineInputs expects
@@ -194,26 +194,26 @@ const SensitivityScenarios = () => {
       capex: ensureArray(capexVal, L, 0),
       
       // Rates - scalars (as percentages for UI)
-      ar_rate: getInputValue('advanced', 'ar_rate', 5),
-      ap_rate: getInputValue('advanced', 'ap_rate', 10),
-      cogs_rate: getInputValue('advanced', 'cogs_rate', 10),
-      income_tax_rate: getInputValue('investor_assumptions', 'tax_rate', 20),
+      ar_rate: getInputValue('expenses', 'ar_rate', 10),
+      ap_rate: getInputValue('expenses', 'ap_rate', 8),
+      cogs_rate: getInputValue('expenses', 'cogs_rate', 10),
+      income_tax_rate: getInputValue('expenses', 'income_tax_rate', 25),
       
       // Financing - scalars and arrays
-      interest_rate: getInputValue('financing', 'debt_interest_rate', 10),
-      debt_duration_years: getInputValue('financing', 'debt_tenor', 5),
+      interest_rate: getInputValue('financing', 'interest_rate', 7.5),
+      debt_duration_years: getInputValue('financing', 'debt_duration_years', 5),
       equity_injection: ensureArray(equityVal, L, 0),
       debt_draw: ensureArray(debtVal, L, 0),
       
       // Pre-purchase - array and scalar
       purchase_amount: ensureArray(purchaseAmountVal, L, 0),
-      purchase_share: getInputValue('purchase_agreements', 'pre_purchase_share', 0),
+      purchase_share: getInputValue('purchase_agreements', 'purchase_share', 0),
       
       // Other scalars
-      opening_cash_y1: getInputValue('advanced', 'opening_cash', 0),
-      discount_rate: getInputValue('investor_assumptions', 'discount_rate', 12),
-      initial_equity_t0: getInputValue('financing', 'initial_equity', 100000),
-      initial_ppe: getInputValue('advanced', 'initial_ppe', 0),
+      opening_cash_y1: getInputValue('financing', 'opening_cash_y1', 0),
+      discount_rate: getInputValue('financing', 'discount_rate', 12),
+      initial_equity_t0: getInputValue('financing', 'initial_equity_t0', 100000),
+      initial_ppe: getInputValue('financing', 'initial_ppe', 0),
     };
   };
 
