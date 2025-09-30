@@ -19,12 +19,20 @@ export function TransposedTable({ years, rows, showTotal = false, totalLabel = '
     if (typeof value === 'string' && value.startsWith('$')) {
       const numValue = parseFloat(value.replace(/[$,]/g, ''));
       if (!isNaN(numValue)) {
-        if (numValue < 0) return <span className="text-destructive">{value}</span>;
-        if (numValue > 0) return <span className="text-success">{value}</span>;
+        if (numValue < 0) return <span className="text-destructive font-semibold">{value}</span>;
+        if (numValue > 0) return <span className="text-success font-semibold">{value}</span>;
         return <span className="text-muted-foreground">{value}</span>;
       }
     }
-    return value;
+    // Format special values like "> horizon", "n/a"
+    if (typeof value === 'string' && (value.includes('horizon') || value === 'n/a' || value === '–')) {
+      return <span className="text-muted-foreground italic font-medium">{value}</span>;
+    }
+    // Format percentage values
+    if (typeof value === 'string' && value.includes('%')) {
+      return <span className="font-semibold">{value}</span>;
+    }
+    return <span className="font-medium">{value}</span>;
   };
 
   return (
@@ -55,16 +63,16 @@ export function TransposedTable({ years, rows, showTotal = false, totalLabel = '
                 idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'
               } ${row.className || ''}`}
             >
-              <td className="sticky left-0 z-10 border-r border-border py-3 px-4 font-medium bg-inherit">
+              <td className="sticky left-0 z-10 border-r border-border py-3.5 px-4 font-semibold bg-inherit">
                 {row.metric}
               </td>
               {row.values.map((value, valIdx) => (
-                <td key={valIdx} className="text-right py-3 px-4 font-mono text-sm">
+                <td key={valIdx} className="text-right py-3.5 px-4 font-mono text-base">
                   {formatValue(value)}
                 </td>
               ))}
               {showTotal && (
-                <td className="text-right py-3 px-4 font-mono text-sm font-bold bg-muted/70 border-l border-border">
+                <td className="text-right py-3.5 px-4 font-mono text-base font-bold bg-muted/70 border-l border-border">
                   {formatValue(row.total || '')}
                 </td>
               )}

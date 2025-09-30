@@ -345,10 +345,6 @@ export default function FinancialMetrics() {
           <h1 className="text-3xl font-bold mt-2">{modelName} – Financial Metrics</h1>
           <p className="text-muted-foreground">Comprehensive financial analysis and performance indicators</p>
         </div>
-        <Button variant="outline" onClick={handleExport}>
-          <Download className="mr-2 h-4 w-4" />
-          Export Report
-        </Button>
       </div>
 
       {/* Executive Summary Cards */}
@@ -459,25 +455,25 @@ export default function FinancialMetrics() {
                 <CardDescription>Returns to equity holders after debt service</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">IRR:</span>
-                  <span className="font-mono font-bold">{formatIRR(metrics.returns.equity.irr)}</span>
+                  <span className="font-mono font-bold text-lg">{formatIRR(metrics.returns.equity.irr)}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">NPV @ {(discountRate * 100).toFixed(1)}%:</span>
-                  <span className="font-mono">{formatCurrency(metrics.returns.equity.npv)}</span>
+                  <span className="font-mono font-semibold text-base">{formatCurrency(metrics.returns.equity.npv)}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">MIRR:</span>
-                  <span className="font-mono">{formatIRR(metrics.returns.equity.mirr)}</span>
+                  <span className="font-mono font-semibold text-base">{formatIRR(metrics.returns.equity.mirr)}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">Payback:</span>
-                  <span className="font-mono">{formatPayback(metrics.returns.equity.payback)}</span>
+                  <span className="font-mono font-medium text-base">{formatPayback(metrics.returns.equity.payback)}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">Discounted Payback:</span>
-                  <span className="font-mono">{formatPayback(metrics.returns.equity.discountedPayback)}</span>
+                  <span className="font-mono font-medium text-base">{formatPayback(metrics.returns.equity.discountedPayback)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -517,67 +513,18 @@ export default function FinancialMetrics() {
                 <CardDescription>Returns to carbon stream investor</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">IRR:</span>
-                  <span className="font-mono font-bold">{formatIRR(metrics.returns.investor.irr)}</span>
+                  <span className="font-mono font-bold text-lg">{formatIRR(metrics.returns.investor.irr)}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">NPV @ {(discountRate * 100).toFixed(1)}%:</span>
-                  <span className="font-mono">{formatCurrency(metrics.returns.investor.npv)}</span>
+                  <span className="font-mono font-semibold text-base">{formatCurrency(metrics.returns.investor.npv)}</span>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Cumulative NPV Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Cumulative NPV by Year</CardTitle>
-              <CardDescription>Build-up of net present value over time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={metrics.returns.equity.cumulativeNPV}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
-                  <XAxis 
-                    dataKey="year" 
-                    stroke="hsl(var(--muted-foreground))"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <YAxis 
-                    stroke="hsl(var(--muted-foreground))"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                  />
-                  <Tooltip 
-                    formatter={(value: any) => formatCurrency(value)}
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--popover))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '0.5rem',
-                    }}
-                  />
-                  <Legend />
-                  <defs>
-                    <linearGradient id="npvGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0.1}/>
-                    </linearGradient>
-                  </defs>
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    name="Equity NPV" 
-                    stroke="hsl(var(--chart-1))" 
-                    strokeWidth={3}
-                    dot={{ fill: 'hsl(var(--chart-1))', r: 4 }}
-                    activeDot={{ r: 6, fill: 'hsl(var(--chart-1))' }}
-                    animationDuration={1000}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Profitability Tab */}
@@ -1027,7 +974,6 @@ export default function FinancialMetrics() {
                     name="EBITDA" 
                     stroke="hsl(var(--chart-3))" 
                     strokeWidth={3}
-                    dot={{ fill: 'hsl(var(--chart-3))', r: 4 }}
                     activeDot={{ r: 6 }}
                     animationDuration={1000}
                   />
@@ -1037,7 +983,6 @@ export default function FinancialMetrics() {
                     name="Net Income" 
                     stroke="hsl(var(--chart-1))" 
                     strokeWidth={3}
-                    dot={{ fill: 'hsl(var(--chart-1))', r: 4 }}
                     activeDot={{ r: 6 }}
                     animationDuration={1000}
                   />
@@ -1150,6 +1095,55 @@ export default function FinancialMetrics() {
             </CardContent>
           </Card>
 
+          {/* Cumulative NPV Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Cumulative NPV by Year</CardTitle>
+              <CardDescription>Build-up of net present value over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={metrics.returns.equity.cumulativeNPV}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                  <XAxis 
+                    dataKey="year" 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => formatCurrency(value)}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--popover))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '0.5rem',
+                    }}
+                  />
+                  <Legend />
+                  <defs>
+                    <linearGradient id="npvGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
+                  <Area 
+                    type="monotone" 
+                    dataKey="value" 
+                    name="Equity NPV" 
+                    fill="url(#npvGradient)"
+                    stroke="hsl(var(--chart-1))" 
+                    strokeWidth={3}
+                    animationDuration={1000}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
           {/* Price Comparison Chart */}
           <Card>
             <CardHeader>
@@ -1185,7 +1179,6 @@ export default function FinancialMetrics() {
                     name="WA Realized Price" 
                     stroke="hsl(var(--chart-1))" 
                     strokeWidth={3}
-                    dot={{ fill: 'hsl(var(--chart-1))', r: 4 }}
                     activeDot={{ r: 6 }}
                     animationDuration={1000}
                   />
@@ -1196,7 +1189,7 @@ export default function FinancialMetrics() {
                     stroke="hsl(var(--destructive))" 
                     strokeWidth={2} 
                     strokeDasharray="5 5"
-                    dot={{ fill: 'hsl(var(--destructive))', r: 3 }}
+                    activeDot={{ r: 5 }}
                     animationDuration={1000}
                   />
                 </LineChart>
