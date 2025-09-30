@@ -255,13 +255,7 @@ const FinancialStatements = () => {
 
   const saveStatementsToDatabase = async (modelId: string, statements: any) => {
     try {
-      // Delete existing statements
-      await supabase
-        .from('financial_statements')
-        .delete()
-        .eq('model_id', modelId);
-
-      // Prepare statements for database
+      // Prepare statements for database FIRST (before deleting old data)
       const statementRows = [];
 
       // Income statements
@@ -339,8 +333,8 @@ const FinancialStatements = () => {
         });
       });
 
-      // Free Cash Flow
-      statements.freeCashFlows.forEach((stmt: any) => {
+      // Free Cash Flow - FIX TYPO: freeCashFlow not freeCashFlows
+      statements.freeCashFlow.forEach((stmt: any) => {
         Object.entries(stmt).forEach(([key, value]) => {
           if (key !== 'year') {
             statementRows.push({
@@ -353,6 +347,17 @@ const FinancialStatements = () => {
           }
         });
       });
+
+      // NOW delete existing statements (only after all data is prepared successfully)
+      const { error: deleteError } = await supabase
+        .from('financial_statements')
+        .delete()
+        .eq('model_id', modelId);
+
+      if (deleteError) {
+        console.error('Error deleting old statements:', deleteError);
+        throw deleteError;
+      }
 
       // Insert statements
       const { error: statementsError } = await supabase
