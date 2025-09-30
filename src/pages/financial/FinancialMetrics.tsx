@@ -538,12 +538,42 @@ export default function FinancialMetrics() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={metrics.returns.equity.cumulativeNPV}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" label={{ value: "Year", position: "insideBottom", offset: -5 }} />
-                  <YAxis label={{ value: "Cumulative NPV ($)", angle: -90, position: "insideLeft" }} />
-                  <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                  <XAxis 
+                    dataKey="year" 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => formatCurrency(value)}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--popover))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '0.5rem',
+                    }}
+                  />
                   <Legend />
-                  <Line type="monotone" dataKey="value" name="Equity NPV" stroke="hsl(var(--chart-1))" strokeWidth={2} />
+                  <defs>
+                    <linearGradient id="npvGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
+                  <Line 
+                    type="monotone" 
+                    dataKey="value" 
+                    name="Equity NPV" 
+                    stroke="hsl(var(--chart-1))" 
+                    strokeWidth={3}
+                    dot={{ fill: 'hsl(var(--chart-1))', r: 4 }}
+                    activeDot={{ r: 6, fill: 'hsl(var(--chart-1))' }}
+                    animationDuration={1000}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -911,13 +941,52 @@ export default function FinancialMetrics() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={yearlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" />
-                  <YAxis />
-                  <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                  <XAxis 
+                    dataKey="year" 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => formatCurrency(value)}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--popover))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '0.5rem',
+                    }}
+                  />
                   <Legend />
-                  <Bar dataKey="spotRevenue" name="Spot Revenue" fill="hsl(var(--chart-1))" stackId="a" />
-                  <Bar dataKey="prepurchaseRevenue" name="Pre-purchase Revenue" fill="hsl(var(--chart-2))" stackId="a" />
+                  <defs>
+                    <linearGradient id="spotGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0.6}/>
+                    </linearGradient>
+                    <linearGradient id="ppGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0.6}/>
+                    </linearGradient>
+                  </defs>
+                  <Bar 
+                    dataKey="spotRevenue" 
+                    name="Spot Revenue" 
+                    fill="url(#spotGradient)" 
+                    stackId="a" 
+                    radius={[0, 0, 0, 0]}
+                    animationDuration={1000}
+                  />
+                  <Bar 
+                    dataKey="prepurchaseRevenue" 
+                    name="Pre-purchase Revenue" 
+                    fill="url(#ppGradient)" 
+                    stackId="a" 
+                    radius={[8, 8, 0, 0]}
+                    animationDuration={1000}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -932,13 +1001,46 @@ export default function FinancialMetrics() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={metrics.profitability.yearly}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" />
-                  <YAxis />
-                  <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                  <XAxis 
+                    dataKey="year" 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => formatCurrency(value)}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--popover))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '0.5rem',
+                    }}
+                  />
                   <Legend />
-                  <Line type="monotone" dataKey="ebitda" name="EBITDA" stroke="hsl(var(--chart-3))" strokeWidth={2} />
-                  <Line type="monotone" dataKey="netIncome" name="Net Income" stroke="hsl(var(--chart-1))" strokeWidth={2} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="ebitda" 
+                    name="EBITDA" 
+                    stroke="hsl(var(--chart-3))" 
+                    strokeWidth={3}
+                    dot={{ fill: 'hsl(var(--chart-3))', r: 4 }}
+                    activeDot={{ r: 6 }}
+                    animationDuration={1000}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="netIncome" 
+                    name="Net Income" 
+                    stroke="hsl(var(--chart-1))" 
+                    strokeWidth={3}
+                    dot={{ fill: 'hsl(var(--chart-1))', r: 4 }}
+                    activeDot={{ r: 6 }}
+                    animationDuration={1000}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -953,11 +1055,40 @@ export default function FinancialMetrics() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={yearlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" />
-                  <YAxis />
-                  <Tooltip formatter={(value: any) => formatCurrency(value)} />
-                  <Area type="monotone" dataKey="cashEnd" name="Cash Balance" fill="hsl(var(--chart-4))" stroke="hsl(var(--chart-4))" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                  <XAxis 
+                    dataKey="year" 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => formatCurrency(value)}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--popover))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '0.5rem',
+                    }}
+                  />
+                  <defs>
+                    <linearGradient id="cashGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-4))" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-4))" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
+                  <Area 
+                    type="monotone" 
+                    dataKey="cashEnd" 
+                    name="Cash Balance" 
+                    fill="url(#cashGradient)" 
+                    stroke="hsl(var(--chart-4))" 
+                    strokeWidth={2}
+                    animationDuration={1000}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </CardContent>
@@ -972,13 +1103,48 @@ export default function FinancialMetrics() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <ComposedChart data={metrics.debt.yearly}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" />
-                  <YAxis />
-                  <Tooltip formatter={(value: any) => formatNumber(value, 2)} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                  <XAxis 
+                    dataKey="year" 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    tickFormatter={(value) => `${value.toFixed(1)}x`}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => formatNumber(value, 2)}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--popover))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '0.5rem',
+                    }}
+                  />
                   <Legend />
-                  <Bar dataKey="dscr" name="DSCR" fill="hsl(var(--chart-2))" />
-                  <Line type="monotone" dataKey={() => 1.2} name="Covenant (1.20x)" stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="5 5" />
+                  <defs>
+                    <linearGradient id="dscrGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0.6}/>
+                    </linearGradient>
+                  </defs>
+                  <Bar 
+                    dataKey="dscr" 
+                    name="DSCR" 
+                    fill="url(#dscrGradient)" 
+                    radius={[8, 8, 0, 0]}
+                    animationDuration={1000}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey={() => 1.2} 
+                    name="Covenant (1.20x)" 
+                    stroke="hsl(var(--destructive))" 
+                    strokeWidth={2} 
+                    strokeDasharray="5 5"
+                    dot={false}
+                  />
                 </ComposedChart>
               </ResponsiveContainer>
             </CardContent>
@@ -993,13 +1159,46 @@ export default function FinancialMetrics() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={metrics.breakEven.yearly}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" label={{ value: "Year", position: "insideBottom", offset: -5 }} />
-                  <YAxis label={{ value: "Price per Credit ($)", angle: -90, position: "insideLeft" }} />
-                  <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                  <XAxis 
+                    dataKey="year" 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    tickFormatter={(value) => `$${value}`}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => formatCurrency(value)}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--popover))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '0.5rem',
+                    }}
+                  />
                   <Legend />
-                  <Line type="monotone" dataKey="realizedPrice" name="WA Realized Price" stroke="hsl(var(--chart-1))" strokeWidth={2} />
-                  <Line type="monotone" dataKey="bePriceOper" name="Break-even Price (Oper)" stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="5 5" />
+                  <Line 
+                    type="monotone" 
+                    dataKey="realizedPrice" 
+                    name="WA Realized Price" 
+                    stroke="hsl(var(--chart-1))" 
+                    strokeWidth={3}
+                    dot={{ fill: 'hsl(var(--chart-1))', r: 4 }}
+                    activeDot={{ r: 6 }}
+                    animationDuration={1000}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="bePriceOper" 
+                    name="Break-even Price (Oper)" 
+                    stroke="hsl(var(--destructive))" 
+                    strokeWidth={2} 
+                    strokeDasharray="5 5"
+                    dot={{ fill: 'hsl(var(--destructive))', r: 3 }}
+                    animationDuration={1000}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
