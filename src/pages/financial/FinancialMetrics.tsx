@@ -457,23 +457,23 @@ export default function FinancialMetrics() {
               <CardContent className="space-y-2">
                 <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">IRR:</span>
-                  <span className="font-mono font-bold text-lg">{formatIRR(metrics.returns.equity.irr)}</span>
+                  <span className="font-mono text-lg">{formatIRR(metrics.returns.equity.irr)}</span>
                 </div>
                 <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">NPV @ {(discountRate * 100).toFixed(1)}%:</span>
-                  <span className="font-mono font-semibold text-base">{formatCurrency(metrics.returns.equity.npv)}</span>
+                  <span className="font-mono text-base">{formatCurrency(metrics.returns.equity.npv)}</span>
                 </div>
                 <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">MIRR:</span>
-                  <span className="font-mono font-semibold text-base">{formatIRR(metrics.returns.equity.mirr)}</span>
+                  <span className="font-mono text-base">{formatIRR(metrics.returns.equity.mirr)}</span>
                 </div>
                 <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">Payback:</span>
-                  <span className="font-mono font-medium text-base">{formatPayback(metrics.returns.equity.payback)}</span>
+                  <span className="font-mono text-base">{formatPayback(metrics.returns.equity.payback)}</span>
                 </div>
                 <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">Discounted Payback:</span>
-                  <span className="font-mono font-medium text-base">{formatPayback(metrics.returns.equity.discountedPayback)}</span>
+                  <span className="font-mono text-base">{formatPayback(metrics.returns.equity.discountedPayback)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -486,7 +486,7 @@ export default function FinancialMetrics() {
               <CardContent className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">IRR:</span>
-                  <span className="font-mono font-bold">{formatIRR(metrics.returns.project.irr)}</span>
+                  <span className="font-mono">{formatIRR(metrics.returns.project.irr)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">NPV @ {(discountRate * 100).toFixed(1)}%:</span>
@@ -515,11 +515,11 @@ export default function FinancialMetrics() {
               <CardContent className="space-y-2">
                 <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">IRR:</span>
-                  <span className="font-mono font-bold text-lg">{formatIRR(metrics.returns.investor.irr)}</span>
+                  <span className="font-mono text-lg">{formatIRR(metrics.returns.investor.irr)}</span>
                 </div>
                 <div className="flex justify-between items-baseline">
                   <span className="text-muted-foreground">NPV @ {(discountRate * 100).toFixed(1)}%:</span>
-                  <span className="font-mono font-semibold text-base">{formatCurrency(metrics.returns.investor.npv)}</span>
+                  <span className="font-mono text-base">{formatCurrency(metrics.returns.investor.npv)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -908,20 +908,10 @@ export default function FinancialMetrics() {
                     }}
                   />
                   <Legend />
-                  <defs>
-                    <linearGradient id="spotGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(120, 60%, 50%)" stopOpacity={0.9}/>
-                      <stop offset="95%" stopColor="hsl(120, 60%, 40%)" stopOpacity={0.6}/>
-                    </linearGradient>
-                    <linearGradient id="ppGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(150, 55%, 45%)" stopOpacity={0.9}/>
-                      <stop offset="95%" stopColor="hsl(150, 55%, 35%)" stopOpacity={0.6}/>
-                    </linearGradient>
-                  </defs>
                   <Bar 
                     dataKey="spotRevenue" 
                     name="Spot Revenue" 
-                    fill="url(#spotGradient)" 
+                    fill="hsl(142, 76%, 36%)" 
                     stackId="a" 
                     radius={[0, 0, 0, 0]}
                     animationDuration={1000}
@@ -929,7 +919,7 @@ export default function FinancialMetrics() {
                   <Bar 
                     dataKey="prepurchaseRevenue" 
                     name="Pre-purchase Revenue" 
-                    fill="url(#ppGradient)" 
+                    fill="hsl(152, 60%, 42%)" 
                     stackId="a" 
                     radius={[8, 8, 0, 0]}
                     animationDuration={1000}
@@ -972,20 +962,20 @@ export default function FinancialMetrics() {
                     type="monotone" 
                     dataKey="ebitda" 
                     name="EBITDA" 
-                    stroke="hsl(140, 65%, 45%)" 
-                    strokeWidth={3}
-                    dot={false}
-                    activeDot={{ r: 6, fill: "hsl(140, 65%, 45%)" }}
+                    stroke="hsl(142, 76%, 36%)" 
+                    strokeWidth={2}
+                    dot={{ fill: "hsl(142, 76%, 36%)", r: 3 }}
+                    activeDot={{ r: 6, fill: "hsl(142, 76%, 36%)" }}
                     animationDuration={1000}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="netIncome" 
                     name="Net Income" 
-                    stroke="hsl(160, 60%, 40%)" 
-                    strokeWidth={3}
-                    dot={false}
-                    activeDot={{ r: 6, fill: "hsl(160, 60%, 40%)" }}
+                    stroke="hsl(210, 70%, 50%)" 
+                    strokeWidth={2}
+                    dot={{ fill: "hsl(210, 70%, 50%)", r: 3 }}
+                    activeDot={{ r: 6, fill: "hsl(210, 70%, 50%)" }}
                     animationDuration={1000}
                   />
                 </LineChart>
@@ -1021,19 +1011,13 @@ export default function FinancialMetrics() {
                       borderRadius: '0.5rem',
                     }}
                   />
-                  <defs>
-                    <linearGradient id="cashGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(130, 50%, 50%)" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="hsl(130, 50%, 40%)" stopOpacity={0.1}/>
-                    </linearGradient>
-                  </defs>
                   <Area 
                     type="monotone" 
                     dataKey="cashEnd" 
                     name="Cash Balance" 
-                    fill="url(#cashGradient)" 
-                    stroke="hsl(130, 50%, 45%)" 
-                    strokeWidth={3}
+                    fill="hsl(142, 76%, 36%, 0.2)" 
+                    stroke="hsl(142, 76%, 36%)" 
+                    strokeWidth={2}
                     animationDuration={1000}
                   />
                 </AreaChart>
@@ -1070,16 +1054,10 @@ export default function FinancialMetrics() {
                     }}
                   />
                   <Legend />
-                  <defs>
-                    <linearGradient id="dscrGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(145, 58%, 48%)" stopOpacity={0.9}/>
-                      <stop offset="95%" stopColor="hsl(145, 58%, 38%)" stopOpacity={0.6}/>
-                    </linearGradient>
-                  </defs>
                   <Bar 
                     dataKey="dscr" 
                     name="DSCR" 
-                    fill="url(#dscrGradient)" 
+                    fill="hsl(142, 76%, 36%)" 
                     radius={[8, 8, 0, 0]}
                     animationDuration={1000}
                   />
@@ -1126,19 +1104,13 @@ export default function FinancialMetrics() {
                     }}
                   />
                   <Legend />
-                  <defs>
-                    <linearGradient id="npvGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(135, 55%, 48%)" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="hsl(135, 55%, 38%)" stopOpacity={0.1}/>
-                    </linearGradient>
-                  </defs>
                   <Area 
                     type="monotone" 
                     dataKey="value" 
                     name="Equity NPV" 
-                    fill="url(#npvGradient)"
-                    stroke="hsl(135, 55%, 45%)" 
-                    strokeWidth={3}
+                    fill="hsl(142, 76%, 36%, 0.2)"
+                    stroke="hsl(142, 76%, 36%)" 
+                    strokeWidth={2}
                     animationDuration={1000}
                   />
                 </AreaChart>
@@ -1179,21 +1151,21 @@ export default function FinancialMetrics() {
                     type="monotone" 
                     dataKey="realizedPrice" 
                     name="WA Realized Price" 
-                    stroke="hsl(155, 62%, 42%)" 
-                    strokeWidth={3}
-                    dot={false}
-                    activeDot={{ r: 6, fill: "hsl(155, 62%, 42%)" }}
+                    stroke="hsl(142, 76%, 36%)" 
+                    strokeWidth={2}
+                    dot={{ fill: "hsl(142, 76%, 36%)", r: 3 }}
+                    activeDot={{ r: 6, fill: "hsl(142, 76%, 36%)" }}
                     animationDuration={1000}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="bePriceOper" 
                     name="Break-even Price (Oper)" 
-                    stroke="hsl(var(--destructive))" 
+                    stroke="hsl(25, 95%, 53%)" 
                     strokeWidth={2} 
                     strokeDasharray="5 5"
-                    dot={false}
-                    activeDot={{ r: 5 }}
+                    dot={{ fill: "hsl(25, 95%, 53%)", r: 3 }}
+                    activeDot={{ r: 5, fill: "hsl(25, 95%, 53%)" }}
                     animationDuration={1000}
                   />
                 </LineChart>

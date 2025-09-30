@@ -19,20 +19,20 @@ export function TransposedTable({ years, rows, showTotal = false, totalLabel = '
     if (typeof value === 'string' && value.startsWith('$')) {
       const numValue = parseFloat(value.replace(/[$,]/g, ''));
       if (!isNaN(numValue)) {
-        if (numValue < 0) return <span className="text-destructive font-semibold">{value}</span>;
-        if (numValue > 0) return <span className="text-success/70">{value}</span>;
+        if (numValue < 0) return <span className="text-destructive">{value}</span>;
+        if (numValue > 0) return <span className="text-[hsl(142,76%,36%)]">{value}</span>;
         return <span className="text-muted-foreground">{value}</span>;
       }
     }
     // Format special values like "> horizon", "n/a"
     if (typeof value === 'string' && (value.includes('horizon') || value === 'n/a' || value === '–')) {
-      return <span className="text-muted-foreground italic font-medium">{value}</span>;
+      return <span className="text-muted-foreground italic">{value}</span>;
     }
     // Format percentage values
     if (typeof value === 'string' && value.includes('%')) {
-      return <span className="font-semibold">{value}</span>;
+      return <span>{value}</span>;
     }
-    return <span className="font-medium">{value}</span>;
+    return <span>{value}</span>;
   };
 
   return (
@@ -63,7 +63,7 @@ export function TransposedTable({ years, rows, showTotal = false, totalLabel = '
                 idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'
               } ${row.className || ''}`}
             >
-              <td className="sticky left-0 z-10 border-r border-border py-3.5 px-4 font-semibold bg-inherit">
+              <td className="sticky left-0 z-10 border-r border-border py-3.5 px-4 font-bold bg-inherit">
                 {row.metric}
               </td>
               {row.values.map((value, valIdx) => (
