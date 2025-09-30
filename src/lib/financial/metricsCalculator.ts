@@ -98,12 +98,13 @@ export function calculateProfitabilityMetrics(yearlyData: YearlyFinancials[]) {
   const yearly = yearlyData.map(y => {
     const revenue = y.totalRevenue;
     const cogs = Math.abs(y.cogs);
-    const grossProfit = revenue - cogs;
-    const opex = Math.abs(y.feasibility) + Math.abs(y.pdd) + Math.abs(y.mrv) + Math.abs(y.staff);
-    const ebitda = grossProfit - opex;
+    const grossProfit = y.grossProfit; // Use already calculated value
+    // Use already calculated opex from engine instead of reconstructing
+    const opex = Math.abs(y.opex);
+    const ebitda = y.ebitda; // Use already calculated value
     const depreciation = Math.abs(y.depreciation);
     const interest = Math.abs(y.interest);
-    const ebt = ebitda - depreciation - interest;
+    const ebt = y.ebt; // Use already calculated value
     const tax = Math.abs(y.incomeTax);
     const netIncome = y.netIncome;
     
@@ -146,7 +147,8 @@ export function calculateUnitEconomics(yearlyData: YearlyFinancials[]) {
     const issued = y.creditsIssued;
     const revenue = y.totalRevenue;
     const cogs = Math.abs(y.cogs);
-    const opex = Math.abs(y.feasibility) + Math.abs(y.pdd) + Math.abs(y.mrv) + Math.abs(y.staff);
+    // Use already calculated opex from engine instead of reconstructing
+    const opex = Math.abs(y.opex);
     const depreciation = Math.abs(y.depreciation);
     
     return {
@@ -164,8 +166,8 @@ export function calculateUnitEconomics(yearlyData: YearlyFinancials[]) {
   const totalIssued = yearly.reduce((sum, y) => sum + y.issuedCredits, 0);
   const totalRevenue = yearlyData.reduce((sum, y) => sum + y.totalRevenue, 0);
   const totalCogs = yearlyData.reduce((sum, y) => sum + Math.abs(y.cogs), 0);
-  const totalOpex = yearlyData.reduce((sum, y) => 
-    sum + Math.abs(y.feasibility) + Math.abs(y.pdd) + Math.abs(y.mrv) + Math.abs(y.staff), 0);
+  // Use already calculated opex from engine
+  const totalOpex = yearlyData.reduce((sum, y) => sum + Math.abs(y.opex), 0);
   
   return {
     yearly,
@@ -189,7 +191,8 @@ export function calculateWorkingCapitalMetrics(yearlyData: YearlyFinancials[]) {
       const ap = y.accountsPayable;
       const nwc = ar - ap;
       const revenue = y.totalRevenue;
-      const opex = Math.abs(y.feasibility) + Math.abs(y.pdd) + Math.abs(y.mrv) + Math.abs(y.staff);
+      // Use already calculated opex from engine
+      const opex = Math.abs(y.opex);
       
       return {
         year: y.year,

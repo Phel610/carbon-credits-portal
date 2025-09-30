@@ -85,60 +85,60 @@ export default function FinancialMetrics() {
 
         return {
           year,
-          // Income Statement
+          // Income Statement - use exact field names from engine output
           spotRevenue: getVal("income_statement", "spot_revenue"),
-          prepurchaseRevenue: getVal("income_statement", "prepurchase_revenue"),
+          prepurchaseRevenue: getVal("income_statement", "pre_purchase_revenue"),
           totalRevenue: getVal("income_statement", "total_revenue"),
           cogs: getVal("income_statement", "cogs"),
-          feasibility: getVal("income_statement", "feasibility"),
-          pdd: getVal("income_statement", "pdd"),
-          mrv: getVal("income_statement", "mrv"),
-          staff: getVal("income_statement", "staff"),
+          feasibility: getVal("income_statement", "feasibility_costs"),
+          pdd: getVal("income_statement", "pdd_costs"),
+          mrv: getVal("income_statement", "mrv_costs"),
+          staff: getVal("income_statement", "staff_costs"),
           opex: getVal("income_statement", "opex_total"),
           ebitda: getVal("income_statement", "ebitda"),
           depreciation: getVal("income_statement", "depreciation"),
           interest: getVal("income_statement", "interest_expense"),
-          ebt: getVal("income_statement", "ebt"),
+          ebt: getVal("income_statement", "earnings_before_tax"),
           incomeTax: getVal("income_statement", "income_tax"),
           netIncome: getVal("income_statement", "net_income"),
-          grossProfit: 0, // calculated
+          grossProfit: getVal("income_statement", "total_revenue") - Math.abs(getVal("income_statement", "cogs")),
           
-          // Balance Sheet
+          // Balance Sheet - use exact field names from engine output
           cash: getVal("balance_sheet", "cash"),
           accountsReceivable: getVal("balance_sheet", "accounts_receivable"),
           ppe: getVal("balance_sheet", "ppe_net"),
           totalAssets: getVal("balance_sheet", "total_assets"),
           accountsPayable: getVal("balance_sheet", "accounts_payable"),
           unearnedRevenue: getVal("balance_sheet", "unearned_revenue"),
-          debt: getVal("balance_sheet", "debt"),
+          debt: getVal("balance_sheet", "debt_balance"),
           totalLiabilities: getVal("balance_sheet", "total_liabilities"),
           equity: getVal("balance_sheet", "total_equity"),
           contributedCapital: getVal("balance_sheet", "contributed_capital"),
           retainedEarnings: getVal("balance_sheet", "retained_earnings"),
           
-          // Cash Flow
-          operatingCF: getVal("cashflow_statement", "operating_cash_flow"),
-          investingCF: getVal("cashflow_statement", "investing_cash_flow"),
-          financingCF: getVal("cashflow_statement", "financing_cash_flow"),
-          netChangeCash: getVal("cashflow_statement", "net_change_cash"),
-          cashEnd: getVal("cashflow_statement", "cash_end"),
-          capex: getVal("cashflow_statement", "capex"),
-          changeAR: getVal("cashflow_statement", "change_ar"),
-          changeAP: getVal("cashflow_statement", "change_ap"),
-          changeUnearned: getVal("cashflow_statement", "change_unearned"),
+          // Cash Flow - use exact field names from engine output
+          operatingCF: getVal("cash_flow", "operating_cash_flow"),
+          investingCF: getVal("cash_flow", "investing_cash_flow"),
+          financingCF: getVal("cash_flow", "financing_cash_flow"),
+          netChangeCash: getVal("cash_flow", "net_change_cash"),
+          cashEnd: getVal("cash_flow", "cash_end"),
+          capex: getVal("cash_flow", "capex"),
+          changeAR: getVal("cash_flow", "change_ar"),
+          changeAP: getVal("cash_flow", "change_ap"),
+          changeUnearned: 0, // Not directly in cash flow statement
           
-          // Debt Schedule
+          // Debt Schedule - use exact field names from engine output
           debtBeginning: getVal("debt_schedule", "beginning_balance"),
           debtDraw: getVal("debt_schedule", "draw"),
           debtPrincipal: getVal("debt_schedule", "principal_payment"),
           debtEnding: getVal("debt_schedule", "ending_balance"),
-          debtInterest: getVal("debt_schedule", "interest"),
+          debtInterest: getVal("debt_schedule", "interest_expense"),
           dscr: getVal("debt_schedule", "dscr"),
           
-          // Carbon & Free Cash Flow
-          creditsGenerated: getVal("carbon_stream", "credits_generated") || getInput("credits_generated"),
-          creditsIssued: getVal("carbon_stream", "credits_issued"),
-          purchasedCreditsDelivered: getVal("carbon_stream", "purchased_credits"),
+          // Carbon & Free Cash Flow - use exact field names from engine output
+          creditsGenerated: getVal("income_statement", "credits_generated"),
+          creditsIssued: getVal("income_statement", "credits_issued"),
+          purchasedCreditsDelivered: getVal("income_statement", "purchased_credits"),
           fcfe: getVal("free_cash_flow", "fcf_to_equity"),
         };
       });
