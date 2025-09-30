@@ -418,7 +418,7 @@ export default function FinancialMetrics() {
 
         {/* Returns Tab */}
         <TabsContent value="returns" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card>
               <CardHeader>
                 <CardTitle>Equity Returns (Levered)</CardTitle>
@@ -473,6 +473,23 @@ export default function FinancialMetrics() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Discounted Payback:</span>
                   <span className="font-mono">{formatPayback(metrics.returns.project.discountedPayback)}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Investor Returns (Pre-purchase)</CardTitle>
+                <CardDescription>Returns to carbon stream investor</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">IRR:</span>
+                  <span className="font-mono font-bold">{formatIRR(metrics.returns.investor.irr)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">NPV @ {discountRate}%:</span>
+                  <span className="font-mono">{formatCurrency(metrics.returns.investor.npv)}</span>
                 </div>
               </CardContent>
             </Card>
