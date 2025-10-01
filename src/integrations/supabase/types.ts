@@ -353,6 +353,7 @@ export type Database = {
           id: string
           is_base_case: boolean | null
           model_id: string
+          notes: string | null
           scenario_data: Json
           scenario_name: string
           updated_at: string
@@ -362,6 +363,7 @@ export type Database = {
           id?: string
           is_base_case?: boolean | null
           model_id: string
+          notes?: string | null
           scenario_data: Json
           scenario_name: string
           updated_at?: string
@@ -371,6 +373,7 @@ export type Database = {
           id?: string
           is_base_case?: boolean | null
           model_id?: string
+          notes?: string | null
           scenario_data?: Json
           scenario_name?: string
           updated_at?: string

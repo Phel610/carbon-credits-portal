@@ -22,7 +22,9 @@ import {
   Star,
   FileDown,
   StickyNote,
-  CheckSquare
+  CheckSquare,
+  HelpCircle,
+  CheckCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -34,6 +36,15 @@ import ScenarioCharts from '@/components/financial/ScenarioCharts';
 import ScenarioTemplates from '@/components/financial/ScenarioTemplates';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,6 +76,8 @@ interface Scenario {
   isBaseCase: boolean;
   variables: Record<string, number>;
   metrics?: any;
+  notes?: string;
+  yearlyFinancials?: YearlyFinancials[];
 }
 
 // ============= Pattern Detection & Preservation Helpers =============
@@ -173,8 +186,14 @@ const SensitivityScenarios = () => {
   const [selectedScenarioIds, setSelectedScenarioIds] = useState<string[]>([]);
   const [scenarioNotes, setScenarioNotes] = useState<Record<string, string>>({});
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [savingNoteId, setSavingNoteId] = useState<string | null>(null);
   const [showProbabilityWeighting, setShowProbabilityWeighting] = useState(false);
   const [scenarioProbabilities, setScenarioProbabilities] = useState<Record<string, number>>({});
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [templateApplied, setTemplateApplied] = useState<{name: string; changes: string[]} | null>(null);
+  const [showPostSaveDialog, setShowPostSaveDialog] = useState(false);
+  const [lastSavedScenarioName, setLastSavedScenarioName] = useState('');
+  const [activeTab, setActiveTab] = useState('sensitivity');
 
   useEffect(() => {
     if (modelId) {
@@ -706,11 +725,23 @@ const SensitivityScenarios = () => {
         modelInputs
       );
 
+      // Attach yearlyFinancials for charts
+      const metricsWithYearly = {
+        ...metrics,
+        yearlyFinancials: yearlyData
+      };
+
       // Set base metrics on first calculation
       if (!baseMetrics) {
-        setBaseMetrics(metrics);
+        setBaseMetrics(metricsWithYearly);
       }
-      setCurrentMetrics(metrics);
+      setCurrentMetrics(metricsWithYearly);
+
+      console.log('✅ Metrics calculated successfully', {
+        equityNPV: metrics.returns?.equity?.npv,
+        equityIRR: metrics.returns?.equity?.irr,
+        hasYearlyData: yearlyData.length > 0
+      });
 
     } catch (error) {
       console.error('Error calculating metrics:', error);
@@ -758,13 +789,33 @@ const SensitivityScenarios = () => {
       return;
     }
 
+    // Validate that metrics have been calculated
+    if (!currentMetrics) {
+      toast({
+        title: "No Metrics Available",
+        description: "Please wait for calculations to complete before saving",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('💾 Saving scenario with metrics:', {
+      name: newScenarioName,
+      hasMetrics: !!currentMetrics,
+      equityNPV: currentMetrics?.returns?.equity?.npv,
+      hasYearlyData: !!currentMetrics?.yearlyFinancials
+    });
+
     try {
       const variablesMap: Record<string, number> = {};
       sensitivities.forEach(s => {
         variablesMap[s.key] = s.currentValue;
       });
 
-      const { error } = await supabase
+      // Check if this is the first scenario (auto-set as base case)
+      const isFirstScenario = scenarios.length === 0;
+
+      const { data, error } = await supabase
         .from('model_scenarios')
         .insert({
           model_id: modelId,
@@ -773,16 +824,18 @@ const SensitivityScenarios = () => {
             variables: variablesMap,
             metrics: currentMetrics
           },
-          is_base_case: false
-        });
+          is_base_case: isFirstScenario,
+          notes: ''
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
-      toast({
-        title: "Scenario Saved",
-        description: `"${newScenarioName}" has been saved successfully`,
-      });
+      console.log('✅ Scenario saved successfully:', data);
 
+      setLastSavedScenarioName(newScenarioName);
+      setShowPostSaveDialog(true);
       setNewScenarioName('');
       await fetchScenarios();
 
@@ -813,11 +866,21 @@ const SensitivityScenarios = () => {
           name: s.scenario_name,
           isBaseCase: s.is_base_case || false,
           variables: scenarioData?.variables || {},
-          metrics: scenarioData?.metrics
+          metrics: scenarioData?.metrics,
+          notes: s.notes || '',
+          yearlyFinancials: scenarioData?.metrics?.yearlyFinancials
         };
       });
 
       setScenarios(scenarioList);
+      
+      // Initialize notes state
+      const notesMap: Record<string, string> = {};
+      scenarioList.forEach(s => {
+        notesMap[s.id] = s.notes || '';
+      });
+      setScenarioNotes(notesMap);
+
     } catch (error) {
       console.error('Error fetching scenarios:', error);
     }
@@ -830,10 +893,49 @@ const SensitivityScenarios = () => {
     }));
     setSensitivities(newSensitivities);
     calculateMetrics(newSensitivities);
+    setActiveTab('sensitivity');
     toast({
       title: "Scenario Loaded",
-      description: `Loaded "${scenario.name}"`,
+      description: `Applied "${scenario.name}" to sensitivity sliders`,
     });
+  };
+
+  const saveScenarioNotes = async (scenarioId: string, notes: string) => {
+    setSavingNoteId(scenarioId);
+    try {
+      const { error } = await supabase
+        .from('model_scenarios')
+        .update({ notes })
+        .eq('id', scenarioId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Notes Saved",
+        description: "Scenario notes updated successfully",
+      });
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save notes",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingNoteId(null);
+    }
+  };
+
+  const debouncedSaveNotes = useCallback(
+    debounce((scenarioId: string, notes: string) => {
+      saveScenarioNotes(scenarioId, notes);
+    }, 2000),
+    []
+  );
+
+  const handleNoteChange = (scenarioId: string, value: string) => {
+    setScenarioNotes(prev => ({ ...prev, [scenarioId]: value }));
+    debouncedSaveNotes(scenarioId, value);
   };
 
   const deleteScenario = async (scenarioId: string) => {
@@ -1006,16 +1108,19 @@ const SensitivityScenarios = () => {
     setNewScenarioName(templateName);
     calculateMetrics(newSensitivities);
     
-    toast({
-      title: "Template Applied",
-      description: `Applied "${templateName}" template. Review and save when ready.`,
+    // Build list of changes
+    const changes: string[] = [];
+    Object.entries(adjustments).forEach(([key, newValue]) => {
+      const variable = sensitivities.find(v => v.key === key);
+      if (variable && variable.baseValue !== newValue) {
+        const pctChange = ((newValue - variable.baseValue) / variable.baseValue) * 100;
+        changes.push(`${variable.name}: ${pctChange > 0 ? '+' : ''}${pctChange.toFixed(0)}%`);
+      }
     });
 
-    // Switch to sensitivity analysis tab
-    const sensitivityTab = document.querySelector('[value="sensitivity"]') as HTMLElement;
-    if (sensitivityTab) {
-      sensitivityTab.click();
-    }
+    setTemplateApplied({ name: templateName, changes });
+    setShowTemplateDialog(true);
+    setActiveTab('sensitivity');
   };
 
   const calculateWeightedMetrics = () => {
@@ -1092,24 +1197,37 @@ const SensitivityScenarios = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="sensitivity" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="sensitivity">Sensitivity Analysis</TabsTrigger>
-            <TabsTrigger value="scenarios">Scenario Manager</TabsTrigger>
-          </TabsList>
+        <TooltipProvider>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="sensitivity">Sensitivity Analysis</TabsTrigger>
+              <TabsTrigger value="scenarios">Scenario Manager</TabsTrigger>
+            </TabsList>
 
-          {/* Sensitivity Analysis Tab */}
-          <TabsContent value="sensitivity" className="space-y-6">
-            {calculating && (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Recalculating metrics...
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Sensitivity Analysis Tab */}
+            <TabsContent value="sensitivity" className="space-y-6">
+              {/* Calculation Status */}
+              {calculating && (
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Recalculating metrics...
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {!calculating && currentMetrics && (
+                <Card className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
+                      <CheckCircle className="h-4 w-4" />
+                      Metrics calculated successfully
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
             {validationWarnings.length > 0 && (
               <Card className="border-warning">
@@ -1313,6 +1431,9 @@ const SensitivityScenarios = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Save Current Scenario</CardTitle>
+                <CardDescription>
+                  {currentMetrics ? 'Metrics calculated and ready to save' : 'Adjust variables and wait for calculations'}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
@@ -1321,10 +1442,20 @@ const SensitivityScenarios = () => {
                     value={newScenarioName}
                     onChange={(e) => setNewScenarioName(e.target.value)}
                   />
-                  <Button onClick={saveScenario}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        onClick={saveScenario}
+                        disabled={calculating || !currentMetrics || !newScenarioName.trim()}
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        Save
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {!currentMetrics ? 'Wait for metrics to calculate' : !newScenarioName.trim() ? 'Enter a scenario name' : 'Save this scenario'}
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </CardContent>
             </Card>
@@ -1338,12 +1469,27 @@ const SensitivityScenarios = () => {
                 sensitivities={sensitivities}
                 onApplyTemplate={applyTemplateToSensitivities}
               />
-              <Button
-                variant="outline"
-                onClick={() => setShowProbabilityWeighting(!showProbabilityWeighting)}
-              >
-                {showProbabilityWeighting ? 'Hide' : 'Show'} Probability Weighting
-              </Button>
+              <div className="flex gap-2 items-center">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                    >
+                      <HelpCircle className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm">
+                    <p><strong>Probability Weighting:</strong> Assign probabilities to different scenarios to calculate expected values. Useful for risk analysis and decision-making under uncertainty.</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowProbabilityWeighting(!showProbabilityWeighting)}
+                >
+                  {showProbabilityWeighting ? 'Hide' : 'Show'} Probability Weighting
+                </Button>
+              </div>
             </div>
 
             {/* Probability Weighting Section */}
@@ -1615,13 +1761,20 @@ const SensitivityScenarios = () => {
 
                             {/* Action Buttons */}
                             <div className="flex flex-wrap gap-2 pt-2 border-t">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => loadScenario(scenario)}
-                              >
-                                Load
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => loadScenario(scenario)}
+                                  >
+                                    Apply to Sensitivity
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Load this scenario's variables into the sensitivity sliders for further adjustment
+                                </TooltipContent>
+                              </Tooltip>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -1631,23 +1784,22 @@ const SensitivityScenarios = () => {
                                 Duplicate
                               </Button>
                               {!scenario.isBaseCase && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setAsBaseCase(scenario.id)}
-                                >
-                                  <Star className="h-3 w-3 mr-1" />
-                                  Set as Base
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setAsBaseCase(scenario.id)}
+                                    >
+                                      <Star className="h-3 w-3 mr-1" />
+                                      Set as Base
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    Mark this scenario as the baseline for comparisons
+                                  </TooltipContent>
+                                </Tooltip>
                               )}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => exportScenario(scenario)}
-                              >
-                                <FileDown className="h-3 w-3 mr-1" />
-                                Export
-                              </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -1688,13 +1840,35 @@ const SensitivityScenarios = () => {
                             {/* Notes Section */}
                             {editingNoteId === scenario.id && (
                               <div className="pt-2 border-t space-y-2">
-                                <Label>Scenario Notes</Label>
+                                <div className="flex items-center justify-between">
+                                  <Label>Scenario Notes</Label>
+                                  <div className="flex items-center gap-2">
+                                    {savingNoteId === scenario.id && (
+                                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        Saving...
+                                      </span>
+                                    )}
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => saveScenarioNotes(scenario.id, scenarioNotes[scenario.id] || '')}
+                                      disabled={savingNoteId === scenario.id}
+                                    >
+                                      <Save className="h-3 w-3 mr-1" />
+                                      Save Notes
+                                    </Button>
+                                  </div>
+                                </div>
                                 <Textarea
                                   placeholder="Add notes about this scenario's assumptions, rationale, or key findings..."
                                   value={scenarioNotes[scenario.id] || ''}
-                                  onChange={(e) => setScenarioNotes(prev => ({ ...prev, [scenario.id]: e.target.value }))}
+                                  onChange={(e) => handleNoteChange(scenario.id, e.target.value)}
                                   rows={3}
                                 />
+                                <p className="text-xs text-muted-foreground">
+                                  Notes auto-save after 2 seconds of typing
+                                </p>
                               </div>
                             )}
                           </CardContent>
@@ -1707,6 +1881,75 @@ const SensitivityScenarios = () => {
             </Card>
           </TabsContent>
         </Tabs>
+        </TooltipProvider>
+
+        {/* Template Application Dialog */}
+        <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                Template Applied: {templateApplied?.name}
+              </DialogTitle>
+              <DialogDescription>
+                We've adjusted your variables based on this template
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <h4 className="font-medium mb-2">Variables Changed:</h4>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  {templateApplied?.changes.slice(0, 8).map((change, idx) => (
+                    <li key={idx}>• {change}</li>
+                  ))}
+                  {(templateApplied?.changes.length || 0) > 8 && (
+                    <li>• +{(templateApplied?.changes.length || 0) - 8} more changes</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setShowTemplateDialog(false)}>
+                Close
+              </Button>
+              <Button onClick={() => {
+                setShowTemplateDialog(false);
+                setActiveTab('sensitivity');
+              }}>
+                Review & Adjust
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Post-Save Action Dialog */}
+        <Dialog open={showPostSaveDialog} onOpenChange={setShowPostSaveDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                Scenario Saved Successfully!
+              </DialogTitle>
+              <DialogDescription>
+                "{lastSavedScenarioName}" has been saved and is ready to compare
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => {
+                setShowPostSaveDialog(false);
+                resetSensitivities();
+              }}>
+                Create Another Scenario
+              </Button>
+              <Button onClick={() => {
+                setShowPostSaveDialog(false);
+                setActiveTab('scenarios');
+              }}>
+                View in Scenario Manager
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </FinancialPlatformLayout>
   );
