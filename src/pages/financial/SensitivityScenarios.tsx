@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import FinancialPlatformLayout from '@/components/layout/FinancialPlatformLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -31,6 +31,7 @@ import { calculateComprehensiveMetrics } from '@/lib/financial/metricsCalculator
 import { YearlyFinancials } from '@/lib/financial/metricsTypes';
 import debounce from 'lodash.debounce';
 import ScenarioCharts from '@/components/financial/ScenarioCharts';
+import ScenarioTemplates from '@/components/financial/ScenarioTemplates';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -172,6 +173,8 @@ const SensitivityScenarios = () => {
   const [selectedScenarioIds, setSelectedScenarioIds] = useState<string[]>([]);
   const [scenarioNotes, setScenarioNotes] = useState<Record<string, string>>({});
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [showProbabilityWeighting, setShowProbabilityWeighting] = useState(false);
+  const [scenarioProbabilities, setScenarioProbabilities] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (modelId) {
@@ -993,6 +996,57 @@ const SensitivityScenarios = () => {
     return impacts.sort((a, b) => Math.abs(b.change) - Math.abs(a.change)).slice(0, 3);
   };
 
+  const applyTemplateToSensitivities = (adjustments: Record<string, number>, templateName: string) => {
+    const newSensitivities = sensitivities.map(s => ({
+      ...s,
+      currentValue: adjustments[s.key] ?? s.currentValue
+    }));
+    
+    setSensitivities(newSensitivities);
+    setNewScenarioName(templateName);
+    calculateMetrics(newSensitivities);
+    
+    toast({
+      title: "Template Applied",
+      description: `Applied "${templateName}" template. Review and save when ready.`,
+    });
+
+    // Switch to sensitivity analysis tab
+    const sensitivityTab = document.querySelector('[value="sensitivity"]') as HTMLElement;
+    if (sensitivityTab) {
+      sensitivityTab.click();
+    }
+  };
+
+  const calculateWeightedMetrics = () => {
+    const totalProbability = Object.values(scenarioProbabilities).reduce((sum, p) => sum + p, 0);
+    
+    if (Math.abs(totalProbability - 100) > 0.1) {
+      return null;
+    }
+
+    const weightedMetrics: any = {
+      equityNPV: 0,
+      equityIRR: 0,
+      projectNPV: 0,
+      totalRevenue: 0
+    };
+
+    scenarios.forEach(scenario => {
+      const probability = (scenarioProbabilities[scenario.id] || 0) / 100;
+      if (scenario.metrics?.returns) {
+        weightedMetrics.equityNPV += (scenario.metrics.returns.equityNPV || 0) * probability;
+        weightedMetrics.equityIRR += (scenario.metrics.returns.equityIRR || 0) * probability;
+        weightedMetrics.projectNPV += (scenario.metrics.returns.projectNPV || 0) * probability;
+      }
+      if (scenario.metrics?.profitability) {
+        weightedMetrics.totalRevenue += (scenario.metrics.profitability.totalRevenue || 0) * probability;
+      }
+    });
+
+    return weightedMetrics;
+  };
+
   const formatValue = (value: number, format: string): string => {
     if (format === 'currency') {
       return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -1278,6 +1332,118 @@ const SensitivityScenarios = () => {
 
           {/* Scenario Manager Tab */}
           <TabsContent value="scenarios" className="space-y-6">
+            {/* Create from Template Button */}
+            <div className="flex justify-between items-center">
+              <ScenarioTemplates 
+                sensitivities={sensitivities}
+                onApplyTemplate={applyTemplateToSensitivities}
+              />
+              <Button
+                variant="outline"
+                onClick={() => setShowProbabilityWeighting(!showProbabilityWeighting)}
+              >
+                {showProbabilityWeighting ? 'Hide' : 'Show'} Probability Weighting
+              </Button>
+            </div>
+
+            {/* Probability Weighting Section */}
+            {showProbabilityWeighting && scenarios.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Probability-Weighted Analysis</CardTitle>
+                  <CardDescription>
+                    Assign probability percentages to each scenario (must sum to 100%)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {scenarios.map(scenario => (
+                      <div key={scenario.id} className="space-y-2">
+                        <Label htmlFor={`prob-${scenario.id}`} className="text-sm">
+                          {scenario.name}
+                        </Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id={`prob-${scenario.id}`}
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={scenarioProbabilities[scenario.id] || 0}
+                            onChange={(e) => setScenarioProbabilities(prev => ({
+                              ...prev,
+                              [scenario.id]: Number(e.target.value)
+                            }))}
+                            className="w-20"
+                          />
+                          <span className="text-sm text-muted-foreground">%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="font-medium">Total Probability:</span>
+                      <Badge 
+                        variant={
+                          Math.abs(Object.values(scenarioProbabilities).reduce((sum, p) => sum + p, 0) - 100) < 0.1
+                            ? "default"
+                            : "destructive"
+                        }
+                      >
+                        {Object.values(scenarioProbabilities).reduce((sum, p) => sum + p, 0).toFixed(1)}%
+                      </Badge>
+                    </div>
+
+                    {(() => {
+                      const weightedMetrics = calculateWeightedMetrics();
+                      if (!weightedMetrics) {
+                        return (
+                          <div className="text-sm text-warning flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4" />
+                            Probabilities must sum to exactly 100% to calculate weighted metrics
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Expected Value (Probability-Weighted):</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="space-y-1">
+                              <div className="text-sm text-muted-foreground">Equity NPV</div>
+                              <div className="text-lg font-bold">
+                                ${weightedMetrics.equityNPV.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-sm text-muted-foreground">Equity IRR</div>
+                              <div className="text-lg font-bold">
+                                {(weightedMetrics.equityIRR * 100).toFixed(1)}%
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-sm text-muted-foreground">Project NPV</div>
+                              <div className="text-lg font-bold">
+                                ${weightedMetrics.projectNPV.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-sm text-muted-foreground">Total Revenue</div>
+                              <div className="text-lg font-bold">
+                                ${weightedMetrics.totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Scenario Comparison Charts */}
             <ScenarioCharts 
               selectedScenarios={scenarios.filter(s => selectedScenarioIds.includes(s.id))} 
