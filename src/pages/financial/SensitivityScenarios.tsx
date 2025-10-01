@@ -17,7 +17,12 @@ import {
   Target,
   AlertTriangle,
   Loader2,
-  Trash2
+  Trash2,
+  Copy,
+  Star,
+  FileDown,
+  StickyNote,
+  CheckSquare
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -25,6 +30,20 @@ import { FinancialCalculationEngine, ModelInputData } from '@/lib/financial/calc
 import { calculateComprehensiveMetrics } from '@/lib/financial/metricsCalculator';
 import { YearlyFinancials } from '@/lib/financial/metricsTypes';
 import debounce from 'lodash.debounce';
+import ScenarioCharts from '@/components/financial/ScenarioCharts';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface SensitivityVariable {
   key: string;
@@ -150,6 +169,9 @@ const SensitivityScenarios = () => {
   
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [newScenarioName, setNewScenarioName] = useState('');
+  const [selectedScenarioIds, setSelectedScenarioIds] = useState<string[]>([]);
+  const [scenarioNotes, setScenarioNotes] = useState<Record<string, string>>({});
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (modelId) {
@@ -820,6 +842,8 @@ const SensitivityScenarios = () => {
 
       if (error) throw error;
 
+      setSelectedScenarioIds(prev => prev.filter(id => id !== scenarioId));
+      
       toast({
         title: "Scenario Deleted",
       });
@@ -832,6 +856,141 @@ const SensitivityScenarios = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const duplicateScenario = async (scenario: Scenario) => {
+    try {
+      const newName = `${scenario.name} (Copy)`;
+      
+      const { error } = await supabase
+        .from('model_scenarios')
+        .insert({
+          model_id: modelId,
+          scenario_name: newName,
+          scenario_data: {
+            variables: scenario.variables,
+            metrics: scenario.metrics
+          },
+          is_base_case: false
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Scenario Duplicated",
+        description: `Created "${newName}"`,
+      });
+      await fetchScenarios();
+    } catch (error) {
+      console.error('Error duplicating scenario:', error);
+      toast({
+        title: "Error",
+        description: "Failed to duplicate scenario",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const setAsBaseCase = async (scenarioId: string) => {
+    try {
+      // First, unset all base cases
+      await supabase
+        .from('model_scenarios')
+        .update({ is_base_case: false })
+        .eq('model_id', modelId);
+
+      // Then set the selected scenario as base case
+      const { error } = await supabase
+        .from('model_scenarios')
+        .update({ is_base_case: true })
+        .eq('id', scenarioId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Base Case Updated",
+      });
+      await fetchScenarios();
+    } catch (error) {
+      console.error('Error setting base case:', error);
+      toast({
+        title: "Error",
+        description: "Failed to set base case",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const exportScenario = (scenario: Scenario) => {
+    const data = {
+      name: scenario.name,
+      variables: scenario.variables,
+      metrics: scenario.metrics,
+      exportDate: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${scenario.name.replace(/\s+/g, '_')}_scenario.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Scenario Exported",
+      description: "Downloaded as JSON file",
+    });
+  };
+
+  const toggleScenarioSelection = (scenarioId: string) => {
+    setSelectedScenarioIds(prev => 
+      prev.includes(scenarioId) 
+        ? prev.filter(id => id !== scenarioId)
+        : [...prev, scenarioId]
+    );
+  };
+
+  const getVariableChanges = (scenario: Scenario) => {
+    const changes: Array<{ key: string; name: string; baseValue: number; newValue: number; change: number }> = [];
+    
+    sensitivities.forEach(s => {
+      const newValue = scenario.variables[s.key];
+      if (newValue !== undefined && Math.abs(newValue - s.baseValue) > 0.01) {
+        changes.push({
+          key: s.key,
+          name: s.name,
+          baseValue: s.baseValue,
+          newValue: newValue,
+          change: ((newValue - s.baseValue) / s.baseValue) * 100
+        });
+      }
+    });
+
+    return changes;
+  };
+
+  const getImpactSummary = (scenario: Scenario) => {
+    if (!scenario.metrics || !baseMetrics) return null;
+
+    const impacts = [
+      {
+        label: 'NPV',
+        change: getMetricChange(scenario.metrics.returns?.equityNPV, baseMetrics.returns?.equityNPV)
+      },
+      {
+        label: 'IRR',
+        change: getMetricChange(scenario.metrics.returns?.equityIRR, baseMetrics.returns?.equityIRR)
+      },
+      {
+        label: 'Revenue',
+        change: getMetricChange(scenario.metrics.profitability?.totalRevenue, baseMetrics.profitability?.totalRevenue)
+      }
+    ];
+
+    return impacts.sort((a, b) => Math.abs(b.change) - Math.abs(a.change)).slice(0, 3);
   };
 
   const formatValue = (value: number, format: string): string => {
@@ -1119,6 +1278,89 @@ const SensitivityScenarios = () => {
 
           {/* Scenario Manager Tab */}
           <TabsContent value="scenarios" className="space-y-6">
+            {/* Scenario Comparison Charts */}
+            <ScenarioCharts 
+              selectedScenarios={scenarios.filter(s => selectedScenarioIds.includes(s.id))} 
+            />
+
+            {/* Scenario Comparison Table */}
+            {selectedScenarioIds.length > 1 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Scenario Comparison</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-2 font-medium">Metric</th>
+                          {scenarios
+                            .filter(s => selectedScenarioIds.includes(s.id))
+                            .map(scenario => (
+                              <th key={scenario.id} className="text-right p-2 font-medium">
+                                {scenario.name}
+                                {scenario.isBaseCase && <Badge variant="secondary" className="ml-2">Base</Badge>}
+                              </th>
+                            ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          { label: 'Equity NPV', key: 'equityNPV', category: 'returns', format: 'currency' },
+                          { label: 'Equity IRR', key: 'equityIRR', category: 'returns', format: 'percentage' },
+                          { label: 'Project NPV', key: 'projectNPV', category: 'returns', format: 'currency' },
+                          { label: 'Payback Period', key: 'paybackPeriod', category: 'returns', format: 'years' },
+                          { label: 'Total Revenue', key: 'totalRevenue', category: 'profitability', format: 'currency' },
+                          { label: 'Total Costs', key: 'totalCosts', category: 'profitability', format: 'currency' },
+                        ].map(metric => {
+                          const baseCaseScenario = scenarios.find(s => s.isBaseCase && selectedScenarioIds.includes(s.id));
+                          const baseValue = baseCaseScenario?.metrics?.[metric.category]?.[metric.key];
+                          
+                          return (
+                            <tr key={metric.key} className="border-b">
+                              <td className="p-2 text-muted-foreground">{metric.label}</td>
+                              {scenarios
+                                .filter(s => selectedScenarioIds.includes(s.id))
+                                .map(scenario => {
+                                  const value = scenario.metrics?.[metric.category]?.[metric.key];
+                                  const change = baseValue ? ((value - baseValue) / baseValue) * 100 : 0;
+                                  const isBase = scenario.isBaseCase;
+                                  
+                                  return (
+                                    <td key={scenario.id} className="p-2 text-right">
+                                      <div>
+                                        <span className="font-medium">
+                                          {metric.format === 'currency' 
+                                            ? `$${(value || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                            : metric.format === 'percentage'
+                                            ? `${((value || 0) * 100).toFixed(1)}%`
+                                            : `${(value || 0).toFixed(1)} yrs`
+                                          }
+                                        </span>
+                                        {!isBase && Math.abs(change) > 0.1 && (
+                                          <Badge 
+                                            variant={change > 0 ? "default" : "destructive"} 
+                                            className="ml-2 text-xs"
+                                          >
+                                            {change > 0 ? '+' : ''}{change.toFixed(0)}%
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </td>
+                                  );
+                                })}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Saved Scenarios List */}
             <Card>
               <CardHeader>
                 <CardTitle>Saved Scenarios</CardTitle>
@@ -1129,35 +1371,170 @@ const SensitivityScenarios = () => {
                     No saved scenarios yet. Create one in the Sensitivity Analysis tab.
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {scenarios.map(scenario => (
-                      <div key={scenario.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <div className="font-medium">{scenario.name}</div>
-                          {scenario.isBaseCase && (
-                            <Badge variant="secondary" className="mt-1">Base Case</Badge>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => loadScenario(scenario)}
-                          >
-                            Load
-                          </Button>
-                          {!scenario.isBaseCase && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteScenario(scenario.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                  <div className="space-y-4">
+                    {scenarios.map(scenario => {
+                      const changes = getVariableChanges(scenario);
+                      const impacts = getImpactSummary(scenario);
+                      const isSelected = selectedScenarioIds.includes(scenario.id);
+
+                      return (
+                        <Card key={scenario.id} className={isSelected ? "border-primary" : ""}>
+                          <CardContent className="p-4 space-y-3">
+                            {/* Header Row */}
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-3 flex-1">
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={() => toggleScenarioSelection(scenario.id)}
+                                  className="mt-1"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-lg">{scenario.name}</span>
+                                    {scenario.isBaseCase && (
+                                      <Badge variant="secondary">
+                                        <Star className="h-3 w-3 mr-1" />
+                                        Base Case
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    {changes.length} variable{changes.length !== 1 ? 's' : ''} changed
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Variables Changed */}
+                            {changes.length > 0 && (
+                              <div className="space-y-2">
+                                <div className="text-sm font-medium">Variables Changed:</div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                  {changes.slice(0, 6).map(change => (
+                                    <div key={change.key} className="text-xs border rounded p-2">
+                                      <div className="font-medium">{change.name}</div>
+                                      <div className="text-muted-foreground flex items-center justify-between">
+                                        <span>{formatValue(change.baseValue, sensitivities.find(s => s.key === change.key)?.format || 'number')} → {formatValue(change.newValue, sensitivities.find(s => s.key === change.key)?.format || 'number')}</span>
+                                        <Badge variant={change.change > 0 ? "default" : "destructive"} className="text-xs">
+                                          {change.change > 0 ? '+' : ''}{change.change.toFixed(0)}%
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                                {changes.length > 6 && (
+                                  <div className="text-xs text-muted-foreground">
+                                    +{changes.length - 6} more changes
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Impact Summary */}
+                            {impacts && impacts.length > 0 && (
+                              <div className="space-y-2">
+                                <div className="text-sm font-medium">Impact Summary:</div>
+                                <div className="flex gap-2 flex-wrap">
+                                  {impacts.map((impact, idx) => (
+                                    <Badge 
+                                      key={idx}
+                                      variant={Math.abs(impact.change) < 5 ? "outline" : impact.change > 0 ? "default" : "destructive"}
+                                    >
+                                      {impact.label}: {impact.change > 0 ? '+' : ''}{impact.change.toFixed(1)}%
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex flex-wrap gap-2 pt-2 border-t">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => loadScenario(scenario)}
+                              >
+                                Load
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => duplicateScenario(scenario)}
+                              >
+                                <Copy className="h-3 w-3 mr-1" />
+                                Duplicate
+                              </Button>
+                              {!scenario.isBaseCase && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setAsBaseCase(scenario.id)}
+                                >
+                                  <Star className="h-3 w-3 mr-1" />
+                                  Set as Base
+                                </Button>
+                              )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => exportScenario(scenario)}
+                              >
+                                <FileDown className="h-3 w-3 mr-1" />
+                                Export
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setEditingNoteId(editingNoteId === scenario.id ? null : scenario.id)}
+                              >
+                                <StickyNote className="h-3 w-3 mr-1" />
+                                Notes
+                              </Button>
+                              {!scenario.isBaseCase && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                    >
+                                      <Trash2 className="h-3 w-3 mr-1" />
+                                      Delete
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Scenario</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete "{scenario.name}"? This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => deleteScenario(scenario.id)}>
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+                            </div>
+
+                            {/* Notes Section */}
+                            {editingNoteId === scenario.id && (
+                              <div className="pt-2 border-t space-y-2">
+                                <Label>Scenario Notes</Label>
+                                <Textarea
+                                  placeholder="Add notes about this scenario's assumptions, rationale, or key findings..."
+                                  value={scenarioNotes[scenario.id] || ''}
+                                  onChange={(e) => setScenarioNotes(prev => ({ ...prev, [scenario.id]: e.target.value }))}
+                                  rows={3}
+                                />
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
