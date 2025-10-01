@@ -50,18 +50,41 @@ interface Scenario {
 // ============= Pattern Detection & Preservation Helpers =============
 
 const getBasePattern = (inputs: any[], category: string, key: string, years: number[]): number[] => {
-  const input = inputs?.find(i => i.category === category && i.input_key === key);
-  if (!input) return years.map(() => 0);
+  // Find ALL rows for this variable
+  const matchingInputs = inputs?.filter(i => i.category === category && i.input_key === key) || [];
   
-  const inputValue = input.input_value;
-  const value = (inputValue && typeof inputValue === 'object' && 'value' in inputValue) 
-    ? inputValue.value 
-    : inputValue;
+  if (matchingInputs.length === 0) return years.map(() => 0);
   
-  if (Array.isArray(value)) {
-    return [...value, ...Array(Math.max(0, years.length - value.length)).fill(0)];
+  // Check if data is year-specific or a single value
+  const hasYearData = matchingInputs.some(i => i.year !== null);
+  
+  if (hasYearData) {
+    // Build year-by-year array from multiple rows
+    const yearMap = new Map();
+    matchingInputs.forEach(input => {
+      if (input.year) {
+        const inputValue = input.input_value;
+        const value = (inputValue && typeof inputValue === 'object' && 'value' in inputValue) 
+          ? inputValue.value 
+          : inputValue;
+        yearMap.set(input.year, value ?? 0);
+      }
+    });
+    
+    // Map to array in year order
+    return years.map(year => yearMap.get(year) ?? 0);
+  } else {
+    // Single value applied to all years
+    const inputValue = matchingInputs[0].input_value;
+    const value = (inputValue && typeof inputValue === 'object' && 'value' in inputValue) 
+      ? inputValue.value 
+      : inputValue;
+      
+    if (Array.isArray(value)) {
+      return [...value, ...Array(Math.max(0, years.length - value.length)).fill(0)];
+    }
+    return years.map(() => value ?? 0);
   }
-  return years.map(() => value ?? 0);
 };
 
 const getScalar = (inputs: any[], category: string, key: string, defaultValue: number = 0): number => {
@@ -192,7 +215,7 @@ const SensitivityScenarios = () => {
       // Load full patterns for all array fields
       const creditsGeneratedPattern = getBasePattern(inputs, 'operational_metrics', 'credits_generated', years);
       const pricePerCreditPattern = getBasePattern(inputs, 'operational_metrics', 'price_per_credit', years);
-      const purchaseAmountPattern = getBasePattern(inputs, 'operational_metrics', 'purchase_amount', years);
+      const purchaseAmountPattern = getBasePattern(inputs, 'financing', 'purchase_amount', years);
       
       const staffCostsPattern = getBasePattern(inputs, 'expenses', 'staff_costs', years);
       const mrvCostsPattern = getBasePattern(inputs, 'expenses', 'mrv_costs', years);
@@ -279,18 +302,18 @@ const SensitivityScenarios = () => {
           format: 'currency',
           basePattern: staffCostsPattern
         },
-        {
-          key: 'mrv_costs',
-          name: 'MRV Costs (Year 1)',
-          baseValue: Math.abs(mrvCostsPattern[0]) || 20000,
-          currentValue: Math.abs(mrvCostsPattern[0]) || 20000,
-          unit: '$',
-          min: 5000,
-          max: 200000,
-          step: 5000,
-          format: 'currency',
-          basePattern: mrvCostsPattern
-        },
+    {
+      key: 'mrv_costs',
+      name: 'MRV Costs (Year 1)',
+      baseValue: Math.abs(mrvCostsPattern.find(v => v !== 0) ?? mrvCostsPattern[0] ?? 20000),
+      currentValue: Math.abs(mrvCostsPattern.find(v => v !== 0) ?? mrvCostsPattern[0] ?? 20000),
+      unit: '$',
+      min: 5000,
+      max: 200000,
+      step: 5000,
+      format: 'currency',
+      basePattern: mrvCostsPattern
+    },
         {
           key: 'pdd_costs',
           name: 'PDD Costs (Year 1)',
