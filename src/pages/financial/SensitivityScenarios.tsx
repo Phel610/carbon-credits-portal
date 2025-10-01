@@ -254,29 +254,7 @@ const SensitivityScenarios = () => {
           format: 'currency',
           basePattern: pricePerCreditPattern
         },
-        {
-          key: 'purchase_share',
-          name: 'Pre-purchase Agreement %',
-          baseValue: (getScalar(inputs, 'operational_metrics', 'purchase_share') || 0) * 100,
-          currentValue: (getScalar(inputs, 'operational_metrics', 'purchase_share') || 0) * 100,
-          unit: '%',
-          min: 0,
-          max: 100,
-          step: 5,
-          format: 'percentage'
-        },
-        {
-          key: 'purchase_amount',
-          name: 'Pre-purchase Amount (Year 1)',
-          baseValue: Math.abs(purchaseAmountPattern[0]) || 0,
-          currentValue: Math.abs(purchaseAmountPattern[0]) || 0,
-          unit: '$',
-          min: 0,
-          max: 1000000,
-          step: 10000,
-          format: 'currency',
-          basePattern: purchaseAmountPattern
-        },
+        // Pre-purchase variables moved to Financing section
 
         // EXPENSES
         {
@@ -375,25 +353,25 @@ const SensitivityScenarios = () => {
         },
         {
           key: 'ar_rate',
-          name: 'Accounts Receivable Days',
-          baseValue: Math.round((getScalar(inputs, 'financial_assumptions', 'ar_rate') || 0.05) * 365),
-          currentValue: Math.round((getScalar(inputs, 'financial_assumptions', 'ar_rate') || 0.05) * 365),
-          unit: 'days',
+          name: 'Accounts Receivable (%)',
+          baseValue: (getScalar(inputs, 'expenses', 'ar_rate') || 0.05) * 100,
+          currentValue: (getScalar(inputs, 'expenses', 'ar_rate') || 0.05) * 100,
+          unit: '%',
           min: 0,
-          max: 180,
-          step: 5,
-          format: 'number'
+          max: 100,
+          step: 1,
+          format: 'percentage'
         },
         {
           key: 'ap_rate',
-          name: 'Accounts Payable Days',
-          baseValue: Math.round((getScalar(inputs, 'financial_assumptions', 'ap_rate') || 0.10) * 365),
-          currentValue: Math.round((getScalar(inputs, 'financial_assumptions', 'ap_rate') || 0.10) * 365),
-          unit: 'days',
+          name: 'Accounts Payable (%)',
+          baseValue: (getScalar(inputs, 'expenses', 'ap_rate') || 0.10) * 100,
+          currentValue: (getScalar(inputs, 'expenses', 'ap_rate') || 0.10) * 100,
+          unit: '%',
           min: 0,
-          max: 180,
-          step: 5,
-          format: 'number'
+          max: 100,
+          step: 1,
+          format: 'percentage'
         },
 
         // FINANCING
@@ -433,7 +411,7 @@ const SensitivityScenarios = () => {
         },
         {
           key: 'debt_duration_years',
-          name: 'Debt Tenor',
+          name: 'Debt Duration (Years)',
           baseValue: getScalar(inputs, 'financing', 'debt_duration_years') || 5,
           currentValue: getScalar(inputs, 'financing', 'debt_duration_years') || 5,
           unit: 'years',
@@ -441,6 +419,29 @@ const SensitivityScenarios = () => {
           max: 15,
           step: 1,
           format: 'number'
+        },
+        {
+          key: 'purchase_share',
+          name: 'Pre-purchase Agreement %',
+          baseValue: (getScalar(inputs, 'financing', 'purchase_share') || 0) * 100,
+          currentValue: (getScalar(inputs, 'financing', 'purchase_share') || 0) * 100,
+          unit: '%',
+          min: 0,
+          max: 100,
+          step: 5,
+          format: 'percentage'
+        },
+        {
+          key: 'purchase_amount',
+          name: 'Pre-purchase Amount (Year 1)',
+          baseValue: Math.abs(purchaseAmountPattern[0]) || 0,
+          currentValue: Math.abs(purchaseAmountPattern[0]) || 0,
+          unit: '$',
+          min: 0,
+          max: 1000000,
+          step: 10000,
+          format: 'currency',
+          basePattern: purchaseAmountPattern
         },
         {
           key: 'equity_injection',
@@ -568,8 +569,8 @@ const SensitivityScenarios = () => {
         interest_rate: (getVar('interest_rate')?.currentValue ?? 10) / 100,
         discount_rate: (getVar('discount_rate')?.currentValue ?? 12) / 100,
         purchase_share: (getVar('purchase_share')?.currentValue ?? 0) / 100,
-        ar_rate: (getVar('ar_rate')?.currentValue ?? 18) / 365,
-        ap_rate: (getVar('ap_rate')?.currentValue ?? 36) / 365,
+        ar_rate: (getVar('ar_rate')?.currentValue ?? 5) / 100,
+        ap_rate: (getVar('ap_rate')?.currentValue ?? 10) / 100,
         debt_duration_years: Math.round(getVar('debt_duration_years')?.currentValue ?? 5),
         initial_equity_t0: getVar('initial_equity_t0')?.currentValue ?? 0,
         opening_cash_y1: getVar('opening_cash_y1')?.currentValue ?? 0,
@@ -977,7 +978,7 @@ const SensitivityScenarios = () => {
                   </h3>
                   <div className="space-y-6">
                     {sensitivities
-                      .filter(s => ['credits_generated', 'price_per_credit', 'purchase_share', 'purchase_amount'].includes(s.key))
+                      .filter(s => ['credits_generated', 'price_per_credit'].includes(s.key))
                       .map(variable => (
                         <div key={variable.key} className="space-y-2">
                           <div className="flex items-center justify-between">
@@ -1059,7 +1060,7 @@ const SensitivityScenarios = () => {
                   <h3 className="font-semibold mb-4">Financing</h3>
                   <div className="space-y-6">
                     {sensitivities
-                      .filter(s => ['discount_rate', 'interest_rate', 'debt_draw', 'debt_duration_years', 'equity_injection', 'initial_equity_t0', 'opening_cash_y1', 'initial_ppe'].includes(s.key))
+                      .filter(s => ['discount_rate', 'interest_rate', 'debt_draw', 'debt_duration_years', 'purchase_share', 'purchase_amount', 'equity_injection', 'initial_equity_t0', 'opening_cash_y1', 'initial_ppe'].includes(s.key))
                       .map(variable => (
                         <div key={variable.key} className="space-y-2">
                           <div className="flex items-center justify-between">
