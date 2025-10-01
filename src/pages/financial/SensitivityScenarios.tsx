@@ -322,7 +322,7 @@ const SensitivityScenarios = () => {
           baseValue: Math.abs(capexPattern.reduce((sum, v) => sum + Math.abs(v), 0)) || 500000,
           currentValue: Math.abs(capexPattern.reduce((sum, v) => sum + Math.abs(v), 0)) || 500000,
           unit: '$',
-          min: 100000,
+          min: 0,
           max: 5000000,
           step: 25000,
           format: 'currency',
