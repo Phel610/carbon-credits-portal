@@ -103,23 +103,55 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
 
       if (inputsError) throw inputsError;
 
+      console.log('Fetched inputs from database:', inputs);
+
+      if (!inputs || inputs.length === 0) {
+        throw new Error('No model inputs found for this model');
+      }
+
+      // Validate input categories
+      const categories = [...new Set(inputs.map(i => i.category))];
+      console.log('Input categories found:', categories);
+      
+      const requiredCategories = ['operational_metrics', 'expenses', 'financing'];
+      const missingCategories = requiredCategories.filter(c => !categories.includes(c));
+      if (missingCategories.length > 0) {
+        console.warn('Missing input categories:', missingCategories);
+      }
+
       // Store raw inputs
       setRawInputsData(inputs || []);
 
       // Transform inputs into ModelInputData format
       const transformedInputs = transformInputsToModelData(inputs);
+      console.log('Transformed inputs for engine:', transformedInputs);
+
+      // Validate transformed inputs before calculation
+      if (!transformedInputs.years || transformedInputs.years.length === 0) {
+        throw new Error('No years defined in model inputs');
+      }
+
+      const requiredArrays = ['credits_generated', 'price_per_credit', 'issuance_flag'];
+      for (const key of requiredArrays) {
+        if (!transformedInputs[key] || transformedInputs[key].length !== transformedInputs.years.length) {
+          console.error(`Invalid array for ${key}:`, transformedInputs[key]);
+          throw new Error(`Invalid or missing array for ${key}. Expected ${transformedInputs.years.length} values.`);
+        }
+      }
+
       setModelInputs(transformedInputs);
 
-      // Calculate financial statements
+      // Calculate financial statements using the engine
       let results;
       try {
         const engine = new FinancialCalculationEngine(transformedInputs);
         results = engine.calculateFinancialStatements();
+        console.log('Financial statements calculated successfully');
         setFinancialData(results);
-      } catch (error) {
-        console.error('Calculation engine error:', error);
+      } catch (calcError: any) {
+        console.error('Calculation engine error:', calcError);
         console.log('Input data that caused error:', transformedInputs);
-        throw new Error(`Failed to calculate financial statements: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(`Failed to calculate financial statements: ${calcError.message}`);
       }
 
       // Calculate comprehensive metrics using metricsCalculator
@@ -334,17 +366,19 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
   };
 
   const transformInputsToModelData = (inputs: any[]): any => {
-    console.log('Raw inputs from database:', inputs);
-    
+    console.log('=== Starting Input Transformation ===');
     const years = Array.from(
-      { length: modelData.end_year - modelData.start_year + 1 },
+      { length: modelData.end_year - modelData.start_year + 1 }, 
       (_, i) => modelData.start_year + i
     );
-
-    // Group inputs by category -> input_key -> year -> value
-    const grouped: Record<string, Record<string, Map<number | string, any>>> = {};
+    console.log('Model years:', years);
     
-    inputs?.forEach(input => {
+    // Group inputs by category -> input_key -> year -> value
+    const grouped: Record<string, Record<string, Map<number | 'single', any>>> = {};
+    
+    inputs?.forEach((input, idx) => {
+      if (idx < 5) console.log(`Processing input ${idx}:`, input);
+      
       if (!grouped[input.category]) {
         grouped[input.category] = {};
       }
@@ -357,7 +391,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
         ? input.input_value.value 
         : input.input_value;
       
-      if (input.year !== null) {
+      if (input.year !== null && input.year !== undefined) {
         // Yearly input
         grouped[input.category][input.input_key].set(input.year, actualValue);
       } else {
@@ -366,28 +400,41 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
       }
     });
     
-    console.log('Grouped inputs:', grouped);
+    console.log('Grouped inputs by category:', Object.keys(grouped));
+    Object.keys(grouped).forEach(cat => {
+      console.log(`  ${cat} keys:`, Object.keys(grouped[cat]));
+    });
     
     // Helper to build year array
     const buildYearArray = (category: string, key: string, defaultArray: any[]): any[] => {
       const map = grouped[category]?.[key];
-      if (!map) return defaultArray;
-      return years.map(year => map.get(year) ?? 0);
+      if (!map) {
+        console.warn(`No data for ${category}.${key}, using defaults`);
+        return defaultArray;
+      }
+      const result = years.map(year => map.get(year) ?? 0);
+      console.log(`${category}.${key}:`, result);
+      return result;
     };
     
     // Helper to get single value
     const getSingleValue = (category: string, key: string, defaultValue: any): any => {
       const map = grouped[category]?.[key];
-      if (!map) return defaultValue;
-      return map.get('single') ?? defaultValue;
+      if (!map) {
+        console.warn(`No data for ${category}.${key}, using default:`, defaultValue);
+        return defaultValue;
+      }
+      const result = map.get('single') ?? defaultValue;
+      console.log(`${category}.${key}:`, result);
+      return result;
     };
-
+    
     const transformed = {
       years,
-      // Operational metrics - use 'operational_metrics' not 'operational'
+      // Operational metrics
       credits_generated: buildYearArray('operational_metrics', 'credits_generated', years.map(() => 0)),
       price_per_credit: buildYearArray('operational_metrics', 'price_per_credit', years.map(() => 0)),
-      issuance_flag: buildYearArray('operational_metrics', 'issuance_flag', years.map(() => 0)),
+      issuance_flag: buildYearArray('operational_metrics', 'issuance_flag', years.map(() => 1)),
       
       // Expenses
       cogs_rate: getSingleValue('expenses', 'cogs_rate', 0.15),
@@ -409,11 +456,13 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
       purchase_amount: buildYearArray('financing', 'purchase_amount', years.map(() => 0)),
       purchase_share: getSingleValue('financing', 'purchase_share', 0.30),
       discount_rate: getSingleValue('financing', 'discount_rate', 0.12),
-      initial_equity_t0: getSingleValue('financing', 'initial_equity_t0', 0),
+      initial_equity_t0: getSingleValue('financing', 'initial_equity_t0', 50000),
       opening_cash_y1: getSingleValue('financing', 'opening_cash_y1', 0),
     };
-
-    console.log('Transformed financial data from database inputs:', transformed);
+    
+    console.log('=== Transformation Complete ===');
+    console.log('Final transformed object keys:', Object.keys(transformed));
+    
     return transformed;
   };
 
@@ -561,9 +610,9 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
             <OperationalMetricsPanel 
               statements={modelInputs.years.map((year: number, idx: number) => ({
                 year,
-                credits_generated: modelInputs.credits_generated[idx] || 0,
-                price_per_credit: modelInputs.price_per_credit[idx] || 0,
-                issuance_flag: modelInputs.issuance_flag[idx] || 0,
+              credits_generated: modelInputs.credits_generated?.[idx] || 0,
+              price_per_credit: modelInputs.price_per_credit?.[idx] || 0,
+              issuance_flag: modelInputs.issuance_flag?.[idx] || 0,
                 credits_issued: (modelInputs.credits_generated[idx] || 0) * (modelInputs.issuance_flag[idx] || 0),
               }))} 
             />
@@ -747,7 +796,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
               <div>
                 <h3 className="text-xl font-semibold mb-4">Carbon Stream</h3>
                 {CarbonStreamTable ? (
-                  <CarbonStreamTable statements={financialData.carbonStream || []} investorIRR={comprehensiveMetrics?.returns?.equityIRR || 0} />
+                  <CarbonStreamTable statements={financialData.carbonStream || []} investorIRR={comprehensiveMetrics?.returns?.equity?.irr || 0} />
                 ) : (
                   <Card>
                     <CardContent className="p-6">

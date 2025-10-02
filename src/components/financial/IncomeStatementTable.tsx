@@ -85,8 +85,8 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               {/* Revenue Section */}
               <TableRow className="bg-muted/50">
                 <TableCell className="font-semibold">REVENUE</TableCell>
-                {statements.map(() => (
-                  <TableCell key="revenue-header"></TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={`revenue-header-${stmt.year}`}></TableCell>
                 ))}
                 <TableCell></TableCell>
               </TableRow>
@@ -130,8 +130,8 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               {/* COGS Section */}
               <TableRow className="bg-muted/50">
                 <TableCell className="font-semibold">Cost of goods sold</TableCell>
-                {statements.map(() => (
-                  <TableCell key="cogs-header"></TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={`cogs-header-${stmt.year}`}></TableCell>
                 ))}
                 <TableCell></TableCell>
               </TableRow>
@@ -163,8 +163,8 @@ const IncomeStatementTable = ({ statements, metadata }: IncomeStatementTableProp
               {/* Operating Expenses Section */}
               <TableRow className="bg-muted/50">
                 <TableCell className="font-semibold">OPERATING EXPENSES</TableCell>
-                {statements.map(() => (
-                  <TableCell key="opex-header"></TableCell>
+                {statements.map((stmt) => (
+                  <TableCell key={`opex-header-${stmt.year}`}></TableCell>
                 ))}
                 <TableCell></TableCell>
               </TableRow>
