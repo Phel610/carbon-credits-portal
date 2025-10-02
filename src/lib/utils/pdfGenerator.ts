@@ -362,16 +362,27 @@ export const generatePDF = async (
       const incColWidths = [50, ...years.map(() => incColWidth)];
       
       const incRows: string[][] = [
+        ['REVENUE', ...years.map(() => '')],
+        ['Carbon credit revenue – spot market', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.spot_revenue || 0))],
+        ['Carbon credit revenue – pre-purchase', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.pre_purchase_revenue || 0))],
         ['Total Revenue', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.total_revenue || 0))],
+        ['', ...years.map(() => '')],
+        ['Cost of goods sold', ...years.map(() => '')],
         ['COGS', ...financialData.incomeStatements.map((s: any) => formatCurrency(Math.abs(s.cogs || 0)))],
         ['Gross Profit', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.gross_profit || 0))],
-        ['Operating Expenses', ...financialData.incomeStatements.map((s: any) => formatCurrency(Math.abs(s.total_opex || 0)))],
+        ['', ...years.map(() => '')],
+        ['OPERATING EXPENSES', ...years.map(() => '')],
+        ['Feasibility study costs', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.feasibility_costs || 0))],
+        ['PDD development costs', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.pdd_costs || 0))],
+        ['Monitoring, Reporting, and Verification (MRV) costs', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.mrv_costs || 0))],
+        ['Staff costs', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.staff_costs || 0))],
+        ['Total Operational cost', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.total_opex || 0))],
+        ['', ...years.map(() => '')],
         ['EBITDA', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.ebitda || 0))],
         ['Depreciation', ...financialData.incomeStatements.map((s: any) => formatCurrency(Math.abs(s.depreciation || 0)))],
-        ['EBIT', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.ebit || 0))],
-        ['Interest Expense', ...financialData.incomeStatements.map((s: any) => formatCurrency(Math.abs(s.interest_expense || 0)))],
-        ['EBT', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.ebt || 0))],
-        ['Tax', ...financialData.incomeStatements.map((s: any) => formatCurrency(Math.abs(s.tax || 0)))],
+        ['Interest expense', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.interest_expense || 0))],
+        ['Earnings Before Tax', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.ebt || 0))],
+        ['Income Tax', ...financialData.incomeStatements.map((s: any) => formatCurrency(Math.abs(s.tax || 0)))],
         ['Net Income', ...financialData.incomeStatements.map((s: any) => formatCurrency(s.net_income || 0))],
       ];
       
@@ -392,14 +403,31 @@ export const generatePDF = async (
       const bsColWidths = [50, ...years.map(() => bsColWidth)];
       
       const bsRows: string[][] = [
+        ['ASSETS', ...years.map(() => '')],
+        ['Current Assets', ...years.map(() => '')],
         ['Cash', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.cash || 0))],
         ['Accounts Receivable', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.accounts_receivable || 0))],
-        ['Total Assets', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.total_assets || 0))],
+        ['Non-current Assets', ...years.map(() => '')],
+        ['Property, Plant & Equipment, Net', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.ppe_net || 0))],
+        ['TOTAL ASSETS', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.total_assets || 0))],
+        ['', ...years.map(() => '')],
+        ['LIABILITIES', ...years.map(() => '')],
+        ['Current Liabilities', ...years.map(() => '')],
         ['Accounts Payable', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.accounts_payable || 0))],
+        ['Long-term Liabilities', ...years.map(() => '')],
+        ['Unearned Revenue', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.unearned_revenue || 0))],
         ['Debt', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.debt || 0))],
-        ['Total Liabilities', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.total_liabilities || 0))],
-        ['Equity', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.equity || 0))],
-        ['Total L+E', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.total_liabilities_equity || 0))],
+        ['TOTAL LIABILITIES', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.total_liabilities || 0))],
+        ['', ...years.map(() => '')],
+        ['EQUITY', ...years.map(() => '')],
+        ['Retained earnings', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.retained_earnings || 0))],
+        ['Contributed capital', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.contributed_capital || 0))],
+        ['TOTAL EQUITY', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.equity || 0))],
+        ['TOTAL LIABILITIES & EQUITY', ...financialData.balanceSheets.map((s: any) => formatCurrency(s.total_liabilities_equity || 0))],
+        ['Balance Check (Assets - Liab & Equity)', ...financialData.balanceSheets.map((s: any) => {
+          const diff = Math.abs((s.total_assets || 0) - (s.total_liabilities_equity || 0));
+          return diff < 0.01 ? '✓ Balanced' : formatCurrency(diff);
+        })],
       ];
       
       addDataTable(bsHeaders, bsRows, bsColWidths);
@@ -419,19 +447,28 @@ export const generatePDF = async (
       const cfColWidths = [50, ...years.map(() => cfColWidth)];
       
       const cfRows: string[][] = [
+        ['OPERATING ACTIVITIES', ...years.map(() => '')],
         ['Net Income', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.net_income || 0))],
         ['Depreciation', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.depreciation || 0))],
-        ['Change in AR', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.change_ar || 0))],
-        ['Change in AP', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.change_ap || 0))],
-        ['CFO', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.cfo || 0))],
+        ['Decrease in accounts receivable', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.change_ar || 0))],
+        ['Increase in accounts payable', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.change_ap || 0))],
+        ['Operating Cash Flow', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.cfo || 0))],
+        ['', ...years.map(() => '')],
+        ['INVESTING ACTIVITIES', ...years.map(() => '')],
         ['CAPEX', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.capex || 0))],
-        ['CFI', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.cfi || 0))],
-        ['Equity Injection', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.equity_injection || 0))],
-        ['Debt Draw', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.debt_draw || 0))],
-        ['Debt Repay', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.debt_repay || 0))],
-        ['CFF', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.cff || 0))],
-        ['Net Cash Change', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.net_cash_change || 0))],
-        ['Ending Cash', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.cash_end || 0))],
+        ['Investing Cash Flow', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.cfi || 0))],
+        ['', ...years.map(() => '')],
+        ['FINANCING ACTIVITIES', ...years.map(() => '')],
+        ['Debt financing', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.debt_draw || 0))],
+        ['Debt repayments', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.debt_repay || 0))],
+        ['Change in unearned revenue (prepurchase) account', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.change_unearned_revenue || 0))],
+        ['Equity injection', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.equity_injection || 0))],
+        ['Financing Cash Flow', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.cff || 0))],
+        ['', ...years.map(() => '')],
+        ['CASH POSITION', ...years.map(() => '')],
+        ['Cash Start', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.cash_start || 0))],
+        ['Net Change Cash', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.net_cash_change || 0))],
+        ['Cash End', ...financialData.cashFlowStatements.map((s: any) => formatCurrency(s.cash_end || 0))],
       ];
       
       addDataTable(cfHeaders, cfRows, cfColWidths);
@@ -471,17 +508,55 @@ export const generatePDF = async (
       yPosition += 7;
       
       const years = financialData.carbonStream.map((stmt: any) => stmt.year);
-      const carbonHeaders = ['Line Item', ...years.map((y: number) => y.toString())];
-      const carbonColWidth = Math.min(30, contentWidth / (years.length + 1));
-      const carbonColWidths = [50, ...years.map(() => carbonColWidth)];
+      const carbonColWidth = Math.min(28, contentWidth / (years.length + 2));
+      const carbonColWidths = [50, ...years.map(() => carbonColWidth), carbonColWidth];
+      
+      // Calculate totals for carbon stream
+      const totalCreditsGenerated = financialData.carbonStream.reduce((sum: number, s: any) => sum + (s.credits_generated || 0), 0);
+      const totalCreditsIssued = financialData.carbonStream.reduce((sum: number, s: any) => sum + (s.credits_issued || 0), 0);
+      const totalPurchasedCredits = financialData.carbonStream.reduce((sum: number, s: any) => sum + (s.purchased_credits || 0), 0);
+      const totalPurchaseAmount = financialData.carbonStream.reduce((sum: number, s: any) => sum + (s.purchase_amount || 0), 0);
+      const impliedPurchasePrice = totalPurchasedCredits > 0 ? totalPurchaseAmount / totalPurchasedCredits : 0;
+      
+      // Calculate Investor IRR
+      const investorCashFlows: number[] = [];
+      financialData.carbonStream.forEach((s: any, idx: number) => {
+        const purchaseAmount = s.purchase_amount || 0;
+        const deliveredValue = (s.purchased_credits || 0) * (s.spot_price || 0);
+        investorCashFlows.push(idx === 0 ? -purchaseAmount : deliveredValue);
+      });
+      
+      const calculateIRR = (cfs: number[]): number => {
+        const maxIter = 1000;
+        const tol = 0.00001;
+        let low = -0.99;
+        let high = 10.0;
+        
+        for (let i = 0; i < maxIter; i++) {
+          const mid = (low + high) / 2;
+          const npv = cfs.reduce((sum, cf, t) => sum + cf / Math.pow(1 + mid, t), 0);
+          
+          if (Math.abs(npv) < tol) return mid;
+          if (npv > 0) low = mid;
+          else high = mid;
+        }
+        return 0;
+      };
+      
+      const investorIRR = calculateIRR(investorCashFlows);
       
       const carbonRows: string[][] = [
-        ['Credits Generated', ...financialData.carbonStream.map((s: any) => (s.credits_generated || 0).toLocaleString())],
-        ['Credits Issued', ...financialData.carbonStream.map((s: any) => (s.credits_issued || 0).toLocaleString())],
-        ['Purchase %', ...financialData.carbonStream.map((s: any) => formatPercent(s.purchase_percent || 0))],
-        ['Purchased Credits', ...financialData.carbonStream.map((s: any) => (s.purchased_credits || 0).toLocaleString())],
-        ['Purchase Amount', ...financialData.carbonStream.map((s: any) => formatCurrency(s.purchase_amount || 0))],
+        ['Percentage of credits purchased', ...financialData.carbonStream.map((s: any) => formatPercent(s.purchase_percent || 0)), '-'],
+        ['Number of credits', ...financialData.carbonStream.map((s: any) => (s.purchased_credits || 0).toLocaleString()), totalPurchasedCredits.toLocaleString()],
+        ['Purchase Amount', ...financialData.carbonStream.map((s: any) => formatCurrency(s.purchase_amount || 0)), formatCurrency(totalPurchaseAmount)],
+        ['Purchased Credits', ...financialData.carbonStream.map((s: any) => (s.purchased_credits || 0).toLocaleString()), totalPurchasedCredits.toLocaleString()],
+        ['Implied Purchase Price', ...financialData.carbonStream.map((s: any) => formatCurrency(impliedPurchasePrice)), formatCurrency(impliedPurchasePrice)],
+        ['Investor Cash Flow', ...investorCashFlows.map((cf: number) => formatCurrency(cf)), formatCurrency(investorCashFlows.reduce((sum, cf) => sum + cf, 0))],
+        ['Investor IRR', ...years.map(() => ''), formatPercent(investorIRR)],
       ];
+      
+      // Update headers to include Total column
+      const carbonHeaders = ['Line Item', ...years.map((y: number) => y.toString()), 'Total'];
       
       addDataTable(carbonHeaders, carbonRows, carbonColWidths);
     }
@@ -516,131 +591,375 @@ export const generatePDF = async (
   if (comprehensiveMetrics) {
     addSectionTitle('Comprehensive Financial Metrics');
     
-    // Returns Metrics
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Detailed breakdown of all financial metrics across the project lifetime', margin, yPosition);
+    yPosition += 10;
+    
+    // Get years from metrics
+    const metricsYears = comprehensiveMetrics.profitability?.yearly?.map((y: any) => y.year) || [];
+    
+    // 1. Returns & NPV Analysis
     if (comprehensiveMetrics.returns) {
-      pdf.setFontSize(11);
+      checkPageBreak(50);
+      pdf.setFontSize(12);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Returns Metrics', margin, yPosition);
-      yPosition += 7;
+      pdf.text('1. Returns & NPV Analysis', margin, yPosition);
+      yPosition += 8;
       
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');
-      const returnsData = [
-        ['Equity NPV:', formatCurrency(comprehensiveMetrics.returns.equity?.npv || 0)],
-        ['Equity IRR:', formatPercent(comprehensiveMetrics.returns.equity?.irr || 0)],
-        ['Equity MIRR:', formatPercent(comprehensiveMetrics.returns.equity?.mirr || 0)],
-        ['Equity Payback:', `${(comprehensiveMetrics.returns.equity?.payback || 0).toFixed(1)} years`],
-        ['Project NPV:', formatCurrency(comprehensiveMetrics.returns.project?.npv || 0)],
-        ['Project IRR:', formatPercent(comprehensiveMetrics.returns.project?.irr || 0)],
-        ['Project MIRR:', formatPercent(comprehensiveMetrics.returns.project?.mirr || 0)],
-        ['Project Payback:', `${(comprehensiveMetrics.returns.project?.payback || 0).toFixed(1)} years`],
-      ];
-      
-      returnsData.forEach(([label, value]) => {
-        checkPageBreak(7);
-        pdf.text(label, margin + 5, yPosition);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(value, margin + 70, yPosition);
-        pdf.setFont('helvetica', 'normal');
-        yPosition += 6;
-      });
+      // Equity Returns
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Equity Returns (Levered)', margin + 5, yPosition);
       yPosition += 5;
-    }
-    
-    // Profitability & Unit Economics
-    checkPageBreak(30);
-    pdf.setFontSize(11);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Profitability & Unit Economics', margin, yPosition);
-    yPosition += 7;
-    
-    pdf.setFontSize(9);
-    pdf.setFont('helvetica', 'normal');
-    if (comprehensiveMetrics.profitability) {
-      const profitData = [
-        ['Avg Gross Margin:', formatPercent(comprehensiveMetrics.profitability.avgGrossMargin || 0)],
-        ['Avg EBITDA Margin:', formatPercent(comprehensiveMetrics.profitability.avgEbitdaMargin || 0)],
-        ['Avg Net Margin:', formatPercent(comprehensiveMetrics.profitability.avgNetMargin || 0)],
-      ];
-      profitData.forEach(([label, value]) => {
-        checkPageBreak(7);
-        pdf.text(label, margin + 5, yPosition);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(value, margin + 70, yPosition);
-        pdf.setFont('helvetica', 'normal');
-        yPosition += 6;
-      });
-    }
-    
-    if (comprehensiveMetrics.unitEconomics) {
-      const unitData = [
-        ['Avg Price/Credit:', formatCurrency(comprehensiveMetrics.unitEconomics.avgPricePerCredit || 0)],
-        ['Avg COGS/Credit:', formatCurrency(comprehensiveMetrics.unitEconomics.avgCogsPerCredit || 0)],
-        ['LCOC:', formatCurrency(comprehensiveMetrics.unitEconomics.lcoc || 0)],
-      ];
-      unitData.forEach(([label, value]) => {
-        checkPageBreak(7);
-        pdf.text(label, margin + 5, yPosition);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(value, margin + 70, yPosition);
-        pdf.setFont('helvetica', 'normal');
-        yPosition += 6;
-      });
-    }
-    yPosition += 5;
-    
-    // Debt & Liquidity
-    checkPageBreak(25);
-    pdf.setFontSize(11);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Debt & Liquidity Metrics', margin, yPosition);
-    yPosition += 7;
-    
-    pdf.setFontSize(9);
-    pdf.setFont('helvetica', 'normal');
-    const debtLiqData = [
-      ['Min DSCR:', (comprehensiveMetrics.debt?.minDSCR || 0).toFixed(2)],
-      ['Avg DSCR:', (comprehensiveMetrics.debt?.avgDSCR || 0).toFixed(2)],
-      ['Peak Funding Need:', formatCurrency(comprehensiveMetrics.liquidity?.peakFundingNeed || 0)],
-      ['Ending Cash:', formatCurrency(comprehensiveMetrics.liquidity?.endingCash || 0)],
-    ];
-    
-    debtLiqData.forEach(([label, value]) => {
-      checkPageBreak(7);
-      pdf.text(label, margin + 5, yPosition);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(value, margin + 70, yPosition);
-      pdf.setFont('helvetica', 'normal');
-      yPosition += 6;
-    });
-    yPosition += 5;
-    
-    // Carbon Metrics
-    if (comprehensiveMetrics.carbon) {
-      checkPageBreak(25);
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Carbon Metrics', margin, yPosition);
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'italic');
+      pdf.text('Returns to equity holders after debt service', margin + 5, yPosition);
       yPosition += 7;
       
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
-      const carbonData = [
-        ['Total Credits Generated:', (comprehensiveMetrics.carbon.totalCreditsGenerated || 0).toLocaleString()],
-        ['Total Credits Issued:', (comprehensiveMetrics.carbon.totalCreditsIssued || 0).toLocaleString()],
-        ['Total Credits Delivered:', (comprehensiveMetrics.carbon.totalCreditsDelivered || 0).toLocaleString()],
+      const equityReturns = [
+        ['IRR:', comprehensiveMetrics.returns.equity?.irr ? formatPercent(comprehensiveMetrics.returns.equity.irr) : 'n/a'],
+        ['NPV:', formatCurrency(comprehensiveMetrics.returns.equity?.npv || 0)],
+        ['MIRR:', comprehensiveMetrics.returns.equity?.mirr ? formatPercent(comprehensiveMetrics.returns.equity.mirr) : 'n/a'],
+        ['Payback:', comprehensiveMetrics.returns.equity?.payback ? `${comprehensiveMetrics.returns.equity.payback.toFixed(1)} years` : '> horizon'],
+        ['Discounted Payback:', comprehensiveMetrics.returns.equity?.discountedPayback ? `${comprehensiveMetrics.returns.equity.discountedPayback.toFixed(1)} years` : '> horizon'],
       ];
       
-      carbonData.forEach(([label, value]) => {
-        checkPageBreak(7);
-        pdf.text(label, margin + 5, yPosition);
+      equityReturns.forEach(([label, value]) => {
+        checkPageBreak(6);
+        pdf.text(label, margin + 10, yPosition);
         pdf.setFont('helvetica', 'bold');
         pdf.text(value, margin + 80, yPosition);
         pdf.setFont('helvetica', 'normal');
         yPosition += 6;
       });
       yPosition += 5;
+      
+      // Project Returns
+      checkPageBreak(35);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Project Returns (Unlevered)', margin + 5, yPosition);
+      yPosition += 5;
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'italic');
+      pdf.text('Returns before financing considerations', margin + 5, yPosition);
+      yPosition += 7;
+      
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      const projectReturns = [
+        ['IRR:', comprehensiveMetrics.returns.project?.irr ? formatPercent(comprehensiveMetrics.returns.project.irr) : 'n/a'],
+        ['NPV:', formatCurrency(comprehensiveMetrics.returns.project?.npv || 0)],
+        ['MIRR:', comprehensiveMetrics.returns.project?.mirr ? formatPercent(comprehensiveMetrics.returns.project.mirr) : 'n/a'],
+        ['Payback:', comprehensiveMetrics.returns.project?.payback ? `${comprehensiveMetrics.returns.project.payback.toFixed(1)} years` : '> horizon'],
+        ['Discounted Payback:', comprehensiveMetrics.returns.project?.discountedPayback ? `${comprehensiveMetrics.returns.project.discountedPayback.toFixed(1)} years` : '> horizon'],
+      ];
+      
+      projectReturns.forEach(([label, value]) => {
+        checkPageBreak(6);
+        pdf.text(label, margin + 10, yPosition);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(value, margin + 80, yPosition);
+        pdf.setFont('helvetica', 'normal');
+        yPosition += 6;
+      });
+      yPosition += 5;
+      
+      // Investor Returns
+      if (comprehensiveMetrics.returns.investor) {
+        checkPageBreak(20);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Investor Returns (Pre-purchase)', margin + 5, yPosition);
+        yPosition += 5;
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'italic');
+        pdf.text('Returns to carbon stream investor', margin + 5, yPosition);
+        yPosition += 7;
+        
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        const investorReturns = [
+          ['IRR:', comprehensiveMetrics.returns.investor?.irr ? formatPercent(comprehensiveMetrics.returns.investor.irr) : 'n/a'],
+          ['NPV:', formatCurrency(comprehensiveMetrics.returns.investor?.npv || 0)],
+        ];
+        
+        investorReturns.forEach(([label, value]) => {
+          checkPageBreak(6);
+          pdf.text(label, margin + 10, yPosition);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(value, margin + 80, yPosition);
+          pdf.setFont('helvetica', 'normal');
+          yPosition += 6;
+        });
+        yPosition += 10;
+      }
     }
+    
+    // 2. Profitability & Margins
+    if (comprehensiveMetrics.profitability?.yearly && comprehensiveMetrics.profitability.yearly.length > 0) {
+      checkPageBreak(60);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('2. Profitability & Margins', margin, yPosition);
+      yPosition += 8;
+      
+      pdf.setFontSize(10);
+      pdf.text('Income Statement Metrics by Year', margin + 5, yPosition);
+      yPosition += 5;
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'italic');
+      pdf.text('Revenue, costs, and profitability breakdown', margin + 5, yPosition);
+      yPosition += 7;
+      
+      const profYears = comprehensiveMetrics.profitability.yearly.map((y: any) => y.year);
+      const profHeaders = ['Metric', ...profYears.map((y: number) => y.toString()), 'Total'];
+      const profColWidth = Math.min(25, (contentWidth - 50) / (profYears.length + 1));
+      const profColWidths = [50, ...profYears.map(() => profColWidth), profColWidth];
+      
+      const totalRevenue = comprehensiveMetrics.profitability.yearly.reduce((sum: number, y: any) => sum + (y.revenue || 0), 0);
+      const totalCOGS = comprehensiveMetrics.profitability.yearly.reduce((sum: number, y: any) => sum + (y.cogs || 0), 0);
+      const totalOPEX = comprehensiveMetrics.profitability.yearly.reduce((sum: number, y: any) => sum + (y.opex || 0), 0);
+      const totalEBITDA = comprehensiveMetrics.profitability.yearly.reduce((sum: number, y: any) => sum + (y.ebitda || 0), 0);
+      const totalDepreciation = comprehensiveMetrics.profitability.yearly.reduce((sum: number, y: any) => sum + (y.depreciation || 0), 0);
+      const totalInterest = comprehensiveMetrics.profitability.yearly.reduce((sum: number, y: any) => sum + (y.interest || 0), 0);
+      const totalTax = comprehensiveMetrics.profitability.yearly.reduce((sum: number, y: any) => sum + (y.tax || 0), 0);
+      const totalNetIncome = comprehensiveMetrics.profitability.yearly.reduce((sum: number, y: any) => sum + (y.netIncome || 0), 0);
+      
+      const profRows: string[][] = [
+        ['Revenue', ...comprehensiveMetrics.profitability.yearly.map((y: any) => formatCurrency(y.revenue || 0)), formatCurrency(totalRevenue)],
+        ['COGS', ...comprehensiveMetrics.profitability.yearly.map((y: any) => formatCurrency(y.cogs || 0)), formatCurrency(totalCOGS)],
+        ['Gross Profit', ...comprehensiveMetrics.profitability.yearly.map((y: any) => formatCurrency((y.revenue || 0) - (y.cogs || 0))), formatCurrency(totalRevenue - totalCOGS)],
+        ['OPEX', ...comprehensiveMetrics.profitability.yearly.map((y: any) => formatCurrency(y.opex || 0)), formatCurrency(totalOPEX)],
+        ['EBITDA', ...comprehensiveMetrics.profitability.yearly.map((y: any) => formatCurrency(y.ebitda || 0)), formatCurrency(totalEBITDA)],
+        ['Depreciation', ...comprehensiveMetrics.profitability.yearly.map((y: any) => formatCurrency(y.depreciation || 0)), formatCurrency(totalDepreciation)],
+        ['Interest', ...comprehensiveMetrics.profitability.yearly.map((y: any) => formatCurrency(y.interest || 0)), formatCurrency(totalInterest)],
+        ['EBT', ...comprehensiveMetrics.profitability.yearly.map((y: any) => formatCurrency((y.ebitda || 0) - (y.depreciation || 0) - (y.interest || 0))), ''],
+        ['Tax', ...comprehensiveMetrics.profitability.yearly.map((y: any) => formatCurrency(y.tax || 0)), formatCurrency(totalTax)],
+        ['Net Income', ...comprehensiveMetrics.profitability.yearly.map((y: any) => formatCurrency(y.netIncome || 0)), formatCurrency(totalNetIncome)],
+        ['Gross Margin %', ...comprehensiveMetrics.profitability.yearly.map((y: any) => y.revenue ? formatPercent((y.revenue - y.cogs) / y.revenue) : '–'), ''],
+        ['EBITDA Margin %', ...comprehensiveMetrics.profitability.yearly.map((y: any) => y.revenue ? formatPercent(y.ebitda / y.revenue) : '–'), ''],
+        ['Net Margin %', ...comprehensiveMetrics.profitability.yearly.map((y: any) => y.revenue ? formatPercent(y.netIncome / y.revenue) : '–'), ''],
+      ];
+      
+      addDataTable(profHeaders, profRows, profColWidths);
+    }
+    
+    // 3. Unit Economics
+    if (comprehensiveMetrics.unitEconomics?.yearly && comprehensiveMetrics.unitEconomics.yearly.length > 0) {
+      checkPageBreak(60);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('3. Unit Economics', margin, yPosition);
+      yPosition += 8;
+      
+      // Per Credit Economics
+      pdf.setFontSize(10);
+      pdf.text('Per Credit Economics', margin + 5, yPosition);
+      yPosition += 5;
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'italic');
+      pdf.text('Cost and revenue per issued carbon credit', margin + 5, yPosition);
+      yPosition += 7;
+      
+      const unitYears = comprehensiveMetrics.unitEconomics.yearly.map((y: any) => y.year);
+      const unitHeaders = ['Metric', ...unitYears.map((y: number) => y.toString()), 'Average'];
+      const unitColWidth = Math.min(25, (contentWidth - 50) / (unitYears.length + 1));
+      const unitColWidths = [50, ...unitYears.map(() => unitColWidth), unitColWidth];
+      
+      const avgIssuedCredits = comprehensiveMetrics.unitEconomics.yearly.reduce((sum: number, y: any) => sum + (y.issuedCredits || 0), 0);
+      const avgPrice = comprehensiveMetrics.unitEconomics.avgPricePerCredit || 0;
+      const avgCOGS = comprehensiveMetrics.unitEconomics.avgCogsPerCredit || 0;
+      const avgLCOC = comprehensiveMetrics.unitEconomics.lcoc || 0;
+      
+      const unitRows: string[][] = [
+        ['Issued Credits', ...comprehensiveMetrics.unitEconomics.yearly.map((y: any) => (y.issuedCredits || 0).toLocaleString()), avgIssuedCredits.toLocaleString()],
+        ['WA Price', ...comprehensiveMetrics.unitEconomics.yearly.map((y: any) => formatCurrency(y.pricePerCredit || 0)), formatCurrency(avgPrice)],
+        ['COGS/Credit', ...comprehensiveMetrics.unitEconomics.yearly.map((y: any) => formatCurrency(y.cogsPerCredit || 0)), formatCurrency(avgCOGS)],
+        ['GP/Credit', ...comprehensiveMetrics.unitEconomics.yearly.map((y: any) => formatCurrency((y.pricePerCredit || 0) - (y.cogsPerCredit || 0))), ''],
+        ['OPEX/Credit', ...comprehensiveMetrics.unitEconomics.yearly.map((y: any) => formatCurrency(y.opexPerCredit || 0)), ''],
+        ['LCOC', ...comprehensiveMetrics.unitEconomics.yearly.map((y: any) => formatCurrency(y.lcoc || 0)), formatCurrency(avgLCOC)],
+        ['All-in Cost', ...comprehensiveMetrics.unitEconomics.yearly.map((y: any) => formatCurrency((y.cogsPerCredit || 0) + (y.opexPerCredit || 0))), ''],
+      ];
+      
+      addDataTable(unitHeaders, unitRows, unitColWidths);
+      
+      // Break-even Analysis
+      if (comprehensiveMetrics.breakEven?.yearly && comprehensiveMetrics.breakEven.yearly.length > 0) {
+        checkPageBreak(40);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Break-even Analysis', margin + 5, yPosition);
+        yPosition += 5;
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'italic');
+        pdf.text('Price and volume thresholds for profitability', margin + 5, yPosition);
+        yPosition += 7;
+        
+        const beYears = comprehensiveMetrics.breakEven.yearly.map((y: any) => y.year);
+        const beHeaders = ['Metric', ...beYears.map((y: number) => y.toString())];
+        const beColWidth = Math.min(28, (contentWidth - 50) / beYears.length);
+        const beColWidths = [50, ...beYears.map(() => beColWidth)];
+        
+        const beRows: string[][] = [
+          ['BE Price (Oper)', ...comprehensiveMetrics.breakEven.yearly.map((y: any) => formatCurrency(y.breakEvenPrice || 0))],
+          ['Realized Price', ...comprehensiveMetrics.breakEven.yearly.map((y: any) => formatCurrency(y.realizedPrice || 0))],
+          ['Safety Spread', ...comprehensiveMetrics.breakEven.yearly.map((y: any) => formatCurrency((y.realizedPrice || 0) - (y.breakEvenPrice || 0)))],
+          ['BE Volume', ...comprehensiveMetrics.breakEven.yearly.map((y: any) => y.breakEvenVolume ? (y.breakEvenVolume).toLocaleString() : '–')],
+        ];
+        
+        addDataTable(beHeaders, beRows, beColWidths);
+      }
+    }
+    
+    // 4. Working Capital Management
+    if (comprehensiveMetrics.workingCapital?.yearly && comprehensiveMetrics.workingCapital.yearly.length > 0) {
+      checkPageBreak(50);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('4. Working Capital Management', margin, yPosition);
+      yPosition += 8;
+      
+      pdf.setFontSize(10);
+      pdf.text('AR, AP, and Cash Conversion Metrics', margin + 5, yPosition);
+      yPosition += 5;
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'italic');
+      pdf.text('Working capital efficiency by year', margin + 5, yPosition);
+      yPosition += 7;
+      
+      const wcYears = comprehensiveMetrics.workingCapital.yearly.map((y: any) => y.year);
+      const wcHeaders = ['Metric', ...wcYears.map((y: number) => y.toString())];
+      const wcColWidth = Math.min(28, (contentWidth - 50) / wcYears.length);
+      const wcColWidths = [50, ...wcYears.map(() => wcColWidth)];
+      
+      const wcRows: string[][] = [
+        ['AR', ...comprehensiveMetrics.workingCapital.yearly.map((y: any) => formatCurrency(y.ar || 0))],
+        ['AP', ...comprehensiveMetrics.workingCapital.yearly.map((y: any) => formatCurrency(y.ap || 0))],
+        ['NWC', ...comprehensiveMetrics.workingCapital.yearly.map((y: any) => formatCurrency(y.nwc || 0))],
+        ['Revenue', ...comprehensiveMetrics.workingCapital.yearly.map((y: any) => formatCurrency(y.revenue || 0))],
+        ['DSO (days)', ...comprehensiveMetrics.workingCapital.yearly.map((y: any) => y.dso ? Math.round(y.dso).toString() : '–')],
+        ['DPO (days)', ...comprehensiveMetrics.workingCapital.yearly.map((y: any) => y.dpo ? Math.round(y.dpo).toString() : '–')],
+        ['NWC % Rev', ...comprehensiveMetrics.workingCapital.yearly.map((y: any) => y.nwcToRevenue ? formatPercent(y.nwcToRevenue) : '–')],
+      ];
+      
+      addDataTable(wcHeaders, wcRows, wcColWidths);
+    }
+    
+    // 5. Liquidity & Debt
+    if (comprehensiveMetrics.liquidity?.yearly && comprehensiveMetrics.liquidity.yearly.length > 0) {
+      checkPageBreak(60);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('5. Liquidity & Debt', margin, yPosition);
+      yPosition += 8;
+      
+      // Liquidity Ratios
+      pdf.setFontSize(10);
+      pdf.text('Liquidity Ratios', margin + 5, yPosition);
+      yPosition += 5;
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'italic');
+      pdf.text('Balance sheet health and solvency metrics', margin + 5, yPosition);
+      yPosition += 7;
+      
+      const liqYears = comprehensiveMetrics.liquidity.yearly.map((y: any) => y.year);
+      const liqHeaders = ['Metric', ...liqYears.map((y: number) => y.toString())];
+      const liqColWidth = Math.min(28, (contentWidth - 50) / liqYears.length);
+      const liqColWidths = [50, ...liqYears.map(() => liqColWidth)];
+      
+      const liqRows: string[][] = [
+        ['Cash', ...comprehensiveMetrics.liquidity.yearly.map((y: any) => formatCurrency(y.cash || 0))],
+        ['Current Ratio', ...comprehensiveMetrics.liquidity.yearly.map((y: any) => y.currentRatio ? y.currentRatio.toFixed(2) : '–')],
+        ['Cash Ratio', ...comprehensiveMetrics.liquidity.yearly.map((y: any) => y.cashRatio ? y.cashRatio.toFixed(2) : '–')],
+        ['D/E', ...comprehensiveMetrics.liquidity.yearly.map((y: any) => y.debtToEquity ? y.debtToEquity.toFixed(2) : '–')],
+        ['Net Debt/EBITDA', ...comprehensiveMetrics.liquidity.yearly.map((y: any) => y.netDebtToEbitda ? y.netDebtToEbitda.toFixed(2) : '–')],
+        ['Interest Coverage', ...comprehensiveMetrics.liquidity.yearly.map((y: any) => y.interestCoverage ? y.interestCoverage.toFixed(2) : '–')],
+      ];
+      
+      addDataTable(liqHeaders, liqRows, liqColWidths);
+      
+      // Debt Service & Coverage
+      if (comprehensiveMetrics.debt?.yearly && comprehensiveMetrics.debt.yearly.length > 0) {
+        checkPageBreak(40);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Debt Service & Coverage', margin + 5, yPosition);
+        yPosition += 5;
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'italic');
+        pdf.text('Debt schedule and DSCR by year', margin + 5, yPosition);
+        yPosition += 7;
+        
+        const debtYears = comprehensiveMetrics.debt.yearly.map((y: any) => y.year);
+        const debtHeaders = ['Metric', ...debtYears.map((y: number) => y.toString())];
+        const debtColWidth = Math.min(28, (contentWidth - 50) / debtYears.length);
+        const debtColWidths = [50, ...debtYears.map(() => debtColWidth)];
+        
+        const debtRows: string[][] = [
+          ['Beg Balance', ...comprehensiveMetrics.debt.yearly.map((y: any) => formatCurrency(y.beginningBalance || 0))],
+          ['Draw', ...comprehensiveMetrics.debt.yearly.map((y: any) => formatCurrency(y.draw || 0))],
+          ['Principal', ...comprehensiveMetrics.debt.yearly.map((y: any) => formatCurrency(y.principal || 0))],
+          ['End Balance', ...comprehensiveMetrics.debt.yearly.map((y: any) => formatCurrency(y.endingBalance || 0))],
+          ['Interest', ...comprehensiveMetrics.debt.yearly.map((y: any) => formatCurrency(y.interest || 0))],
+          ['DSCR', ...comprehensiveMetrics.debt.yearly.map((y: any) => y.dscr ? `${y.dscr.toFixed(2)}x` : '–x')],
+        ];
+        
+        addDataTable(debtHeaders, debtRows, debtColWidths);
+      }
+    }
+    
+    // 6. Carbon KPIs
+    if (comprehensiveMetrics.carbonKPIs?.yearly && comprehensiveMetrics.carbonKPIs.yearly.length > 0) {
+      checkPageBreak(50);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('6. Carbon KPIs', margin, yPosition);
+      yPosition += 8;
+      
+      pdf.setFontSize(10);
+      pdf.text('Carbon Credit Metrics', margin + 5, yPosition);
+      yPosition += 5;
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'italic');
+      pdf.text('Generation, issuance, and pricing by year', margin + 5, yPosition);
+      yPosition += 7;
+      
+      const carbonYears = comprehensiveMetrics.carbonKPIs.yearly.map((y: any) => y.year);
+      const carbonHeaders = ['Metric', ...carbonYears.map((y: number) => y.toString()), 'Total'];
+      const carbonColWidth = Math.min(25, (contentWidth - 50) / (carbonYears.length + 1));
+      const carbonColWidths = [50, ...carbonYears.map(() => carbonColWidth), carbonColWidth];
+      
+      const totalGenerated = comprehensiveMetrics.carbonKPIs.yearly.reduce((sum: number, y: any) => sum + (y.creditsGenerated || 0), 0);
+      const totalIssued = comprehensiveMetrics.carbonKPIs.yearly.reduce((sum: number, y: any) => sum + (y.creditsIssued || 0), 0);
+      const totalDelivered = comprehensiveMetrics.carbonKPIs.yearly.reduce((sum: number, y: any) => sum + (y.ppDelivered || 0), 0);
+      
+      const carbonRows: string[][] = [
+        ['Generated', ...comprehensiveMetrics.carbonKPIs.yearly.map((y: any) => (y.creditsGenerated || 0).toLocaleString()), totalGenerated.toLocaleString()],
+        ['Issued', ...comprehensiveMetrics.carbonKPIs.yearly.map((y: any) => (y.creditsIssued || 0).toLocaleString()), totalIssued.toLocaleString()],
+        ['Issuance %', ...comprehensiveMetrics.carbonKPIs.yearly.map((y: any) => y.issuanceRate ? formatPercent(y.issuanceRate) : '0%'), ''],
+        ['PP Delivered', ...comprehensiveMetrics.carbonKPIs.yearly.map((y: any) => (y.ppDelivered || 0).toLocaleString()), totalDelivered.toLocaleString()],
+        ['PP Remaining', ...comprehensiveMetrics.carbonKPIs.yearly.map((y: any) => y.ppRemaining ? (y.ppRemaining).toLocaleString() : '–'), ''],
+        ['WA Price', ...comprehensiveMetrics.carbonKPIs.yearly.map((y: any) => formatCurrency(y.waPrice || 0)), ''],
+        ['Spot Price', ...comprehensiveMetrics.carbonKPIs.yearly.map((y: any) => formatCurrency(y.spotPrice || 0)), ''],
+      ];
+      
+      addDataTable(carbonHeaders, carbonRows, carbonColWidths);
+    }
+    
+    // 7. Financial Charts (section title only, charts added later)
+    checkPageBreak(15);
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('7. Financial Charts & Visualizations', margin, yPosition);
+    yPosition += 8;
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'italic');
+    pdf.text('Visual representations of key trends and metrics (see Charts & Visualizations section)', margin + 5, yPosition);
+    yPosition += 10;
   }
 
   // ========== SCENARIO ANALYSIS ==========
