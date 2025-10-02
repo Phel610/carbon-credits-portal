@@ -37,6 +37,7 @@ import ScenarioTemplates from '@/components/financial/ScenarioTemplates';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HelpTooltip } from '@/components/help/HelpTooltip';
 import {
   Dialog,
   DialogContent,
@@ -1080,18 +1081,19 @@ const SensitivityScenarios = () => {
   const getImpactSummary = (scenario: Scenario) => {
     if (!scenario.metrics || !baseMetrics) return null;
 
+    // FIXED: Using correct nested paths for metrics
     const impacts = [
       {
         label: 'NPV',
-        change: getMetricChange(scenario.metrics.returns?.equityNPV, baseMetrics.returns?.equityNPV)
+        change: getMetricChange(scenario.metrics.returns?.equity?.npv, baseMetrics.returns?.equity?.npv)
       },
       {
         label: 'IRR',
-        change: getMetricChange(scenario.metrics.returns?.equityIRR, baseMetrics.returns?.equityIRR)
+        change: getMetricChange(scenario.metrics.returns?.equity?.irr, baseMetrics.returns?.equity?.irr)
       },
       {
         label: 'Revenue',
-        change: getMetricChange(scenario.metrics.profitability?.totalRevenue, baseMetrics.profitability?.totalRevenue)
+        change: getMetricChange(scenario.metrics.profitability?.total?.revenue, baseMetrics.profitability?.total?.revenue)
       }
     ];
 
@@ -1130,6 +1132,7 @@ const SensitivityScenarios = () => {
       return null;
     }
 
+    // FIXED: Using correct nested paths for metrics
     const weightedMetrics: any = {
       equityNPV: 0,
       equityIRR: 0,
@@ -1140,15 +1143,16 @@ const SensitivityScenarios = () => {
     scenarios.forEach(scenario => {
       const probability = (scenarioProbabilities[scenario.id] || 0) / 100;
       if (scenario.metrics?.returns) {
-        weightedMetrics.equityNPV += (scenario.metrics.returns.equityNPV || 0) * probability;
-        weightedMetrics.equityIRR += (scenario.metrics.returns.equityIRR || 0) * probability;
-        weightedMetrics.projectNPV += (scenario.metrics.returns.projectNPV || 0) * probability;
+        weightedMetrics.equityNPV += (scenario.metrics.returns.equity?.npv || 0) * probability;
+        weightedMetrics.equityIRR += (scenario.metrics.returns.equity?.irr || 0) * probability;
+        weightedMetrics.projectNPV += (scenario.metrics.returns.project?.npv || 0) * probability;
       }
       if (scenario.metrics?.profitability) {
-        weightedMetrics.totalRevenue += (scenario.metrics.profitability.totalRevenue || 0) * probability;
+        weightedMetrics.totalRevenue += (scenario.metrics.profitability.total?.revenue || 0) * probability;
       }
     });
 
+    console.log('[Weighted Metrics] Calculated:', weightedMetrics);
     return weightedMetrics;
   };
 
@@ -1206,6 +1210,41 @@ const SensitivityScenarios = () => {
 
             {/* Sensitivity Analysis Tab */}
             <TabsContent value="sensitivity" className="space-y-6">
+              {/* Getting Started Guide */}
+              {scenarios.length === 0 && (
+                <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                      <HelpCircle className="h-5 w-5" />
+                      Getting Started with Sensitivity Analysis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <p className="text-blue-700 dark:text-blue-300">
+                      Use this tool to understand how changes in key variables impact your project's financial outcomes:
+                    </p>
+                    <div className="space-y-2 text-blue-700 dark:text-blue-300">
+                      <div className="flex items-start gap-2">
+                        <span className="font-semibold">Step 1:</span>
+                        <span>Adjust the sliders below to change key input variables (prices, quantities, costs, etc.)</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="font-semibold">Step 2:</span>
+                        <span>Watch the "Key Impacts" section update in real-time to see how metrics change</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="font-semibold">Step 3:</span>
+                        <span>Save interesting combinations as named scenarios (e.g., "Best Case", "Conservative", "High Growth")</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="font-semibold">Step 4:</span>
+                        <span>Switch to the "Scenario Manager" tab to compare multiple scenarios side-by-side</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
               {/* Calculation Status */}
               {calculating && (
                 <Card>
@@ -1470,19 +1509,10 @@ const SensitivityScenarios = () => {
                 onApplyTemplate={applyTemplateToSensitivities}
               />
               <div className="flex gap-2 items-center">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                    >
-                      <HelpCircle className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-sm">
-                    <p><strong>Probability Weighting:</strong> Assign probabilities to different scenarios to calculate expected values. Useful for risk analysis and decision-making under uncertainty.</p>
-                  </TooltipContent>
-                </Tooltip>
+                <HelpTooltip 
+                  content="Probability Weighting allows you to assign likelihood percentages to different scenarios, creating a probability-weighted expected outcome. This is especially useful for: (1) Risk analysis - weighing best/base/worst cases, (2) Decision-making under uncertainty, (3) Portfolio planning. Example: Assign 20% to pessimistic, 60% to base case, and 20% to optimistic scenarios."
+                  iconOnly
+                />
                 <Button
                   variant="outline"
                   onClick={() => setShowProbabilityWeighting(!showProbabilityWeighting)}
@@ -1599,7 +1629,18 @@ const SensitivityScenarios = () => {
             {selectedScenarioIds.length > 1 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Scenario Comparison</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      Scenario Comparison Table
+                      <HelpTooltip 
+                        content="Compare key metrics side-by-side across scenarios. The 'Base Case' serves as the reference point - percentage changes show how each scenario differs from the base. Select 2+ scenarios using checkboxes to enable comparison."
+                        iconOnly
+                      />
+                    </CardTitle>
+                  </div>
+                  <CardDescription>
+                    Detailed metric comparison with % change from base case
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
@@ -1617,40 +1658,48 @@ const SensitivityScenarios = () => {
                             ))}
                         </tr>
                       </thead>
-                      <tbody>
+                       <tbody>
                         {[
-                          { label: 'Equity NPV', key: 'equityNPV', category: 'returns', format: 'currency' },
-                          { label: 'Equity IRR', key: 'equityIRR', category: 'returns', format: 'percentage' },
-                          { label: 'Project NPV', key: 'projectNPV', category: 'returns', format: 'currency' },
-                          { label: 'Payback Period', key: 'paybackPeriod', category: 'returns', format: 'years' },
-                          { label: 'Total Revenue', key: 'totalRevenue', category: 'profitability', format: 'currency' },
-                          { label: 'Total Costs', key: 'totalCosts', category: 'profitability', format: 'currency' },
+                          { label: 'Equity NPV', path: 'returns.equity.npv', format: 'currency' },
+                          { label: 'Equity IRR', path: 'returns.equity.irr', format: 'percentage' },
+                          { label: 'Project NPV', path: 'returns.project.npv', format: 'currency' },
+                          { label: 'Payback Period', path: 'returns.equity.payback', format: 'years' },
+                          { label: 'Total Revenue', path: 'profitability.total.revenue', format: 'currency' },
+                          { label: 'Total Costs', path: 'profitability.total.cogs', format: 'currency' },
                         ].map(metric => {
                           const baseCaseScenario = scenarios.find(s => s.isBaseCase && selectedScenarioIds.includes(s.id));
-                          const baseValue = baseCaseScenario?.metrics?.[metric.category]?.[metric.key];
+                          
+                          // Helper to get nested value from path like 'returns.equity.npv'
+                          const getNestedValue = (obj: any, path: string): number | null => {
+                            return path.split('.').reduce((acc, part) => acc?.[part], obj) ?? null;
+                          };
+                          
+                          const baseValue = getNestedValue(baseCaseScenario?.metrics, metric.path);
                           
                           return (
-                            <tr key={metric.key} className="border-b">
+                            <tr key={metric.path} className="border-b">
                               <td className="p-2 text-muted-foreground">{metric.label}</td>
                               {scenarios
                                 .filter(s => selectedScenarioIds.includes(s.id))
                                 .map(scenario => {
-                                  const value = scenario.metrics?.[metric.category]?.[metric.key];
-                                  const change = baseValue ? ((value - baseValue) / baseValue) * 100 : 0;
+                                  const value = getNestedValue(scenario.metrics, metric.path);
+                                  const change = baseValue && value !== null ? ((value - baseValue) / baseValue) * 100 : 0;
                                   const isBase = scenario.isBaseCase;
                                   
                                   return (
                                     <td key={scenario.id} className="p-2 text-right">
                                       <div>
                                         <span className="font-medium">
-                                          {metric.format === 'currency' 
-                                            ? `$${(value || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                          {value === null || value === undefined
+                                            ? 'N/A'
+                                            : metric.format === 'currency' 
+                                            ? `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                                             : metric.format === 'percentage'
-                                            ? `${((value || 0) * 100).toFixed(1)}%`
-                                            : `${(value || 0).toFixed(1)} yrs`
+                                            ? `${(value * 100).toFixed(1)}%`
+                                            : `${value.toFixed(1)} yrs`
                                           }
                                         </span>
-                                        {!isBase && Math.abs(change) > 0.1 && (
+                                        {!isBase && baseValue !== null && value !== null && Math.abs(change) > 0.1 && (
                                           <Badge 
                                             variant={change > 0 ? "default" : "destructive"} 
                                             className="ml-2 text-xs"
@@ -1679,8 +1728,31 @@ const SensitivityScenarios = () => {
               </CardHeader>
               <CardContent>
                 {scenarios.length === 0 ? (
-                  <div className="text-center text-muted-foreground py-8">
-                    No saved scenarios yet. Create one in the Sensitivity Analysis tab.
+                  <div className="text-center py-12 space-y-4">
+                    <div className="text-muted-foreground">
+                      <p className="text-lg font-medium">No saved scenarios yet</p>
+                      <p className="text-sm mt-2">Create your first scenario to start comparing alternatives</p>
+                    </div>
+                    <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground max-w-md mx-auto">
+                      <div className="flex items-start gap-2 text-left w-full">
+                        <span className="font-semibold">1.</span>
+                        <span>Adjust variables in the Sensitivity Analysis tab</span>
+                      </div>
+                      <div className="flex items-start gap-2 text-left w-full">
+                        <span className="font-semibold">2.</span>
+                        <span>Click "Save Current Scenario" with a descriptive name</span>
+                      </div>
+                      <div className="flex items-start gap-2 text-left w-full">
+                        <span className="font-semibold">3.</span>
+                        <span>Return here to compare multiple scenarios</span>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => setActiveTab('sensitivity')}
+                      className="mt-4"
+                    >
+                      Go to Sensitivity Analysis
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
