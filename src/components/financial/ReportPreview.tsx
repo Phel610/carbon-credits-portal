@@ -791,19 +791,41 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                             Probability: {(scenario.probability * 100).toFixed(0)}%
                           </p>
                         )}
-                        {scenario.metrics && (
+                         {scenario.metrics && (
                           <div className="grid grid-cols-3 gap-2 text-sm">
                             <div>
                               <span className="text-muted-foreground">Equity NPV: </span>
-                              <span className="font-medium">${(scenario.metrics.equity?.npv || 0).toLocaleString()}</span>
+                              <span className="font-medium">${(scenario.metrics.returns?.equity?.npv || 0).toLocaleString()}</span>
                             </div>
                             <div>
                               <span className="text-muted-foreground">Equity IRR: </span>
-                              <span className="font-medium">{((scenario.metrics.equity?.irr || 0) * 100).toFixed(1)}%</span>
+                              <span className="font-medium">{((scenario.metrics.returns?.equity?.irr || 0) * 100).toFixed(1)}%</span>
                             </div>
                             <div>
                               <span className="text-muted-foreground">Project NPV: </span>
-                              <span className="font-medium">${(scenario.metrics.project?.npv || 0).toLocaleString()}</span>
+                              <span className="font-medium">${(scenario.metrics.returns?.project?.npv || 0).toLocaleString()}</span>
+                            </div>
+                          </div>
+                        )}
+                        {scenario.changes && scenario.changes.length > 0 && (
+                          <div className="mt-3">
+                            <p className="text-sm font-medium mb-2">Variables Changed: {scenario.changes.length}</p>
+                            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                              {scenario.changes.map((change: any, idx: number) => (
+                                <div key={idx} className="text-xs border-l-2 border-primary/30 pl-2">
+                                  <p className="font-medium">{change.name}</p>
+                                  <p className="text-muted-foreground">
+                                    {typeof change.baseValue === 'number' && Math.abs(change.baseValue) > 1000 
+                                      ? `$${change.baseValue.toLocaleString()}` 
+                                      : String(change.baseValue)
+                                    } → {
+                                      typeof change.newValue === 'number' && Math.abs(change.newValue) > 1000 
+                                        ? `$${change.newValue.toLocaleString()}` 
+                                        : String(change.newValue)
+                                    } ({change.change >= 0 ? '+' : ''}{(change.change * 100).toFixed(1)}%)
+                                  </p>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         )}
@@ -834,13 +856,13 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                         <div className="grid grid-cols-2 gap-4">
                           <div className="text-center p-4 border rounded-lg bg-accent/10">
                             <p className="text-xl font-bold text-primary">
-                              ${scenarios.reduce((sum, s) => sum + (s.metrics?.equity?.npv || 0) * (s.probability || 0), 0).toLocaleString()}
+                              ${scenarios.reduce((sum, s) => sum + (s.metrics?.returns?.equity?.npv || 0) * (s.probability || 0), 0).toLocaleString()}
                             </p>
                             <p className="text-sm text-muted-foreground">Probability-Weighted Equity NPV</p>
                           </div>
                           <div className="text-center p-4 border rounded-lg bg-accent/10">
                             <p className="text-xl font-bold text-primary">
-                              {(scenarios.reduce((sum, s) => sum + ((s.metrics?.equity?.irr || 0) * (s.probability || 0)), 0) * 100).toFixed(1)}%
+                              {(scenarios.reduce((sum, s) => sum + ((s.metrics?.returns?.equity?.irr || 0) * (s.probability || 0)), 0) * 100).toFixed(1)}%
                             </p>
                             <p className="text-sm text-muted-foreground">Probability-Weighted Equity IRR</p>
                           </div>

@@ -21,7 +21,13 @@ interface ScenarioData {
   notes?: string;
   probability?: number;
   metrics: any;
-  changes: Array<{ variable: string; baseValue: any; newValue: any }>;
+  changes: Array<{ 
+    key: string;
+    name: string;
+    baseValue: any;
+    newValue: any;
+    change: number;
+  }>;
 }
 
 export const generatePDF = async (
@@ -205,11 +211,11 @@ export const generatePDF = async (
     pdf.setFontSize(9);
     pdf.setFont('helvetica', 'normal');
     const metricsData = [
-      ['Equity NPV:', formatCurrency(comprehensiveMetrics.returns?.equityNPV || 0)],
-      ['Equity IRR:', formatPercent(comprehensiveMetrics.returns?.equityIRR || 0)],
-      ['Project NPV:', formatCurrency(comprehensiveMetrics.returns?.projectNPV || 0)],
-      ['Project IRR:', formatPercent(comprehensiveMetrics.returns?.projectIRR || 0)],
-      ['Payback Period:', `${(comprehensiveMetrics.returns?.paybackPeriod || 0).toFixed(1)} years`],
+      ['Equity NPV:', formatCurrency(comprehensiveMetrics.returns?.equity?.npv || 0)],
+      ['Equity IRR:', formatPercent(comprehensiveMetrics.returns?.equity?.irr || 0)],
+      ['Project NPV:', formatCurrency(comprehensiveMetrics.returns?.project?.npv || 0)],
+      ['Project IRR:', formatPercent(comprehensiveMetrics.returns?.project?.irr || 0)],
+      ['Payback Period:', `${(comprehensiveMetrics.returns?.equity?.payback || 0).toFixed(1)} years`],
       ['Min DSCR:', (comprehensiveMetrics.debt?.minDSCR || 0).toFixed(2)],
       ['Peak Funding:', formatCurrency(comprehensiveMetrics.liquidity?.peakFundingNeed || 0)],
     ];
@@ -485,14 +491,14 @@ export const generatePDF = async (
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
       const returnsData = [
-        ['Equity NPV:', formatCurrency(comprehensiveMetrics.returns.equityNPV || 0)],
-        ['Equity IRR:', formatPercent(comprehensiveMetrics.returns.equityIRR || 0)],
-        ['Equity MIRR:', formatPercent(comprehensiveMetrics.returns.equityMIRR || 0)],
-        ['Equity Payback:', `${(comprehensiveMetrics.returns.paybackPeriod || 0).toFixed(1)} years`],
-        ['Project NPV:', formatCurrency(comprehensiveMetrics.returns.projectNPV || 0)],
-        ['Project IRR:', formatPercent(comprehensiveMetrics.returns.projectIRR || 0)],
-        ['Project MIRR:', formatPercent(comprehensiveMetrics.returns.projectMIRR || 0)],
-        ['Project Payback:', `${(comprehensiveMetrics.returns.projectPayback || 0).toFixed(1)} years`],
+        ['Equity NPV:', formatCurrency(comprehensiveMetrics.returns.equity?.npv || 0)],
+        ['Equity IRR:', formatPercent(comprehensiveMetrics.returns.equity?.irr || 0)],
+        ['Equity MIRR:', formatPercent(comprehensiveMetrics.returns.equity?.mirr || 0)],
+        ['Equity Payback:', `${(comprehensiveMetrics.returns.equity?.payback || 0).toFixed(1)} years`],
+        ['Project NPV:', formatCurrency(comprehensiveMetrics.returns.project?.npv || 0)],
+        ['Project IRR:', formatPercent(comprehensiveMetrics.returns.project?.irr || 0)],
+        ['Project MIRR:', formatPercent(comprehensiveMetrics.returns.project?.mirr || 0)],
+        ['Project Payback:', `${(comprehensiveMetrics.returns.project?.payback || 0).toFixed(1)} years`],
       ];
       
       returnsData.forEach(([label, value]) => {
@@ -632,9 +638,9 @@ export const generatePDF = async (
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'normal');
         const scenMetrics = [
-          ['Equity NPV:', formatCurrency(scenario.metrics.equityNPV || 0)],
-          ['Equity IRR:', formatPercent(scenario.metrics.equityIRR || 0)],
-          ['Project NPV:', formatCurrency(scenario.metrics.projectNPV || 0)],
+          ['Equity NPV:', formatCurrency(scenario.metrics.returns?.equity?.npv || 0)],
+          ['Equity IRR:', formatPercent(scenario.metrics.returns?.equity?.irr || 0)],
+          ['Project NPV:', formatCurrency(scenario.metrics.returns?.project?.npv || 0)],
         ];
         
         scenMetrics.forEach(([label, value]) => {
@@ -649,18 +655,73 @@ export const generatePDF = async (
       
       // Variable changes
       if (scenario.changes && scenario.changes.length > 0) {
-        checkPageBreak(15);
+        checkPageBreak(20);
         pdf.setFontSize(9);
-        pdf.setFont('helvetica', 'italic');
-        pdf.text('Variables Modified:', margin + 5, yPosition);
-        yPosition += 6;
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`Variables Changed: ${scenario.changes.length}`, margin + 5, yPosition);
+        yPosition += 7;
         
         scenario.changes.forEach((change) => {
-          checkPageBreak(6);
-          pdf.setFont('helvetica', 'normal');
-          pdf.text(`• ${change.variable}: ${change.baseValue} → ${change.newValue}`, margin + 10, yPosition);
+          checkPageBreak(10);
+          pdf.setFontSize(8);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(change.name, margin + 10, yPosition);
           yPosition += 5;
+          
+          pdf.setFont('helvetica', 'normal');
+          const formatValue = (val: any) => {
+            if (typeof val === 'number') {
+              if (val > 1000 || val < -1000) return formatCurrency(val);
+              if (val < 1 && val > -1 && val !== 0) return formatPercent(val);
+              return val.toLocaleString();
+            }
+            return String(val);
+          };
+          
+          const changeSign = change.change >= 0 ? '+' : '';
+          pdf.text(`${formatValue(change.baseValue)} → ${formatValue(change.newValue)}  (${changeSign}${(change.change * 100).toFixed(1)}%)`, margin + 15, yPosition);
+          yPosition += 6;
         });
+        yPosition += 3;
+      }
+      
+      // Impact Summary (show percentage change from base case)
+      const baseCase = scenarios.find(s => s.is_base_case);
+      if (!scenario.is_base_case && baseCase && scenario.metrics && baseCase.metrics) {
+        checkPageBreak(20);
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Impact Summary:', margin + 5, yPosition);
+        yPosition += 7;
+        
+        pdf.setFont('helvetica', 'normal');
+        const baseNPV = baseCase.metrics.returns?.equity?.npv || 0;
+        const scenarioNPV = scenario.metrics.returns?.equity?.npv || 0;
+        const npvChange = baseNPV !== 0 ? ((scenarioNPV - baseNPV) / Math.abs(baseNPV)) * 100 : 0;
+        
+        const baseIRR = baseCase.metrics.returns?.equity?.irr || 0;
+        const scenarioIRR = scenario.metrics.returns?.equity?.irr || 0;
+        const irrChange = baseIRR !== 0 ? ((scenarioIRR - baseIRR) / Math.abs(baseIRR)) * 100 : 0;
+        
+        const baseRevenue = baseCase.metrics.profitability?.totalRevenue || 0;
+        const scenarioRevenue = scenario.metrics.profitability?.totalRevenue || 0;
+        const revenueChange = baseRevenue !== 0 ? ((scenarioRevenue - baseRevenue) / Math.abs(baseRevenue)) * 100 : 0;
+        
+        const impactData = [
+          ['NPV:', `${npvChange >= 0 ? '+' : ''}${npvChange.toFixed(1)}%`],
+          ['IRR:', `${irrChange >= 0 ? '+' : ''}${irrChange.toFixed(1)}%`],
+          ['Revenue:', `${revenueChange >= 0 ? '+' : ''}${revenueChange.toFixed(1)}%`],
+        ];
+        
+        impactData.forEach(([label, value]) => {
+          checkPageBreak(6);
+          pdf.text(label, margin + 10, yPosition);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(value, margin + 50, yPosition);
+          pdf.setFont('helvetica', 'normal');
+          yPosition += 6;
+        });
+        yPosition += 3;
       }
       
       // Notes
@@ -688,8 +749,8 @@ export const generatePDF = async (
       yPosition += 7;
       
       const totalProb = withProbabilities.reduce((sum, s) => sum + (s.probability || 0), 0);
-      const weightedEquityNPV = withProbabilities.reduce((sum, s) => sum + (s.metrics?.equityNPV || 0) * (s.probability || 0), 0);
-      const weightedEquityIRR = withProbabilities.reduce((sum, s) => sum + (s.metrics?.equityIRR || 0) * (s.probability || 0), 0);
+      const weightedEquityNPV = withProbabilities.reduce((sum, s) => sum + (s.metrics?.returns?.equity?.npv || 0) * (s.probability || 0), 0);
+      const weightedEquityIRR = withProbabilities.reduce((sum, s) => sum + (s.metrics?.returns?.equity?.irr || 0) * (s.probability || 0), 0);
       
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
