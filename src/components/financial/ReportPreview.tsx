@@ -140,6 +140,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
   const [scenarios, setScenarios] = useState<any[]>([]);
   const [comprehensiveMetrics, setComprehensiveMetrics] = useState<any>(null);
   const [rawInputsData, setRawInputsData] = useState<any[]>([]);
+  const [yearlyFinancials, setYearlyFinancials] = useState<YearlyFinancials[]>([]);
   
   // Dynamic imports for table components to avoid module resolution issues
   const [IncomeStatementTable, setIncomeStatementTable] = useState<any>(null);
@@ -311,6 +312,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
         transformedInputs
       );
       setComprehensiveMetrics(compMetrics);
+      setYearlyFinancials(yearlyFinancials);
 
       // Fetch saved scenarios
       const { data: scenariosData, error: scenariosError } = await supabase
@@ -1293,7 +1295,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={financialData.yearlyData}>
+                      <BarChart data={yearlyFinancials}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
                         <XAxis 
                           dataKey="year" 
@@ -1391,7 +1393,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={financialData.yearlyData}>
+                      <AreaChart data={yearlyFinancials}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
                         <XAxis 
                           dataKey="year" 
