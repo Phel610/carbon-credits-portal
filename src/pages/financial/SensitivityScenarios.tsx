@@ -744,6 +744,11 @@ const SensitivityScenarios = () => {
         hasYearlyData: yearlyData.length > 0
       });
 
+      toast({
+        title: "Metrics calculated successfully",
+        duration: 3000,
+      });
+
     } catch (error) {
       console.error('Error calculating metrics:', error);
       toast({
@@ -1183,27 +1188,26 @@ const SensitivityScenarios = () => {
 
   return (
     <FinancialPlatformLayout>
-      <div className="space-y-6">
+      <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => navigate(`/financial/models/${modelId}`)}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold">Sensitivity & Scenarios</h1>
-              <p className="text-muted-foreground">{modelName}</p>
-            </div>
-          </div>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(`/financial/models/${modelId}`)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Sensitivity & Scenarios</h1>
+          <p className="text-muted-foreground">{modelName}</p>
         </div>
 
         <TooltipProvider>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList>
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="sensitivity">Sensitivity Analysis</TabsTrigger>
               <TabsTrigger value="scenarios">Scenario Manager</TabsTrigger>
             </TabsList>
@@ -1252,17 +1256,6 @@ const SensitivityScenarios = () => {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Recalculating metrics...
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-              
-              {!calculating && currentMetrics && (
-                <Card className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
-                      <CheckCircle className="h-4 w-4" />
-                      Metrics calculated successfully
                     </div>
                   </CardContent>
                 </Card>
@@ -2022,6 +2015,23 @@ const SensitivityScenarios = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Bottom Navigation */}
+        <div className="flex justify-between pt-6 border-t">
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/financial/models/${modelId}/statements`)}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Statements
+          </Button>
+          <Button
+            onClick={() => navigate(`/financial/models/${modelId}/reports`)}
+          >
+            <FileDown className="mr-2 h-4 w-4" />
+            Generate Reports
+          </Button>
+        </div>
       </div>
     </FinancialPlatformLayout>
   );
