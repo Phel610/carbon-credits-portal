@@ -32,6 +32,41 @@ interface AICommentary {
   investorHighlights: string;
 }
 
+// Variable names mapping for display
+const VARIABLE_NAMES: Record<string, string> = {
+  'credits_generated': 'Credits Generated (Year 1)',
+  'price_per_credit': 'Credit Price (Year 1)',
+  'cogs_rate': 'COGS Rate',
+  'staff_costs': 'Staff Costs (Year 1)',
+  'mrv_costs': 'MRV Costs (Year 1)',
+  'pdd_costs': 'PDD Costs (Year 1)',
+  'feasibility_costs': 'Feasibility Costs (Year 1)',
+  'capex': 'CAPEX (Total)',
+  'depreciation': 'Depreciation (Year 1)',
+  'discount_rate': 'Discount Rate (WACC)',
+  'interest_rate': 'Interest Rate',
+  'income_tax_rate': 'Income Tax Rate',
+  'ar_rate': 'AR Rate',
+  'ap_rate': 'AP Rate',
+  'equity_injection': 'Equity Injection (Year 1)',
+  'debt_draw': 'Debt Draw (Year 1)',
+  'purchase_amount': 'Purchase Amount (Year 1)',
+  'purchase_share': 'Purchase Share',
+  'debt_duration_years': 'Debt Duration',
+  'issuance_flag': 'Issuance Flag (Year 1)',
+};
+
+// Helper function to format values for display
+const formatVariableValue = (key: string, value: number): string => {
+  if (key.includes('rate') || key.includes('share')) {
+    return `${(value * 100).toFixed(1)}%`;
+  } else if (key.includes('cost') || key.includes('capex') || key.includes('price') || 
+             key.includes('injection') || key.includes('draw') || key.includes('amount')) {
+    return `$${Math.round(value).toLocaleString()}`;
+  }
+  return Math.round(value).toLocaleString();
+};
+
 const ReportPreview: React.FC<ReportPreviewProps> = ({ 
   modelId, 
   reportType, 
@@ -227,25 +262,67 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
 
       if (scenariosError) throw scenariosError;
       
+      // Get base case values for comparison (use current model inputs as base)
+      const baseValues = { ...transformedInputs };
+      
       // Process scenarios with their pre-calculated metrics
-        const processedScenarios = scenariosData?.map(scenario => {
-          try {
-            const scenarioData = scenario.scenario_data as any;
-            
-            // Scenarios are saved with pre-calculated metrics, just use them directly
-            return {
-              scenario_name: scenario.scenario_name,
-              is_base_case: scenario.is_base_case || false,
-              notes: scenario.notes,
-              probability: (scenarioData.probability || 0) / 100, // Convert from whole number to decimal
-              metrics: scenarioData.metrics, // Use pre-calculated metrics from database
-              changes: scenarioData.variables || [] // Database stores changes as 'variables'
-            };
-          } catch (error) {
-            console.error(`Failed to process scenario "${scenario.scenario_name}":`, error);
-            return null;
-          }
-        }).filter(Boolean) || [];
+      const processedScenarios = scenariosData?.map(scenario => {
+        try {
+          const scenarioData = scenario.scenario_data as any;
+          
+          // Compute variable changes
+          const variables = scenarioData.variables || {};
+          const changes = Object.keys(variables)
+            .map(key => {
+              const newValue = variables[key];
+              let baseValue = baseValues[key];
+              
+              // For array values (like credits_generated, price_per_credit), use first year
+              if (Array.isArray(baseValue)) {
+                baseValue = baseValue[0];
+              }
+              if (Array.isArray(newValue)) {
+                return null; // Skip array comparisons for now
+              }
+              
+              // Skip if no change or invalid values
+              if (baseValue === undefined || newValue === undefined || baseValue === newValue) {
+                return null;
+              }
+              
+              // Calculate percentage change
+              const percentChange = baseValue !== 0 
+                ? ((newValue - baseValue) / baseValue) 
+                : 0;
+              
+              // Only include if change is significant (> 0.01%)
+              if (Math.abs(percentChange) < 0.0001) {
+                return null;
+              }
+              
+              return {
+                key,
+                name: VARIABLE_NAMES[key] || key,
+                baseValue,
+                newValue,
+                change: percentChange
+              };
+            })
+            .filter(Boolean);
+          
+          return {
+            scenario_name: scenario.scenario_name,
+            is_base_case: scenario.is_base_case || false,
+            notes: scenario.notes,
+            probability: (scenarioData.probability || 0) / 100,
+            metrics: scenarioData.metrics,
+            changes
+          };
+        } catch (error) {
+          console.error(`Failed to process scenario "${scenario.scenario_name}":`, error);
+          return null;
+        }
+      }).filter(Boolean) || [];
       
       setScenarios(processedScenarios);
 
@@ -815,14 +892,11 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                                 <div key={idx} className="text-xs border-l-2 border-primary/30 pl-2">
                                   <p className="font-medium">{change.name}</p>
                                   <p className="text-muted-foreground">
-                                    {typeof change.baseValue === 'number' && Math.abs(change.baseValue) > 1000 
-                                      ? `$${change.baseValue.toLocaleString()}` 
-                                      : String(change.baseValue)
-                                    } → {
-                                      typeof change.newValue === 'number' && Math.abs(change.newValue) > 1000 
-                                        ? `$${change.newValue.toLocaleString()}` 
-                                        : String(change.newValue)
-                                    } ({change.change >= 0 ? '+' : ''}{(change.change * 100).toFixed(1)}%)
+                                    {formatVariableValue(change.key, change.baseValue)} → {formatVariableValue(change.key, change.newValue)}
+                                    {' '}
+                                    <span className={change.change >= 0 ? 'text-green-600' : 'text-red-600'}>
+                                      ({change.change >= 0 ? '+' : ''}{(change.change * 100).toFixed(1)}%)
+                                    </span>
                                   </p>
                                 </div>
                               ))}

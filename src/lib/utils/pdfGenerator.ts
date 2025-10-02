@@ -95,6 +95,16 @@ export const generatePDF = async (
     return `${(value * 100).toFixed(1)}%`;
   };
 
+  const formatVariableValue = (key: string, value: number): string => {
+    if (key.includes('rate') || key.includes('share')) {
+      return `${(value * 100).toFixed(1)}%`;
+    } else if (key.includes('cost') || key.includes('capex') || key.includes('price') || 
+               key.includes('injection') || key.includes('draw') || key.includes('amount')) {
+      return formatCurrency(value);
+    }
+    return Math.round(value).toLocaleString();
+  };
+
   const addDataTable = (headers: string[], rows: string[][], colWidths: number[]) => {
     const rowHeight = 6;
     const headerHeight = 7;
@@ -669,17 +679,8 @@ export const generatePDF = async (
           yPosition += 5;
           
           pdf.setFont('helvetica', 'normal');
-          const formatValue = (val: any) => {
-            if (typeof val === 'number') {
-              if (val > 1000 || val < -1000) return formatCurrency(val);
-              if (val < 1 && val > -1 && val !== 0) return formatPercent(val);
-              return val.toLocaleString();
-            }
-            return String(val);
-          };
-          
           const changeSign = change.change >= 0 ? '+' : '';
-          pdf.text(`${formatValue(change.baseValue)} → ${formatValue(change.newValue)}  (${changeSign}${(change.change * 100).toFixed(1)}%)`, margin + 15, yPosition);
+          pdf.text(`${formatVariableValue(change.key, change.baseValue)} → ${formatVariableValue(change.key, change.newValue)}  (${changeSign}${(change.change * 100).toFixed(1)}%)`, margin + 15, yPosition);
           yPosition += 6;
         });
         yPosition += 3;
