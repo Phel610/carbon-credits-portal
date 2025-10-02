@@ -24,7 +24,8 @@ import {
   StickyNote,
   CheckSquare,
   HelpCircle,
-  CheckCircle
+  CheckCircle,
+  Pencil
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -197,6 +198,7 @@ const SensitivityScenarios = () => {
   const [showPostSaveDialog, setShowPostSaveDialog] = useState(false);
   const [lastSavedScenarioName, setLastSavedScenarioName] = useState('');
   const [activeTab, setActiveTab] = useState('sensitivity');
+  const [editingNotesMode, setEditingNotesMode] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (modelId) {
@@ -1793,6 +1795,33 @@ const SensitivityScenarios = () => {
                                   </div>
                                 </div>
                               </div>
+                              
+                              {/* Delete button in header */}
+                              {!scenario.isBaseCase && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <HelpTooltip content="Delete this entire scenario">
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </HelpTooltip>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Scenario</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete "{scenario.name}"? This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => deleteScenario(scenario.id)}>
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
                             </div>
 
                             {/* Variables Changed */}
@@ -1875,35 +1904,6 @@ const SensitivityScenarios = () => {
                                   Notes
                                 </Button>
                               </HelpTooltip>
-                              {!scenario.isBaseCase && (
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <HelpTooltip content="Delete this entire scenario">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                      >
-                                        <Trash2 className="h-3 w-3 mr-1" />
-                                        Delete
-                                      </Button>
-                                    </HelpTooltip>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Delete Scenario</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Are you sure you want to delete "{scenario.name}"? This action cannot be undone.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => deleteScenario(scenario.id)}>
-                                        Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              )}
                             </div>
 
                             {/* Notes Section */}
@@ -1918,15 +1918,29 @@ const SensitivityScenarios = () => {
                                         Saving...
                                       </span>
                                     )}
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => saveScenarioNotes(scenario.id, scenarioNotes[scenario.id] || '')}
-                                      disabled={savingNoteId === scenario.id}
-                                    >
-                                      <Save className="h-3 w-3 mr-1" />
-                                      Save Notes
-                                    </Button>
+                                    {!editingNotesMode[scenario.id] ? (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => setEditingNotesMode(prev => ({ ...prev, [scenario.id]: true }))}
+                                      >
+                                        <Pencil className="h-3 w-3 mr-1" />
+                                        Edit Notes
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={async () => {
+                                          await saveScenarioNotes(scenario.id, scenarioNotes[scenario.id] || '');
+                                          setEditingNotesMode(prev => ({ ...prev, [scenario.id]: false }));
+                                        }}
+                                        disabled={savingNoteId === scenario.id}
+                                      >
+                                        <Save className="h-3 w-3 mr-1" />
+                                        Save Notes
+                                      </Button>
+                                    )}
                                   </div>
                                 </div>
                                 <Textarea
@@ -1934,10 +1948,14 @@ const SensitivityScenarios = () => {
                                   value={scenarioNotes[scenario.id] || ''}
                                   onChange={(e) => handleNoteChange(scenario.id, e.target.value)}
                                   rows={3}
+                                  disabled={!editingNotesMode[scenario.id]}
+                                  className={!editingNotesMode[scenario.id] ? 'bg-muted' : ''}
                                 />
-                                <p className="text-xs text-muted-foreground">
-                                  Notes auto-save after 2 seconds of typing
-                                </p>
+                                {editingNotesMode[scenario.id] && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Notes auto-save after 2 seconds of typing
+                                  </p>
+                                )}
                               </div>
                             )}
                           </CardContent>

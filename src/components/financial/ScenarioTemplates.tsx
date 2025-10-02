@@ -198,40 +198,119 @@ const ScenarioTemplates = ({ sensitivities, onApplyTemplate }: ScenarioTemplates
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Template Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {templates.map(template => (
-              <Card
-                key={template.id}
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  selectedTemplate?.id === template.id ? 'ring-2 ring-primary' : ''
-                }`}
-                onClick={() => handleTemplateSelect(template)}
-              >
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <span className={template.color}>{template.icon}</span>
-                    {template.name}
-                  </CardTitle>
-                  <CardDescription>{template.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant={template.adjustments.revenue > 0 ? "default" : template.adjustments.revenue < 0 ? "destructive" : "outline"}>
-                      Revenue: {template.adjustments.revenue > 0 ? '+' : ''}{template.adjustments.revenue}%
-                    </Badge>
-                    <Badge variant={template.adjustments.costs > 0 ? "destructive" : template.adjustments.costs < 0 ? "default" : "outline"}>
-                      Costs: {template.adjustments.costs > 0 ? '+' : ''}{template.adjustments.costs}%
-                    </Badge>
-                    {template.adjustments.financing !== 0 && (
-                      <Badge variant={template.adjustments.financing > 0 ? "destructive" : "default"}>
-                        Financing: {template.adjustments.financing > 0 ? '+' : ''}{template.adjustments.financing}%
-                      </Badge>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          {/* Template Selection - Categorized */}
+          <div className="space-y-6">
+            {/* Three-Point Estimate */}
+            <div>
+              <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Three-Point Estimate</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {templates.filter(t => ['optimistic', 'pessimistic', 'conservative'].includes(t.id)).map(template => (
+                  <Card
+                    key={template.id}
+                    className={`cursor-pointer transition-all hover:shadow-md ${
+                      selectedTemplate?.id === template.id ? 'ring-2 ring-primary' : ''
+                    }`}
+                    onClick={() => handleTemplateSelect(template)}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <span className={template.color}>{template.icon}</span>
+                        {template.name}
+                      </CardTitle>
+                      <CardDescription className="text-xs">{template.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant={template.adjustments.revenue > 0 ? "default" : template.adjustments.revenue < 0 ? "destructive" : "outline"} className="text-xs">
+                          Rev: {template.adjustments.revenue > 0 ? '+' : ''}{template.adjustments.revenue}%
+                        </Badge>
+                        <Badge variant={template.adjustments.costs > 0 ? "destructive" : template.adjustments.costs < 0 ? "default" : "outline"} className="text-xs">
+                          Cost: {template.adjustments.costs > 0 ? '+' : ''}{template.adjustments.costs}%
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Market Conditions */}
+            <div>
+              <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Market Conditions</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {templates.filter(t => ['best_case', 'market_stress'].includes(t.id)).map(template => (
+                  <Card
+                    key={template.id}
+                    className={`cursor-pointer transition-all hover:shadow-md ${
+                      selectedTemplate?.id === template.id ? 'ring-2 ring-primary' : ''
+                    }`}
+                    onClick={() => handleTemplateSelect(template)}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <span className={template.color}>{template.icon}</span>
+                        {template.name}
+                      </CardTitle>
+                      <CardDescription className="text-xs">{template.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant={template.adjustments.revenue > 0 ? "default" : template.adjustments.revenue < 0 ? "destructive" : "outline"} className="text-xs">
+                          Rev: {template.adjustments.revenue > 0 ? '+' : ''}{template.adjustments.revenue}%
+                        </Badge>
+                        <Badge variant={template.adjustments.costs > 0 ? "destructive" : template.adjustments.costs < 0 ? "default" : "outline"} className="text-xs">
+                          Cost: {template.adjustments.costs > 0 ? '+' : ''}{template.adjustments.costs}%
+                        </Badge>
+                        {template.adjustments.financing !== 0 && (
+                          <Badge variant={template.adjustments.financing > 0 ? "destructive" : "default"} className="text-xs">
+                            Fin: {template.adjustments.financing > 0 ? '+' : ''}{template.adjustments.financing}%
+                          </Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Cost Scenarios */}
+            <div>
+              <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Cost Scenarios</h3>
+              <div className="grid grid-cols-1 gap-3">
+                {templates.filter(t => t.id === 'cost_overrun').map(template => (
+                  <Card
+                    key={template.id}
+                    className={`cursor-pointer transition-all hover:shadow-md ${
+                      selectedTemplate?.id === template.id ? 'ring-2 ring-primary' : ''
+                    }`}
+                    onClick={() => handleTemplateSelect(template)}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <span className={template.color}>{template.icon}</span>
+                        {template.name}
+                      </CardTitle>
+                      <CardDescription className="text-xs">{template.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant={template.adjustments.revenue > 0 ? "default" : template.adjustments.revenue < 0 ? "destructive" : "outline"} className="text-xs">
+                          Rev: {template.adjustments.revenue > 0 ? '+' : ''}{template.adjustments.revenue}%
+                        </Badge>
+                        <Badge variant={template.adjustments.costs > 0 ? "destructive" : template.adjustments.costs < 0 ? "default" : "outline"} className="text-xs">
+                          Cost: {template.adjustments.costs > 0 ? '+' : ''}{template.adjustments.costs}%
+                        </Badge>
+                        {template.adjustments.financing !== 0 && (
+                          <Badge variant={template.adjustments.financing > 0 ? "destructive" : "default"} className="text-xs">
+                            Fin: {template.adjustments.financing > 0 ? '+' : ''}{template.adjustments.financing}%
+                          </Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Customization Section */}
