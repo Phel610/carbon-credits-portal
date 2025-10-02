@@ -228,77 +228,24 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
       if (scenariosError) throw scenariosError;
       
       // Process scenarios with their comprehensive metrics
-      const processedScenarios = scenariosData?.map(scenario => {
-        const scenarioData = scenario.scenario_data as any;
-        const scenarioEngine = new FinancialCalculationEngine(scenarioData);
-        const scenarioResults = scenarioEngine.calculateFinancialStatements();
-        
-        // Calculate comprehensive metrics for each scenario
-        const scenarioYearlyFinancials: YearlyFinancials[] = scenarioResults.incomeStatements.map((income: any, idx: number) => ({
-          year: income.year,
-          spotRevenue: income.spot_revenue || 0,
-          prepurchaseRevenue: income.prepurchase_revenue || 0,
-          totalRevenue: income.total_revenue || 0,
-          cogs: income.cogs || 0,
-          grossProfit: income.gross_profit || 0,
-          feasibility: income.feasibility || 0,
-          pdd: income.pdd || 0,
-          mrv: income.mrv || 0,
-          staff: income.staff || 0,
-          opex: income.total_opex || 0,
-          ebitda: income.ebitda || 0,
-          depreciation: income.depreciation || 0,
-          interest: income.interest_expense || 0,
-          ebt: income.earnings_before_tax || 0,
-          incomeTax: income.income_tax || 0,
-          netIncome: income.net_income || 0,
-          cash: scenarioResults.balanceSheets[idx]?.cash || 0,
-          accountsReceivable: scenarioResults.balanceSheets[idx]?.accounts_receivable || 0,
-          ppe: scenarioResults.balanceSheets[idx]?.ppe_net || 0,
-          totalAssets: scenarioResults.balanceSheets[idx]?.total_assets || 0,
-          accountsPayable: scenarioResults.balanceSheets[idx]?.accounts_payable || 0,
-          unearnedRevenue: scenarioResults.balanceSheets[idx]?.unearned_revenue || 0,
-          debt: scenarioResults.balanceSheets[idx]?.debt_balance || 0,
-          totalLiabilities: scenarioResults.balanceSheets[idx]?.total_liabilities || 0,
-          equity: scenarioResults.balanceSheets[idx]?.total_equity || 0,
-          contributedCapital: scenarioResults.balanceSheets[idx]?.contributed_capital || 0,
-          retainedEarnings: scenarioResults.balanceSheets[idx]?.retained_earnings || 0,
-          operatingCF: scenarioResults.cashFlowStatements[idx]?.operating_cash_flow || 0,
-          investingCF: scenarioResults.cashFlowStatements[idx]?.investing_cash_flow || 0,
-          financingCF: scenarioResults.cashFlowStatements[idx]?.financing_cash_flow || 0,
-          netChangeCash: scenarioResults.cashFlowStatements[idx]?.net_change_cash || 0,
-          cashEnd: scenarioResults.cashFlowStatements[idx]?.cash_end || 0,
-          capex: scenarioResults.cashFlowStatements[idx]?.capex || 0,
-          changeAR: scenarioResults.cashFlowStatements[idx]?.change_ar || 0,
-          changeAP: scenarioResults.cashFlowStatements[idx]?.change_ap || 0,
-          changeUnearned: scenarioResults.cashFlowStatements[idx]?.unearned_release || 0,
-          debtBeginning: scenarioResults.debtSchedule[idx]?.beginning_balance || 0,
-          debtDraw: scenarioResults.debtSchedule[idx]?.draw || 0,
-          debtPrincipal: scenarioResults.debtSchedule[idx]?.principal_payment || 0,
-          debtEnding: scenarioResults.debtSchedule[idx]?.ending_balance || 0,
-          debtInterest: scenarioResults.debtSchedule[idx]?.interest_expense || 0,
-          dscr: scenarioResults.debtSchedule[idx]?.dscr || 0,
-          creditsGenerated: scenarioData.credits_generated[idx] || 0,
-          creditsIssued: scenarioData.credits_generated[idx] * (scenarioData.issuance_flag[idx] || 0) || 0,
-          purchasedCreditsDelivered: scenarioResults.carbonStream[idx]?.purchased_credits || 0,
-          fcfe: scenarioResults.freeCashFlow[idx]?.fcf_to_equity || 0,
-        }));
+        const processedScenarios = scenariosData?.map(scenario => {
+          try {
+            const scenarioData = scenario.scenario_data as any;
+            // Extract the inputs object from scenario_data
+            const scenarioInputs = scenarioData.inputs || scenarioData;
+            const scenarioEngine = new FinancialCalculationEngine(scenarioInputs);
+            const scenarioResult = scenarioEngine.calculateFinancialStatements();
 
-        const scenarioCompMetrics = calculateComprehensiveMetrics(
-          scenarioYearlyFinancials,
-          scenarioData.discount_rate,
-          scenarioData
-        );
-        
-        return {
-          scenario_name: scenario.scenario_name,
-          is_base_case: scenario.is_base_case || false,
-          notes: scenario.notes,
-          probability: scenarioData.probability || 0,
-          metrics: scenarioCompMetrics.returns,
-          comprehensiveMetrics: scenarioCompMetrics,
-        };
-      }) || [];
+            return {
+              name: scenario.scenario_name || `Scenario ${scenario.id}`,
+              metrics: scenarioResult.metrics,
+              probability: scenarioInputs.probability || 0,
+            };
+          } catch (error) {
+            console.error(`Failed to process scenario "${scenario.scenario_name}":`, error);
+            return null;
+          }
+        }).filter(Boolean) || [];
       
       setScenarios(processedScenarios);
 
