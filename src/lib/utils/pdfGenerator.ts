@@ -796,35 +796,110 @@ export const generatePDF = async (
 
   // ========== CHARTS & VISUALIZATIONS ==========
   addSectionTitle('Charts & Visualizations');
-  yPosition += 10;
   
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text('The following interactive charts are included in the online report preview:', margin, yPosition);
-  yPosition += 8;
-  
-  const chartsList = [
-    '• Revenue by Source - Spot vs pre-purchase revenue breakdown',
-    '• Profitability Trend - EBITDA and Net Income over time',
-    '• Cash Position - Cash balance trajectory',
-    '• Debt Service Coverage Ratio - DSCR with covenant threshold',
-    '• Cumulative NPV - Net present value build-up by year',
-    '• Price Comparison - Realized vs break-even pricing'
+  // Helper function to capture chart as image using dynamic import
+  const captureChartAsImage = async (elementId: string): Promise<string | null> => {
+    try {
+      const element = document.getElementById(elementId);
+      if (!element) {
+        console.warn(`Chart element not found: ${elementId}`);
+        return null;
+      }
+
+      // Wait for chart to fully render
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Dynamic import to avoid build-time issues
+      const html2canvas = (await import('html2canvas')).default;
+      
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      return canvas.toDataURL('image/png');
+    } catch (error) {
+      console.error(`Error capturing chart ${elementId}:`, error);
+      return null;
+    }
+  };
+
+  // Wait a bit before starting chart capture to ensure full render
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  // Define charts to capture
+  const charts = [
+    { id: 'chart-revenue', title: 'Revenue by Source', description: 'Spot vs pre-purchase revenue breakdown' },
+    { id: 'chart-profitability', title: 'Profitability Trend', description: 'EBITDA and Net Income over time' },
+    { id: 'chart-cash', title: 'Cash Position', description: 'Cash balance trajectory' },
+    { id: 'chart-dscr', title: 'Debt Service Coverage Ratio', description: 'DSCR with covenant threshold' },
+    { id: 'chart-npv', title: 'Cumulative NPV', description: 'Net present value build-up by year' },
+    { id: 'chart-prices', title: 'Price Comparison', description: 'Realized vs break-even pricing' }
   ];
-  
-  chartsList.forEach(chart => {
-    checkPageBreak(7);
-    pdf.text(chart, margin + 3, yPosition);
-    yPosition += 6;
-  });
-  
-  yPosition += 10;
-  pdf.setFont('helvetica', 'italic');
-  pdf.text('Note: For interactive charts with tooltips and full detail, please view the online', margin, yPosition);
-  yPosition += 5;
-  pdf.text('report preview or visit the Financial Metrics page of the platform.', margin, yPosition);
+
+  let chartsCaptured = 0;
+  let chartsFailed = 0;
+
+  for (const chart of charts) {
+    try {
+      const imageData = await captureChartAsImage(chart.id);
+      
+      if (imageData) {
+        // Add page break if needed (2 charts per page)
+        if (chartsCaptured > 0 && chartsCaptured % 2 === 0) {
+          addPageFooter();
+          pdf.addPage();
+          currentPage++;
+          yPosition = margin;
+        } else if (chartsCaptured > 0) {
+          yPosition += 10; // Space between charts on same page
+        }
+
+        checkPageBreak(120);
+        
+        // Add chart title
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(chart.title, margin, yPosition);
+        yPosition += 5;
+        
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'italic');
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(chart.description, margin, yPosition);
+        pdf.setTextColor(0, 0, 0);
+        yPosition += 8;
+        
+        // Add chart image
+        const imgWidth = contentWidth;
+        const imgHeight = 100; // Fixed height for consistency
+        pdf.addImage(imageData, 'PNG', margin, yPosition, imgWidth, imgHeight);
+        yPosition += imgHeight + 5;
+        
+        chartsCaptured++;
+      } else {
+        chartsFailed++;
+      }
+    } catch (error) {
+      console.error(`Failed to add chart ${chart.id}:`, error);
+      chartsFailed++;
+    }
+  }
+
+  // Add note if some charts failed
+  if (chartsFailed > 0) {
+    checkPageBreak(15);
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'italic');
+    pdf.setTextColor(100, 100, 100);
+    pdf.text(`Note: ${chartsFailed} chart(s) could not be captured. View the online report for all visualizations.`, margin, yPosition);
+    pdf.setTextColor(0, 0, 0);
+    yPosition += 10;
+  }
+
   pdf.setFont('helvetica', 'normal');
-  yPosition += 15;
 
   // ========== AI COMMENTARY (AI-assisted reports only) ==========
   if (reportType === 'ai-assisted' && aiCommentary) {

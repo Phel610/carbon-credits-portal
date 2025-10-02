@@ -551,6 +551,13 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
 
   const handleDownloadPDF = async () => {
     setGenerating(true);
+    
+    // Show progress toast
+    toast({
+      title: "Generating PDF",
+      description: "Capturing charts and compiling report...",
+    });
+    
     try {
       await generatePDF(
         financialData, 
@@ -563,13 +570,13 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
       );
       toast({
         title: "Success",
-        description: "PDF report generated successfully",
+        description: "PDF report with charts generated successfully",
       });
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({
         title: "Error",
-        description: "Failed to generate PDF",
+        description: "Failed to generate PDF. Please try again.",
         variant: "destructive",
       });
     } finally {
