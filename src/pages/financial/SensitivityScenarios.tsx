@@ -1907,7 +1907,7 @@ const SensitivityScenarios = () => {
                             </div>
 
                             {/* Notes Section */}
-                            {editingNoteId === scenario.id && (
+                            {(editingNoteId === scenario.id || (scenarioNotes[scenario.id] && scenarioNotes[scenario.id].trim() !== '')) && (
                               <div className="pt-2 border-t space-y-2">
                                 <div className="flex items-center justify-between">
                                   <Label>Scenario Notes</Label>
