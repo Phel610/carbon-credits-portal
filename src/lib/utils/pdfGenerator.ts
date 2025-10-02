@@ -794,6 +794,38 @@ export const generatePDF = async (
     }
   }
 
+  // ========== CHARTS & VISUALIZATIONS ==========
+  addSectionTitle('Charts & Visualizations');
+  yPosition += 10;
+  
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('The following interactive charts are included in the online report preview:', margin, yPosition);
+  yPosition += 8;
+  
+  const chartsList = [
+    '• Revenue by Source - Spot vs pre-purchase revenue breakdown',
+    '• Profitability Trend - EBITDA and Net Income over time',
+    '• Cash Position - Cash balance trajectory',
+    '• Debt Service Coverage Ratio - DSCR with covenant threshold',
+    '• Cumulative NPV - Net present value build-up by year',
+    '• Price Comparison - Realized vs break-even pricing'
+  ];
+  
+  chartsList.forEach(chart => {
+    checkPageBreak(7);
+    pdf.text(chart, margin + 3, yPosition);
+    yPosition += 6;
+  });
+  
+  yPosition += 10;
+  pdf.setFont('helvetica', 'italic');
+  pdf.text('Note: For interactive charts with tooltips and full detail, please view the online', margin, yPosition);
+  yPosition += 5;
+  pdf.text('report preview or visit the Financial Metrics page of the platform.', margin, yPosition);
+  pdf.setFont('helvetica', 'normal');
+  yPosition += 15;
+
   // ========== AI COMMENTARY (AI-assisted reports only) ==========
   if (reportType === 'ai-assisted' && aiCommentary) {
     addSectionTitle('Risk Assessment');

@@ -8,6 +8,7 @@ import { FinancialCalculationEngine, ModelInputData } from '@/lib/financial/calc
 import { calculateComprehensiveMetrics } from '@/lib/financial/metricsCalculator';
 import { YearlyFinancials } from '@/lib/financial/metricsTypes';
 import { supabase } from '@/integrations/supabase/client';
+import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart } from 'recharts';
 import { toast } from '@/hooks/use-toast';
 import { generatePDF } from '@/lib/utils/pdfGenerator';
 import OperationalMetricsPanel from './OperationalMetricsPanel';
@@ -1273,14 +1274,289 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                 </div>
               )}
 
-              {/* Section 7: Charts Note */}
+              {/* Section 7: Charts & Visualizations */}
               <div>
                 <h3 className="text-2xl font-semibold mb-4">7. Financial Charts & Visualizations</h3>
-                <Card>
-                  <CardContent className="p-6">
-                    <p className="text-muted-foreground">
-                      Interactive financial charts (revenue trends, profitability, cash position, DSCR, cumulative NPV, etc.) are available on the Financial Metrics page of the platform.
-                    </p>
+                
+                {/* Revenue by Source Chart */}
+                <Card className="mb-4" id="chart-revenue">
+                  <CardHeader>
+                    <CardTitle>Revenue by Source</CardTitle>
+                    <CardDescription>Spot vs pre-purchase revenue over time</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={financialData.yearlyData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                        <XAxis 
+                          dataKey="year" 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                        />
+                        <YAxis 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                          tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                        />
+                        <Tooltip 
+                          formatter={(value: any) => formatCurrency(value)}
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--popover))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '0.5rem',
+                          }}
+                        />
+                        <Legend />
+                        <Bar 
+                          dataKey="spotRevenue" 
+                          name="Spot Revenue" 
+                          fill="hsl(142, 76%, 36%)" 
+                          stackId="a" 
+                          radius={[0, 0, 0, 0]}
+                        />
+                        <Bar 
+                          dataKey="prepurchaseRevenue" 
+                          name="Pre-purchase Revenue" 
+                          fill="hsl(210, 70%, 50%)" 
+                          stackId="a" 
+                          radius={[8, 8, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Profitability Trend Chart */}
+                <Card className="mb-4" id="chart-profitability">
+                  <CardHeader>
+                    <CardTitle>Profitability Trend</CardTitle>
+                    <CardDescription>EBITDA and Net Income over time</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={comprehensiveMetrics.profitability.yearly}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                        <XAxis 
+                          dataKey="year" 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                        />
+                        <YAxis 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                          tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                        />
+                        <Tooltip 
+                          formatter={(value: any) => formatCurrency(value)}
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--popover))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '0.5rem',
+                          }}
+                        />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="ebitda" 
+                          name="EBITDA" 
+                          stroke="hsl(142, 76%, 36%)" 
+                          strokeWidth={2}
+                          dot={{ fill: "hsl(142, 76%, 36%)", r: 3 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="netIncome" 
+                          name="Net Income" 
+                          stroke="hsl(210, 70%, 50%)" 
+                          strokeWidth={2}
+                          dot={{ fill: "hsl(210, 70%, 50%)", r: 3 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Cash Position Chart */}
+                <Card className="mb-4" id="chart-cash">
+                  <CardHeader>
+                    <CardTitle>Cash Position</CardTitle>
+                    <CardDescription>Cash balance over time</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={financialData.yearlyData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                        <XAxis 
+                          dataKey="year" 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                        />
+                        <YAxis 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                          tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                        />
+                        <Tooltip 
+                          formatter={(value: any) => formatCurrency(value)}
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--popover))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '0.5rem',
+                          }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="cashEnd" 
+                          name="Cash Balance" 
+                          fill="hsl(142, 76%, 36%, 0.2)" 
+                          stroke="hsl(142, 76%, 36%)" 
+                          strokeWidth={2}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* DSCR Chart */}
+                <Card className="mb-4" id="chart-dscr">
+                  <CardHeader>
+                    <CardTitle>Debt Service Coverage Ratio</CardTitle>
+                    <CardDescription>DSCR by year with covenant threshold</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <ComposedChart data={comprehensiveMetrics.debt.yearly}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                        <XAxis 
+                          dataKey="year" 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                        />
+                        <YAxis 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                          tickFormatter={(value) => `${value.toFixed(1)}x`}
+                          domain={[0, 'auto']}
+                        />
+                        <Tooltip 
+                          formatter={(value: any) => formatNumber(value, 2)}
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--popover))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '0.5rem',
+                          }}
+                        />
+                        <Legend />
+                        <Bar 
+                          dataKey="dscr" 
+                          name="DSCR" 
+                          fill="hsl(142, 76%, 36%)" 
+                          radius={[8, 8, 0, 0]}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey={() => 1.2} 
+                          name="Covenant (1.20x)" 
+                          stroke="hsl(var(--destructive))" 
+                          strokeWidth={2} 
+                          strokeDasharray="5 5"
+                          dot={false}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Cumulative NPV Chart */}
+                <Card className="mb-4" id="chart-npv">
+                  <CardHeader>
+                    <CardTitle>Cumulative NPV by Year</CardTitle>
+                    <CardDescription>Build-up of net present value over time</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={comprehensiveMetrics.returns.equity.cumulativeNPV}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                        <XAxis 
+                          dataKey="year" 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                        />
+                        <YAxis 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                          tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                        />
+                        <Tooltip 
+                          formatter={(value: any) => formatCurrency(value)}
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--popover))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '0.5rem',
+                          }}
+                        />
+                        <Legend />
+                        <Area 
+                          type="monotone" 
+                          dataKey="value" 
+                          name="Equity NPV" 
+                          fill="hsl(142, 76%, 36%, 0.2)"
+                          stroke="hsl(142, 76%, 36%)" 
+                          strokeWidth={2}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Price Comparison Chart */}
+                <Card className="mb-4" id="chart-prices">
+                  <CardHeader>
+                    <CardTitle>Price Comparison</CardTitle>
+                    <CardDescription>Weighted average realized price vs break-even price</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={comprehensiveMetrics.breakEven.yearly}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                        <XAxis 
+                          dataKey="year" 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                        />
+                        <YAxis 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                          tickFormatter={(value) => `$${value}`}
+                        />
+                        <Tooltip 
+                          formatter={(value: any) => formatCurrency(value)}
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--popover))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '0.5rem',
+                          }}
+                        />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="realizedPrice" 
+                          name="WA Realized Price" 
+                          stroke="hsl(142, 76%, 36%)" 
+                          strokeWidth={2}
+                          dot={{ fill: "hsl(142, 76%, 36%)", r: 3 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="bePriceOper" 
+                          name="Break-even Price (Oper)" 
+                          stroke="hsl(25, 95%, 53%)" 
+                          strokeWidth={2} 
+                          strokeDasharray="5 5"
+                          dot={{ fill: "hsl(25, 95%, 53%)", r: 3 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </CardContent>
                 </Card>
               </div>
