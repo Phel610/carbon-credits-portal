@@ -5,9 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Download, Loader2, FileText, TrendingUp, PieChart, BarChart3 } from 'lucide-react';
 import { FinancialCalculationEngine, ModelInputData } from '@/lib/financial/calculationEngine';
+import { calculateComprehensiveMetrics } from '@/lib/financial/metricsCalculator';
+import { YearlyFinancials } from '@/lib/financial/metricsTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { generatePDF } from '@/lib/utils/pdfGenerator';
+import OperationalMetricsPanel from './OperationalMetricsPanel';
 
 interface ReportPreviewProps {
   modelId: string;
@@ -42,6 +45,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
   const [modelInputs, setModelInputs] = useState<any>(null);
   const [scenarios, setScenarios] = useState<any[]>([]);
   const [comprehensiveMetrics, setComprehensiveMetrics] = useState<any>(null);
+  const [rawInputsData, setRawInputsData] = useState<any[]>([]);
   
   // Dynamic imports for table components to avoid module resolution issues
   const [IncomeStatementTable, setIncomeStatementTable] = useState<any>(null);
@@ -99,6 +103,9 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
 
       if (inputsError) throw inputsError;
 
+      // Store raw inputs
+      setRawInputsData(inputs || []);
+
       // Transform inputs into ModelInputData format
       const transformedInputs = transformInputsToModelData(inputs);
       setModelInputs(transformedInputs);
@@ -107,6 +114,70 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
       const engine = new FinancialCalculationEngine(transformedInputs);
       const results = engine.calculateFinancialStatements();
       setFinancialData(results);
+
+      // Calculate comprehensive metrics using metricsCalculator
+      const yearlyFinancials: YearlyFinancials[] = results.incomeStatements.map((income: any, idx: number) => ({
+        year: income.year,
+        // Income Statement
+        spotRevenue: income.spot_revenue || 0,
+        prepurchaseRevenue: income.prepurchase_revenue || 0,
+        totalRevenue: income.total_revenue || 0,
+        cogs: income.cogs || 0,
+        grossProfit: income.gross_profit || 0,
+        feasibility: income.feasibility || 0,
+        pdd: income.pdd || 0,
+        mrv: income.mrv || 0,
+        staff: income.staff || 0,
+        opex: income.total_opex || 0,
+        ebitda: income.ebitda || 0,
+        depreciation: income.depreciation || 0,
+        interest: income.interest_expense || 0,
+        ebt: income.earnings_before_tax || 0,
+        incomeTax: income.income_tax || 0,
+        netIncome: income.net_income || 0,
+        // Balance Sheet
+        cash: results.balanceSheets[idx]?.cash || 0,
+        accountsReceivable: results.balanceSheets[idx]?.accounts_receivable || 0,
+        ppe: results.balanceSheets[idx]?.ppe_net || 0,
+        totalAssets: results.balanceSheets[idx]?.total_assets || 0,
+        accountsPayable: results.balanceSheets[idx]?.accounts_payable || 0,
+        unearnedRevenue: results.balanceSheets[idx]?.unearned_revenue || 0,
+        debt: results.balanceSheets[idx]?.debt_balance || 0,
+        totalLiabilities: results.balanceSheets[idx]?.total_liabilities || 0,
+        equity: results.balanceSheets[idx]?.total_equity || 0,
+        contributedCapital: results.balanceSheets[idx]?.contributed_capital || 0,
+        retainedEarnings: results.balanceSheets[idx]?.retained_earnings || 0,
+        // Cash Flow
+        operatingCF: results.cashFlowStatements[idx]?.operating_cash_flow || 0,
+        investingCF: results.cashFlowStatements[idx]?.investing_cash_flow || 0,
+        financingCF: results.cashFlowStatements[idx]?.financing_cash_flow || 0,
+        netChangeCash: results.cashFlowStatements[idx]?.net_change_cash || 0,
+        cashEnd: results.cashFlowStatements[idx]?.cash_end || 0,
+        capex: results.cashFlowStatements[idx]?.capex || 0,
+        changeAR: results.cashFlowStatements[idx]?.change_ar || 0,
+        changeAP: results.cashFlowStatements[idx]?.change_ap || 0,
+        changeUnearned: results.cashFlowStatements[idx]?.unearned_release || 0,
+        // Debt Schedule
+        debtBeginning: results.debtSchedule[idx]?.beginning_balance || 0,
+        debtDraw: results.debtSchedule[idx]?.draw || 0,
+        debtPrincipal: results.debtSchedule[idx]?.principal_payment || 0,
+        debtEnding: results.debtSchedule[idx]?.ending_balance || 0,
+        debtInterest: results.debtSchedule[idx]?.interest_expense || 0,
+        dscr: results.debtSchedule[idx]?.dscr || 0,
+        // Carbon metrics - map from operational inputs
+        creditsGenerated: transformedInputs.credits_generated[idx] || 0,
+        creditsIssued: transformedInputs.credits_generated[idx] * (transformedInputs.issuance_flag[idx] || 0) || 0,
+        purchasedCreditsDelivered: results.carbonStream[idx]?.purchased_credits || 0,
+        // Free Cash Flow
+        fcfe: results.freeCashFlow[idx]?.fcf_to_equity || 0,
+      }));
+
+      const compMetrics = calculateComprehensiveMetrics(
+        yearlyFinancials,
+        transformedInputs.discount_rate,
+        transformedInputs
+      );
+      setComprehensiveMetrics(compMetrics);
 
       // Fetch saved scenarios
       const { data: scenariosData, error: scenariosError } = await supabase
@@ -117,104 +188,81 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
 
       if (scenariosError) throw scenariosError;
       
-      // Process scenarios with their metrics
+      // Process scenarios with their comprehensive metrics
       const processedScenarios = scenariosData?.map(scenario => {
         const scenarioData = scenario.scenario_data as any;
         const scenarioEngine = new FinancialCalculationEngine(scenarioData);
         const scenarioResults = scenarioEngine.calculateFinancialStatements();
+        
+        // Calculate comprehensive metrics for each scenario
+        const scenarioYearlyFinancials: YearlyFinancials[] = scenarioResults.incomeStatements.map((income: any, idx: number) => ({
+          year: income.year,
+          spotRevenue: income.spot_revenue || 0,
+          prepurchaseRevenue: income.prepurchase_revenue || 0,
+          totalRevenue: income.total_revenue || 0,
+          cogs: income.cogs || 0,
+          grossProfit: income.gross_profit || 0,
+          feasibility: income.feasibility || 0,
+          pdd: income.pdd || 0,
+          mrv: income.mrv || 0,
+          staff: income.staff || 0,
+          opex: income.total_opex || 0,
+          ebitda: income.ebitda || 0,
+          depreciation: income.depreciation || 0,
+          interest: income.interest_expense || 0,
+          ebt: income.earnings_before_tax || 0,
+          incomeTax: income.income_tax || 0,
+          netIncome: income.net_income || 0,
+          cash: scenarioResults.balanceSheets[idx]?.cash || 0,
+          accountsReceivable: scenarioResults.balanceSheets[idx]?.accounts_receivable || 0,
+          ppe: scenarioResults.balanceSheets[idx]?.ppe_net || 0,
+          totalAssets: scenarioResults.balanceSheets[idx]?.total_assets || 0,
+          accountsPayable: scenarioResults.balanceSheets[idx]?.accounts_payable || 0,
+          unearnedRevenue: scenarioResults.balanceSheets[idx]?.unearned_revenue || 0,
+          debt: scenarioResults.balanceSheets[idx]?.debt_balance || 0,
+          totalLiabilities: scenarioResults.balanceSheets[idx]?.total_liabilities || 0,
+          equity: scenarioResults.balanceSheets[idx]?.total_equity || 0,
+          contributedCapital: scenarioResults.balanceSheets[idx]?.contributed_capital || 0,
+          retainedEarnings: scenarioResults.balanceSheets[idx]?.retained_earnings || 0,
+          operatingCF: scenarioResults.cashFlowStatements[idx]?.operating_cash_flow || 0,
+          investingCF: scenarioResults.cashFlowStatements[idx]?.investing_cash_flow || 0,
+          financingCF: scenarioResults.cashFlowStatements[idx]?.financing_cash_flow || 0,
+          netChangeCash: scenarioResults.cashFlowStatements[idx]?.net_change_cash || 0,
+          cashEnd: scenarioResults.cashFlowStatements[idx]?.cash_end || 0,
+          capex: scenarioResults.cashFlowStatements[idx]?.capex || 0,
+          changeAR: scenarioResults.cashFlowStatements[idx]?.change_ar || 0,
+          changeAP: scenarioResults.cashFlowStatements[idx]?.change_ap || 0,
+          changeUnearned: scenarioResults.cashFlowStatements[idx]?.unearned_release || 0,
+          debtBeginning: scenarioResults.debtSchedule[idx]?.beginning_balance || 0,
+          debtDraw: scenarioResults.debtSchedule[idx]?.draw || 0,
+          debtPrincipal: scenarioResults.debtSchedule[idx]?.principal_payment || 0,
+          debtEnding: scenarioResults.debtSchedule[idx]?.ending_balance || 0,
+          debtInterest: scenarioResults.debtSchedule[idx]?.interest_expense || 0,
+          dscr: scenarioResults.debtSchedule[idx]?.dscr || 0,
+          creditsGenerated: scenarioData.credits_generated[idx] || 0,
+          creditsIssued: scenarioData.credits_generated[idx] * (scenarioData.issuance_flag[idx] || 0) || 0,
+          purchasedCreditsDelivered: scenarioResults.carbonStream[idx]?.purchased_credits || 0,
+          fcfe: scenarioResults.freeCashFlow[idx]?.fcf_to_equity || 0,
+        }));
+
+        const scenarioCompMetrics = calculateComprehensiveMetrics(
+          scenarioYearlyFinancials,
+          scenarioData.discount_rate,
+          scenarioData
+        );
         
         return {
           scenario_name: scenario.scenario_name,
           is_base_case: scenario.is_base_case || false,
           notes: scenario.notes,
           probability: scenarioData.probability || 0,
-          metrics: {
-            equityNPV: scenarioResults.metrics?.npv_equity || 0,
-            equityIRR: (scenarioResults.metrics?.irr_equity || 0) / 100, // Convert from percentage
-            projectNPV: scenarioResults.metrics?.npv_equity || 0, // Use equity NPV as fallback
-          },
-          changes: [],
+          metrics: scenarioCompMetrics.returns,
+          comprehensiveMetrics: scenarioCompMetrics,
         };
       }) || [];
       
       setScenarios(processedScenarios);
 
-      // Build comprehensive metrics from basic metrics
-      setComprehensiveMetrics({
-        returns: {
-          equity: {
-            npv: results.metrics?.npv_equity || 0,
-            irr: (results.metrics?.irr_equity || 0) / 100, // Convert from percentage
-            payback: null,
-            discountedPayback: null,
-            mirr: null,
-            cumulativeNPV: [],
-          },
-          project: {
-            npv: results.metrics?.npv_equity || 0,
-            irr: (results.metrics?.irr_equity || 0) / 100,
-            payback: null,
-            discountedPayback: null,
-            mirr: null,
-            cumulativeNPV: [],
-          },
-          investor: {
-            npv: 0,
-            irr: null,
-          },
-        },
-        debt: {
-          yearly: [],
-          minDSCR: results.metrics?.min_dscr || null,
-          minDSCRYear: null,
-          debtAmortizesBy: null,
-        },
-        liquidity: {
-          yearly: [],
-        },
-        profitability: {
-          yearly: [],
-          total: {
-            revenue: 0,
-            cogs: 0,
-            grossProfit: 0,
-            opex: 0,
-            ebitda: 0,
-            netIncome: 0,
-          },
-        },
-        unitEconomics: {
-          yearly: [],
-          total: {
-            totalIssued: 0,
-            avgWaPrice: null,
-            avgCogsPerCredit: null,
-            avgLcoc: null,
-          },
-        },
-        workingCapital: {
-          yearly: [],
-        },
-        cashHealth: {
-          yearly: [],
-          minCashEnd: results.metrics?.ending_cash || 0,
-          minCashYear: 0,
-          peakFunding: 0,
-        },
-        carbonKPIs: {
-          yearly: [],
-          impliedPPPrice: null,
-          totalGenerated: 0,
-          totalIssued: 0,
-        },
-        breakEven: {
-          yearly: [],
-        },
-        compliance: {
-          yearly: [],
-          overallPass: true,
-        },
-      });
 
       // Generate AI commentary if needed
       if (reportType === 'ai-assisted') {
@@ -281,44 +329,69 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
   const transformInputsToModelData = (inputs: any[]): any => {
     const years = Array.from({ length: modelData.end_year - modelData.start_year + 1 }, (_, i) => modelData.start_year + i);
     
-    const transformed = {
-      years,
-      // Operational metrics
-      credits_generated: [10000, 12000, 15000, 18000, 20000].slice(0, years.length),
-      price_per_credit: [15, 16, 17, 18, 19].slice(0, years.length),
-      issuance_flag: [0, 1, 1, 1, 1].slice(0, years.length),
-      
-      // Expenses (negative per Excel convention)
-      cogs_rate: 0.15,
-      feasibility_costs: [-50000, 0, 0, 0, 0].slice(0, years.length),
-      pdd_costs: [-75000, 0, 0, 0, 0].slice(0, years.length),
-      mrv_costs: [-40000, -15000, -15000, -15000, -15000].slice(0, years.length),
-      staff_costs: [-100000, -100000, -100000, -100000, -100000].slice(0, years.length),
-      depreciation: [-10000, -10000, -10000, -10000, -10000].slice(0, years.length),
-      income_tax_rate: 0.25,
-      
-      // Working capital rates
-      ar_rate: 0.05,
-      ap_rate: 0.10,
-      
-      // CAPEX and financing
-      capex: [-200000, -100000, 0, 0, 0].slice(0, years.length),
-      equity_injection: [500000, 0, 0, 0, 0].slice(0, years.length),
-      interest_rate: 0.08,
-      debt_duration_years: 5,
-      debt_draw: [300000, 0, 0, 0, 0].slice(0, years.length),
-      
-      // Pre-purchase agreements
-      purchase_amount: [0, 50000, 0, 0, 0].slice(0, years.length),
-      purchase_share: 0.30,
-      
-      // Returns
-      discount_rate: 0.12,
-      initial_equity_t0: 100000,
+    // Group inputs by category and parse real database data
+    const inputsByCategory: Record<string, Record<string, any>> = {};
+    inputs?.forEach(input => {
+      if (!inputsByCategory[input.category]) {
+        inputsByCategory[input.category] = {};
+      }
+      inputsByCategory[input.category][input.input_key] = input.input_value;
+    });
+
+    // Helper function to parse yearly arrays
+    const parseYearlyArray = (category: string, key: string, defaultValue: any[] = []): any[] => {
+      const value = inputsByCategory[category]?.[key];
+      if (Array.isArray(value)) return value.slice(0, years.length);
+      if (typeof value === 'object' && value !== null) {
+        // Handle object format with year keys
+        return years.map(year => value[year] || 0);
+      }
+      return defaultValue.slice(0, years.length);
     };
 
-    // TODO: Parse actual inputs from database to override defaults
-    console.log('Using default financial data for report preview:', transformed);
+    // Helper function to parse single values
+    const parseValue = (category: string, key: string, defaultValue: any): any => {
+      const value = inputsByCategory[category]?.[key];
+      return value !== undefined && value !== null ? value : defaultValue;
+    };
+
+    const transformed = {
+      years,
+      // Operational metrics from database
+      credits_generated: parseYearlyArray('operational', 'credits_generated', [10000, 12000, 15000, 18000, 20000]),
+      price_per_credit: parseYearlyArray('operational', 'price_per_credit', [15, 16, 17, 18, 19]),
+      issuance_flag: parseYearlyArray('operational', 'issuance_flag', [0, 1, 1, 1, 1]),
+      
+      // Expenses from database (should be negative)
+      cogs_rate: parseValue('expenses', 'cogs_rate', 0.15),
+      feasibility_costs: parseYearlyArray('expenses', 'feasibility_costs', [-50000, 0, 0, 0, 0]),
+      pdd_costs: parseYearlyArray('expenses', 'pdd_costs', [-75000, 0, 0, 0, 0]),
+      mrv_costs: parseYearlyArray('expenses', 'mrv_costs', [-40000, -15000, -15000, -15000, -15000]),
+      staff_costs: parseYearlyArray('expenses', 'staff_costs', [-100000, -100000, -100000, -100000, -100000]),
+      depreciation: parseYearlyArray('expenses', 'depreciation', [-10000, -10000, -10000, -10000, -10000]),
+      income_tax_rate: parseValue('expenses', 'income_tax_rate', 0.25),
+      
+      // Working capital rates from database
+      ar_rate: parseValue('expenses', 'ar_rate', 0.05),
+      ap_rate: parseValue('expenses', 'ap_rate', 0.10),
+      
+      // CAPEX and financing from database
+      capex: parseYearlyArray('expenses', 'capex', [-200000, -100000, 0, 0, 0]),
+      equity_injection: parseYearlyArray('financing', 'equity_injection', [500000, 0, 0, 0, 0]),
+      interest_rate: parseValue('financing', 'interest_rate', 0.08),
+      debt_duration_years: parseValue('financing', 'debt_duration_years', 5),
+      debt_draw: parseYearlyArray('financing', 'debt_draw', [300000, 0, 0, 0, 0]),
+      
+      // Pre-purchase agreements from database
+      purchase_amount: parseYearlyArray('financing', 'purchase_amount', [0, 50000, 0, 0, 0]),
+      purchase_share: parseValue('financing', 'purchase_share', 0.30),
+      
+      // Returns from database
+      discount_rate: parseValue('financing', 'discount_rate', 0.12),
+      initial_equity_t0: parseValue('financing', 'initial_equity_t0', 100000),
+    };
+
+    console.log('Transformed financial data from database inputs:', transformed);
     return transformed;
   };
 
@@ -461,37 +534,133 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
             </CardContent>
           </Card>
 
-          {/* Financial Metrics */}
-          {financialData && (
+          {/* Operational Metrics Panel */}
+          {financialData && modelInputs && (
+            <OperationalMetricsPanel 
+              statements={modelInputs.years.map((year: number, idx: number) => ({
+                year,
+                credits_generated: modelInputs.credits_generated[idx] || 0,
+                price_per_credit: modelInputs.price_per_credit[idx] || 0,
+                issuance_flag: modelInputs.issuance_flag[idx] || 0,
+                credits_issued: (modelInputs.credits_generated[idx] || 0) * (modelInputs.issuance_flag[idx] || 0),
+              }))} 
+            />
+          )}
+
+          {/* Financial Metrics Summary */}
+          {comprehensiveMetrics && (
             <Card>
               <CardHeader>
-                <CardTitle>Financial Metrics</CardTitle>
+                <CardTitle>Key Financial Metrics</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-4 border rounded-lg">
-                    <p className="text-2xl font-bold text-primary">
-                      ${(financialData.metrics?.npv_equity || 0).toLocaleString()}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Net Present Value</p>
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-semibold mb-3">Returns</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-4 border rounded-lg">
+                        <p className="text-2xl font-bold text-primary">
+                          ${(comprehensiveMetrics.returns?.equity?.npv || 0).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Equity NPV</p>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <p className="text-2xl font-bold text-primary">
+                          {((comprehensiveMetrics.returns?.equity?.irr || 0) * 100).toFixed(1)}%
+                        </p>
+                        <p className="text-sm text-muted-foreground">Equity IRR</p>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <p className="text-2xl font-bold text-primary">
+                          ${(comprehensiveMetrics.returns?.project?.npv || 0).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Project NPV</p>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <p className="text-2xl font-bold text-primary">
+                          {((comprehensiveMetrics.returns?.project?.irr || 0) * 100).toFixed(1)}%
+                        </p>
+                        <p className="text-sm text-muted-foreground">Project IRR</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <p className="text-2xl font-bold text-primary">
-                      {((financialData.metrics?.company_irr || 0) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">Project IRR</p>
+
+                  <Separator />
+
+                  <div>
+                    <h4 className="font-semibold mb-3">Profitability</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center p-4 border rounded-lg">
+                        <p className="text-xl font-bold">
+                          ${(comprehensiveMetrics.profitability?.total?.revenue || 0).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Total Revenue</p>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <p className="text-xl font-bold">
+                          ${(comprehensiveMetrics.profitability?.total?.ebitda || 0).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Total EBITDA</p>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <p className="text-xl font-bold">
+                          ${(comprehensiveMetrics.profitability?.total?.netIncome || 0).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Total Net Income</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <p className="text-2xl font-bold text-primary">
-                      {(financialData.metrics?.payback_period || 0).toFixed(1)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Payback Period (Years)</p>
+
+                  <Separator />
+
+                  <div>
+                    <h4 className="font-semibold mb-3">Debt & Liquidity</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="text-center p-4 border rounded-lg">
+                        <p className="text-xl font-bold">
+                          {(comprehensiveMetrics.debt?.minDSCR || 0).toFixed(2)}x
+                        </p>
+                        <p className="text-sm text-muted-foreground">Min DSCR</p>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <p className="text-xl font-bold">
+                          ${(comprehensiveMetrics.cashHealth?.peakFunding || 0).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Peak Funding</p>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <p className="text-xl font-bold">
+                          ${(comprehensiveMetrics.cashHealth?.minCashEnd || 0).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Min Cash Balance</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <p className="text-2xl font-bold text-primary">
-                      {((financialData.metrics?.ebitda_margin || 0) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">EBITDA Margin</p>
+
+                  <Separator />
+
+                  <div>
+                    <h4 className="font-semibold mb-3">Carbon KPIs</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="text-center p-4 border rounded-lg">
+                        <p className="text-xl font-bold">
+                          {(comprehensiveMetrics.carbonKPIs?.totalGenerated || 0).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Total Credits Generated</p>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <p className="text-xl font-bold">
+                          {(comprehensiveMetrics.carbonKPIs?.totalIssued || 0).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Total Credits Issued</p>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <p className="text-xl font-bold">
+                          ${(comprehensiveMetrics.carbonKPIs?.impliedPPPrice || 0).toFixed(2)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Implied PP Price</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -581,88 +750,111 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
             </>
           )}
 
-          {/* Comprehensive Metrics Display */}
-          {comprehensiveMetrics && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Comprehensive Metrics Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-4 border rounded-lg">
-                    <p className="text-2xl font-bold text-primary">
-                      ${(comprehensiveMetrics.returns?.equity?.npv || 0).toLocaleString()}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Equity NPV</p>
-                  </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <p className="text-2xl font-bold text-primary">
-                      {((comprehensiveMetrics.returns?.equity?.irr || 0) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">Equity IRR</p>
-                  </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <p className="text-2xl font-bold text-primary">
-                      ${(comprehensiveMetrics.returns?.project?.npv || 0).toLocaleString()}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Project NPV</p>
-                  </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <p className="text-2xl font-bold text-primary">
-                      {((comprehensiveMetrics.returns?.project?.irr || 0) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">Project IRR</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
-          {/* Scenarios Display */}
+          {/* Scenarios Display with Probability Weighting */}
           {scenarios.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Saved Scenarios ({scenarios.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {scenarios.map((scenario, index) => (
-                    <div key={index} className="border-b pb-4 last:border-0">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold">{scenario.scenario_name}</h4>
-                        {scenario.is_base_case && (
-                          <Badge variant="secondary">Base Case</Badge>
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Saved Scenarios ({scenarios.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {scenarios.map((scenario, index) => (
+                      <div key={index} className="border-b pb-4 last:border-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold">{scenario.scenario_name}</h4>
+                          {scenario.is_base_case && (
+                            <Badge variant="secondary">Base Case</Badge>
+                          )}
+                        </div>
+                        {scenario.probability > 0 && (
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Probability: {(scenario.probability * 100).toFixed(0)}%
+                          </p>
+                        )}
+                        {scenario.metrics && (
+                          <div className="grid grid-cols-3 gap-2 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Equity NPV: </span>
+                              <span className="font-medium">${(scenario.metrics.equity?.npv || 0).toLocaleString()}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Equity IRR: </span>
+                              <span className="font-medium">{((scenario.metrics.equity?.irr || 0) * 100).toFixed(1)}%</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Project NPV: </span>
+                              <span className="font-medium">${(scenario.metrics.project?.npv || 0).toLocaleString()}</span>
+                            </div>
+                          </div>
+                        )}
+                        {scenario.notes && (
+                          <p className="text-sm text-muted-foreground mt-2 italic">{scenario.notes}</p>
                         )}
                       </div>
-                      {scenario.probability > 0 && (
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Probability-Weighted Analysis */}
+              {scenarios.some(s => s.probability > 0) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5" />
+                      Probability-Weighted Analysis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
                         <p className="text-sm text-muted-foreground mb-2">
-                          Probability: {(scenario.probability * 100).toFixed(0)}%
+                          Expected values based on scenario probabilities:
                         </p>
-                      )}
-                      {scenario.metrics && (
-                        <div className="grid grid-cols-3 gap-2 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Equity NPV: </span>
-                            <span className="font-medium">${(scenario.metrics.equityNPV || 0).toLocaleString()}</span>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="text-center p-4 border rounded-lg bg-accent/10">
+                            <p className="text-xl font-bold text-primary">
+                              ${scenarios.reduce((sum, s) => sum + (s.metrics?.equity?.npv || 0) * (s.probability || 0), 0).toLocaleString()}
+                            </p>
+                            <p className="text-sm text-muted-foreground">Probability-Weighted Equity NPV</p>
                           </div>
-                          <div>
-                            <span className="text-muted-foreground">Equity IRR: </span>
-                            <span className="font-medium">{((scenario.metrics.equityIRR || 0) * 100).toFixed(1)}%</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Project NPV: </span>
-                            <span className="font-medium">${(scenario.metrics.projectNPV || 0).toLocaleString()}</span>
+                          <div className="text-center p-4 border rounded-lg bg-accent/10">
+                            <p className="text-xl font-bold text-primary">
+                              {(scenarios.reduce((sum, s) => sum + ((s.metrics?.equity?.irr || 0) * (s.probability || 0)), 0) * 100).toFixed(1)}%
+                            </p>
+                            <p className="text-sm text-muted-foreground">Probability-Weighted Equity IRR</p>
                           </div>
                         </div>
-                      )}
-                      {scenario.notes && (
-                        <p className="text-sm text-muted-foreground mt-2 italic">{scenario.notes}</p>
-                      )}
+                      </div>
+                      <Separator />
+                      <div>
+                        <p className="text-sm font-medium mb-2">Risk Distribution:</p>
+                        <div className="space-y-2">
+                          {scenarios.filter(s => s.probability > 0).map((scenario, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <div className="flex-1">
+                                <div className="flex justify-between text-sm mb-1">
+                                  <span>{scenario.scenario_name}</span>
+                                  <span className="text-muted-foreground">{(scenario.probability * 100).toFixed(0)}%</span>
+                                </div>
+                                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-primary" 
+                                    style={{ width: `${scenario.probability * 100}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
 
           {/* AI Commentary for Scenarios and Investor Highlights */}
