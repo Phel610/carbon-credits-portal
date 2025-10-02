@@ -95,12 +95,37 @@ export const generatePDF = async (
     return `${(value * 100).toFixed(1)}%`;
   };
 
+  const VARIABLE_FORMATS: Record<string, 'currency' | 'percentage' | 'number'> = {
+    'credits_generated': 'number',
+    'price_per_credit': 'currency',
+    'cogs_rate': 'percentage',
+    'staff_costs': 'currency',
+    'mrv_costs': 'currency',
+    'pdd_costs': 'currency',
+    'feasibility_costs': 'currency',
+    'capex': 'currency',
+    'depreciation': 'currency',
+    'discount_rate': 'percentage',
+    'interest_rate': 'percentage',
+    'income_tax_rate': 'percentage',
+    'ar_rate': 'percentage',
+    'ap_rate': 'percentage',
+    'equity_injection': 'currency',
+    'debt_draw': 'currency',
+    'purchase_amount': 'currency',
+    'purchase_share': 'percentage',
+    'debt_duration_years': 'number',
+    'issuance_flag': 'number',
+  };
+
   const formatVariableValue = (key: string, value: number): string => {
-    if (key.includes('rate') || key.includes('share')) {
-      return `${(value * 100).toFixed(1)}%`;
-    } else if (key.includes('cost') || key.includes('capex') || key.includes('price') || 
-               key.includes('injection') || key.includes('draw') || key.includes('amount')) {
-      return formatCurrency(value);
+    const format = VARIABLE_FORMATS[key] || 'number';
+    
+    if (format === 'currency') {
+      return `$${Math.round(value).toLocaleString()}`;
+    }
+    if (format === 'percentage') {
+      return `${value.toFixed(1)}%`;
     }
     return Math.round(value).toLocaleString();
   };

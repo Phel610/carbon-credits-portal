@@ -56,13 +56,39 @@ const VARIABLE_NAMES: Record<string, string> = {
   'issuance_flag': 'Issuance Flag (Year 1)',
 };
 
+// Variable format types mapping
+const VARIABLE_FORMATS: Record<string, 'currency' | 'percentage' | 'number'> = {
+  'credits_generated': 'number',
+  'price_per_credit': 'currency',
+  'cogs_rate': 'percentage',
+  'staff_costs': 'currency',
+  'mrv_costs': 'currency',
+  'pdd_costs': 'currency',
+  'feasibility_costs': 'currency',
+  'capex': 'currency',
+  'depreciation': 'currency',
+  'discount_rate': 'percentage',
+  'interest_rate': 'percentage',
+  'income_tax_rate': 'percentage',
+  'ar_rate': 'percentage',
+  'ap_rate': 'percentage',
+  'equity_injection': 'currency',
+  'debt_draw': 'currency',
+  'purchase_amount': 'currency',
+  'purchase_share': 'percentage',
+  'debt_duration_years': 'number',
+  'issuance_flag': 'number',
+};
+
 // Helper function to format values for display
 const formatVariableValue = (key: string, value: number): string => {
-  if (key.includes('rate') || key.includes('share')) {
-    return `${(value * 100).toFixed(1)}%`;
-  } else if (key.includes('cost') || key.includes('capex') || key.includes('price') || 
-             key.includes('injection') || key.includes('draw') || key.includes('amount')) {
+  const format = VARIABLE_FORMATS[key] || 'number';
+  
+  if (format === 'currency') {
     return `$${Math.round(value).toLocaleString()}`;
+  }
+  if (format === 'percentage') {
+    return `${value.toFixed(1)}%`;
   }
   return Math.round(value).toLocaleString();
 };
@@ -887,9 +913,9 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                         {scenario.changes && scenario.changes.length > 0 && (
                           <div className="mt-3">
                             <p className="text-sm font-medium mb-2">Variables Changed: {scenario.changes.length}</p>
-                            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                               {scenario.changes.map((change: any, idx: number) => (
-                                <div key={idx} className="text-xs border-l-2 border-primary/30 pl-2">
+                                <div key={idx} className="text-xs border-l-2 border-primary/30 pl-2 py-1">
                                   <p className="font-medium">{change.name}</p>
                                   <p className="text-muted-foreground">
                                     {formatVariableValue(change.key, change.baseValue)} → {formatVariableValue(change.key, change.newValue)}
