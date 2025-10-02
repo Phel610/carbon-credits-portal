@@ -2,3 +2,9 @@ project_id = "vmeapvxhkhmtzwscukfe"
 
 [functions.generate-ai-report-commentary]
 verify_jwt = true
+
+[functions.auto-purge-deleted-models]
+verify_jwt = false
+
+[functions.auto-purge-deleted-scenarios]
+verify_jwt = false

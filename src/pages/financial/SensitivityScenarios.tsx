@@ -80,6 +80,7 @@ interface Scenario {
   variables: Record<string, number>;
   metrics?: any;
   notes?: string;
+  probability?: number;
   yearlyFinancials?: YearlyFinancials[];
 }
 
@@ -179,6 +180,7 @@ const SensitivityScenarios = () => {
   const [calculating, setCalculating] = useState(false);
   const [modelName, setModelName] = useState('');
   const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   const [sensitivities, setSensitivities] = useState<SensitivityVariable[]>([]);
   const [baseMetrics, setBaseMetrics] = useState<any>(null);
@@ -637,7 +639,7 @@ const SensitivityScenarios = () => {
     }
   };
 
-  const calculateMetrics = useCallback(async (variables: SensitivityVariable[]) => {
+  const calculateMetrics = useCallback(async (variables: SensitivityVariable[], skipToast = false) => {
     try {
       setCalculating(true);
       setValidationWarnings([]);
@@ -748,10 +750,12 @@ const SensitivityScenarios = () => {
         hasYearlyData: yearlyData.length > 0
       });
 
-      toast({
-        title: "Metrics calculated successfully",
-        duration: 3000,
-      });
+      if (!skipToast) {
+        toast({
+          title: "Metrics calculated successfully",
+          duration: 3000,
+        });
+      }
 
     } catch (error) {
       console.error('Error calculating metrics:', error);
@@ -766,8 +770,8 @@ const SensitivityScenarios = () => {
   }, [baseMetrics, modelId]);
 
   const debouncedCalculateMetrics = useCallback(
-    debounce((variables: SensitivityVariable[]) => {
-      calculateMetrics(variables);
+    debounce((variables: SensitivityVariable[], skipToast = false) => {
+      calculateMetrics(variables, skipToast);
     }, 500),
     [calculateMetrics]
   );
@@ -777,7 +781,7 @@ const SensitivityScenarios = () => {
       s.key === key ? { ...s, currentValue: value[0] } : s
     );
     setSensitivities(newSensitivities);
-    debouncedCalculateMetrics(newSensitivities);
+    debouncedCalculateMetrics(newSensitivities, isInitialLoad);
   };
 
   const resetSensitivities = () => {
@@ -865,6 +869,7 @@ const SensitivityScenarios = () => {
         .from('model_scenarios')
         .select('*')
         .eq('model_id', modelId)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -878,18 +883,22 @@ const SensitivityScenarios = () => {
           variables: scenarioData?.variables || {},
           metrics: scenarioData?.metrics,
           notes: s.notes || '',
+          probability: scenarioData?.probability || 0,
           yearlyFinancials: scenarioData?.metrics?.yearlyFinancials
         };
       });
 
       setScenarios(scenarioList);
       
-      // Initialize notes state
+      // Initialize notes and probabilities state
       const notesMap: Record<string, string> = {};
+      const probabilitiesMap: Record<string, number> = {};
       scenarioList.forEach(s => {
         notesMap[s.id] = s.notes || '';
+        probabilitiesMap[s.id] = s.probability || 0;
       });
       setScenarioNotes(notesMap);
+      setScenarioProbabilities(probabilitiesMap);
 
     } catch (error) {
       console.error('Error fetching scenarios:', error);
@@ -1132,6 +1141,41 @@ const SensitivityScenarios = () => {
     setTemplateApplied({ name: templateName, changes });
     setShowTemplateDialog(true);
     setActiveTab('sensitivity');
+  };
+
+  // Debounced probability save
+  const debouncedSaveProbability = useCallback(
+    debounce(async (scenarioId: string, probability: number) => {
+      try {
+        const scenario = scenarios.find(s => s.id === scenarioId);
+        if (!scenario) return;
+
+        const { error } = await supabase
+          .from('model_scenarios')
+          .update({
+            scenario_data: {
+              variables: scenario.variables,
+              metrics: scenario.metrics,
+              yearlyFinancials: scenario.yearlyFinancials,
+              probability
+            } as any
+          })
+          .eq('id', scenarioId);
+
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error saving probability:', error);
+      }
+    }, 1000),
+    [scenarios]
+  );
+
+  const handleProbabilityChange = (scenarioId: string, value: number) => {
+    setScenarioProbabilities(prev => ({
+      ...prev,
+      [scenarioId]: value
+    }));
+    debouncedSaveProbability(scenarioId, value);
   };
 
   const calculateWeightedMetrics = () => {
@@ -1518,7 +1562,13 @@ const SensitivityScenarios = () => {
               />
               <div className="flex gap-2 items-center">
                 <HelpTooltip 
-                  content="Probability Weighting allows you to assign likelihood percentages to different scenarios, creating a probability-weighted expected outcome. This is especially useful for: (1) Risk analysis - weighing best/base/worst cases, (2) Decision-making under uncertainty, (3) Portfolio planning. Example: Assign 20% to pessimistic, 60% to base case, and 20% to optimistic scenarios."
+                        content={`Probability Weighting allows you to assign likelihood percentages to different scenarios, creating a probability-weighted expected outcome. This is especially useful for:
+
+1. Risk analysis - weighing best/base/worst cases
+2. Decision-making under uncertainty
+3. Portfolio planning
+
+Example: Assign 20% to pessimistic, 60% to base case, and 20% to optimistic scenarios.`}
                   iconOnly
                 />
                 <Button
@@ -1554,10 +1604,7 @@ const SensitivityScenarios = () => {
                             max="100"
                             step="1"
                             value={scenarioProbabilities[scenario.id] || 0}
-                            onChange={(e) => setScenarioProbabilities(prev => ({
-                              ...prev,
-                              [scenario.id]: Number(e.target.value)
-                            }))}
+                            onChange={(e) => handleProbabilityChange(scenario.id, Number(e.target.value))}
                             className="w-20"
                           />
                           <span className="text-sm text-muted-foreground">%</span>

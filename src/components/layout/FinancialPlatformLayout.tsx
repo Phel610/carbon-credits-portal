@@ -23,6 +23,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { createComprehensiveTestModel } from '@/lib/testData/createTestModel';
 import { toast } from '@/hooks/use-toast';
@@ -54,6 +55,7 @@ const globalNavigation = [
 function FinancialSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { state } = useSidebar();
   const [isCreatingTest, setIsCreatingTest] = useState(false);
   
   const isActivePath = (href: string) => {
@@ -104,7 +106,9 @@ function FinancialSidebar() {
       <SidebarHeader>
         <div className="flex items-center gap-2 px-4 py-2">
           <Calculator className="h-6 w-6 text-primary" />
-          <span className="font-semibold">Financial Platform</span>
+          {state !== "collapsed" && (
+            <span className="font-semibold">Financial Platform</span>
+          )}
         </div>
       </SidebarHeader>
       
@@ -173,9 +177,6 @@ export default function FinancialPlatformLayout({ children }: FinancialPlatformL
               <Link to="/financial/dashboard" className="font-semibold text-xl">
                 Financial Modelling
               </Link>
-              <div className="px-2 py-1 bg-trust/10 text-trust text-xs rounded-md font-medium">
-                Financial Platform
-              </div>
             </div>
             
             <div className="ml-auto flex items-center gap-4">

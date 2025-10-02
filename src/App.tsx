@@ -26,6 +26,7 @@ import FinancialReports from "./pages/financial/FinancialReports";
 import FinancialMetrics from "./pages/financial/FinancialMetrics";
 import ModelReports from "./pages/financial/ModelReports";
 import SensitivityScenarios from "./pages/financial/SensitivityScenarios";
+import ScenariosTrash from "./pages/financial/ScenariosTrash";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -139,6 +140,11 @@ const App = () => (
             <Route path="/financial/models/:id/scenarios" element={
               <ProtectedRoute>
                 <SensitivityScenarios />
+              </ProtectedRoute>
+            } />
+            <Route path="/financial/models/:id/scenarios/trash" element={
+              <ProtectedRoute>
+                <ScenariosTrash />
               </ProtectedRoute>
             } />
             <Route path="/financial/reports" element={
