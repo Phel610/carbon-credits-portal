@@ -471,25 +471,25 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 border rounded-lg">
                     <p className="text-2xl font-bold text-primary">
-                      ${financialData.metrics.npv.toLocaleString()}
+                      ${(financialData.metrics?.npv_equity || 0).toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Net Present Value</p>
                   </div>
                   <div className="text-center p-4 border rounded-lg">
                     <p className="text-2xl font-bold text-primary">
-                      {(financialData.metrics.company_irr * 100).toFixed(1)}%
+                      {((financialData.metrics?.company_irr || 0) * 100).toFixed(1)}%
                     </p>
                     <p className="text-sm text-muted-foreground">Project IRR</p>
                   </div>
                   <div className="text-center p-4 border rounded-lg">
                     <p className="text-2xl font-bold text-primary">
-                      {financialData.metrics.payback_period.toFixed(1)}
+                      {(financialData.metrics?.payback_period || 0).toFixed(1)}
                     </p>
                     <p className="text-sm text-muted-foreground">Payback Period (Years)</p>
                   </div>
                   <div className="text-center p-4 border rounded-lg">
                     <p className="text-2xl font-bold text-primary">
-                      {financialData.metrics.ebitda_margin.toFixed(1)}%
+                      {((financialData.metrics?.ebitda_margin || 0) * 100).toFixed(1)}%
                     </p>
                     <p className="text-sm text-muted-foreground">EBITDA Margin</p>
                   </div>
