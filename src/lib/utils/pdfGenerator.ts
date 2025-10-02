@@ -218,22 +218,97 @@ export const generatePDF = async (
   currentPage++;
   yPosition = margin;
 
-  // ========== EXECUTIVE SUMMARY ==========
-  addSectionTitle('Executive Summary');
-  
-  if (reportType === 'ai-assisted' && aiCommentary) {
+  // ========== AI NARRATIVE SECTION (AI-ASSISTED REPORTS ONLY) ==========
+  const addNarrativeSubsection = (title: string, content: string) => {
+    checkPageBreak(30);
+    
+    // Subsection title
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(30, 64, 175);
+    pdf.text(title, margin, yPosition);
+    pdf.setTextColor(0, 0, 0);
+    yPosition += 7;
+    
+    // Content
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
-    const summaryHeight = addText(aiCommentary.executiveSummary, margin, yPosition, contentWidth, 10);
-    yPosition += summaryHeight + 10;
-  } else {
-    pdf.setFontSize(10);
+    const contentHeight = addText(content, margin + 5, yPosition, contentWidth - 5, 10);
+    yPosition += contentHeight + 8;
+  };
+
+  const addAINarrativeSection = (commentary: AICommentary) => {
+    // Page header with background
+    pdf.setFillColor(245, 247, 250);
+    pdf.rect(0, 0, pageWidth, 35, 'F');
+    
+    pdf.setFontSize(20);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(30, 64, 175);
+    pdf.text('AI-Generated Insights & Analysis', pageWidth / 2, 20, { align: 'center' });
+    
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'italic');
+    pdf.setTextColor(100, 100, 100);
+    pdf.text('Powered by OpenAI GPT-4 • Please review alongside detailed financials', pageWidth / 2, 28, { align: 'center' });
+    pdf.setTextColor(0, 0, 0);
+    
+    yPosition = 45;
+    
+    // Introduction
+    pdf.setFontSize(9);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(`This report provides a comprehensive financial analysis for ${modelData.project_name || modelData.name}`, margin, yPosition);
+    const intro = "This section provides AI-generated commentary to help interpret the financial model. " +
+                  "The analysis considers key metrics, scenarios, and risk factors to provide strategic insights.";
+    const introHeight = addText(intro, margin, yPosition, contentWidth, 9);
+    yPosition += introHeight + 10;
+    
+    // 1. Executive Summary
+    addNarrativeSubsection('1. Executive Summary', commentary.executiveSummary);
+    
+    // 2. Risk Assessment
+    addNarrativeSubsection('2. Financial Viability & Risk Assessment', commentary.riskAssessment);
+    
+    // 3. Scenario Commentary
+    addNarrativeSubsection('3. Scenario Analysis Commentary', commentary.scenarioCommentary);
+    
+    // 4. Investor Highlights
+    addNarrativeSubsection('4. Investor Highlights & Recommendations', commentary.investorHighlights);
+    
+    // Disclaimer at bottom
+    checkPageBreak(20);
     yPosition += 5;
-    pdf.text(`over the ${modelData.end_year - modelData.start_year + 1}-year projection period from ${modelData.start_year} to ${modelData.end_year}.`, margin, yPosition);
-    yPosition += 10;
+    pdf.setFillColor(255, 251, 235);
+    pdf.rect(margin, yPosition, contentWidth, 15, 'F');
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'italic');
+    pdf.setTextColor(120, 53, 15);
+    const disclaimer = "Disclaimer: This commentary is AI-generated and should be used as supplementary analysis. " +
+                       "Please review all financial statements, assumptions, and scenarios before making decisions.";
+    addText(disclaimer, margin + 2, yPosition + 4, contentWidth - 4, 8);
+    yPosition += 20;
+    pdf.setTextColor(0, 0, 0);
+  };
+
+  // If AI-assisted report, add AI narrative pages FIRST
+  if (reportType === 'ai-assisted' && aiCommentary) {
+    addAINarrativeSection(aiCommentary);
+    // Add separator page
+    addPageFooter();
+    pdf.addPage();
+    currentPage++;
+    yPosition = margin;
   }
+
+  // ========== EXECUTIVE SUMMARY ==========
+  addSectionTitle('Project Overview');
+  
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text(`This report provides a comprehensive financial analysis for ${modelData.project_name || modelData.name}`, margin, yPosition);
+  yPosition += 5;
+  pdf.text(`over the ${modelData.end_year - modelData.start_year + 1}-year projection period from ${modelData.start_year} to ${modelData.end_year}.`, margin, yPosition);
+  yPosition += 10;
 
   // Key Metrics Dashboard
   if (comprehensiveMetrics) {
