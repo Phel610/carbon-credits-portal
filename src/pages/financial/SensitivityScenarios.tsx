@@ -38,6 +38,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { HelpTooltip } from '@/components/help/HelpTooltip';
+import { SensitivityTutorial } from '@/components/help/SensitivityTutorial';
 import {
   Dialog,
   DialogContent,
@@ -192,6 +193,7 @@ const SensitivityScenarios = () => {
   const [scenarioProbabilities, setScenarioProbabilities] = useState<Record<string, number>>({});
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [templateApplied, setTemplateApplied] = useState<{name: string; changes: string[]} | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [showPostSaveDialog, setShowPostSaveDialog] = useState(false);
   const [lastSavedScenarioName, setLastSavedScenarioName] = useState('');
   const [activeTab, setActiveTab] = useState('sensitivity');
@@ -1193,16 +1195,27 @@ const SensitivityScenarios = () => {
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={() => navigate(`/financial/models/${modelId}`)}
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Model
           </Button>
         </div>
         
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Sensitivity & Scenarios</h1>
-          <p className="text-muted-foreground">{modelName}</p>
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold">{modelName} - Sensitivity & Scenarios</h1>
+            <p className="text-muted-foreground">Test different assumptions and compare scenario outcomes</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowTutorial(true)}
+          >
+            <HelpCircle className="h-4 w-4 mr-2" />
+            Help Guide
+          </Button>
         </div>
 
         <TooltipProvider>
@@ -1787,7 +1800,7 @@ const SensitivityScenarios = () => {
                               <div className="space-y-2">
                                 <div className="text-sm font-medium">Variables Changed:</div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                  {changes.slice(0, 6).map(change => (
+                                  {changes.map(change => (
                                     <div key={change.key} className="text-xs border rounded p-2">
                                       <div className="font-medium">{change.name}</div>
                                       <div className="text-muted-foreground flex items-center justify-between">
@@ -1799,11 +1812,6 @@ const SensitivityScenarios = () => {
                                     </div>
                                   ))}
                                 </div>
-                                {changes.length > 6 && (
-                                  <div className="text-xs text-muted-foreground">
-                                    +{changes.length - 6} more changes
-                                  </div>
-                                )}
                               </div>
                             )}
 
@@ -1826,63 +1834,59 @@ const SensitivityScenarios = () => {
 
                             {/* Action Buttons */}
                             <div className="flex flex-wrap gap-2 pt-2 border-t">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
+                              <HelpTooltip content="Load this scenario's variables into the sensitivity sliders for further adjustment">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => loadScenario(scenario)}
+                                >
+                                  Apply to Sensitivity
+                                </Button>
+                              </HelpTooltip>
+                              <HelpTooltip content="Create a copy of this scenario">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => duplicateScenario(scenario)}
+                                >
+                                  <Copy className="h-3 w-3 mr-1" />
+                                  Duplicate
+                                </Button>
+                              </HelpTooltip>
+                              {!scenario.isBaseCase && (
+                                <HelpTooltip content="Mark this scenario as the baseline for comparisons">
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => loadScenario(scenario)}
+                                    onClick={() => setAsBaseCase(scenario.id)}
                                   >
-                                    Apply to Sensitivity
+                                    <Star className="h-3 w-3 mr-1" />
+                                    Set as Base
                                   </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  Load this scenario's variables into the sensitivity sliders for further adjustment
-                                </TooltipContent>
-                              </Tooltip>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => duplicateScenario(scenario)}
-                              >
-                                <Copy className="h-3 w-3 mr-1" />
-                                Duplicate
-                              </Button>
-                              {!scenario.isBaseCase && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => setAsBaseCase(scenario.id)}
-                                    >
-                                      <Star className="h-3 w-3 mr-1" />
-                                      Set as Base
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    Mark this scenario as the baseline for comparisons
-                                  </TooltipContent>
-                                </Tooltip>
+                                </HelpTooltip>
                               )}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setEditingNoteId(editingNoteId === scenario.id ? null : scenario.id)}
-                              >
-                                <StickyNote className="h-3 w-3 mr-1" />
-                                Notes
-                              </Button>
+                              <HelpTooltip content="Add or edit notes about this scenario's assumptions and findings">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setEditingNoteId(editingNoteId === scenario.id ? null : scenario.id)}
+                                >
+                                  <StickyNote className="h-3 w-3 mr-1" />
+                                  Notes
+                                </Button>
+                              </HelpTooltip>
                               {!scenario.isBaseCase && (
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                    >
-                                      <Trash2 className="h-3 w-3 mr-1" />
-                                      Delete
-                                    </Button>
+                                    <HelpTooltip content="Delete this entire scenario">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                      >
+                                        <Trash2 className="h-3 w-3 mr-1" />
+                                        Delete
+                                      </Button>
+                                    </HelpTooltip>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
                                     <AlertDialogHeader>
@@ -1964,12 +1968,9 @@ const SensitivityScenarios = () => {
               <div>
                 <h4 className="font-medium mb-2">Variables Changed:</h4>
                 <ul className="space-y-1 text-sm text-muted-foreground">
-                  {templateApplied?.changes.slice(0, 8).map((change, idx) => (
+                  {templateApplied?.changes.map((change, idx) => (
                     <li key={idx}>• {change}</li>
                   ))}
-                  {(templateApplied?.changes.length || 0) > 8 && (
-                    <li>• +{(templateApplied?.changes.length || 0) - 8} more changes</li>
-                  )}
                 </ul>
               </div>
             </div>
@@ -2020,10 +2021,10 @@ const SensitivityScenarios = () => {
         <div className="flex justify-between pt-6 border-t">
           <Button
             variant="outline"
-            onClick={() => navigate(`/financial/models/${modelId}/statements`)}
+            onClick={() => navigate(`/financial/models/${modelId}/metrics`)}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Statements
+            Back to Metrics
           </Button>
           <Button
             onClick={() => navigate(`/financial/models/${modelId}/reports`)}
@@ -2032,6 +2033,9 @@ const SensitivityScenarios = () => {
             Generate Reports
           </Button>
         </div>
+
+        {/* Tutorial Dialog */}
+        <SensitivityTutorial open={showTutorial} onOpenChange={setShowTutorial} />
       </div>
     </FinancialPlatformLayout>
   );
