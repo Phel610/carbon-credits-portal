@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { generatePDF } from '@/lib/utils/pdfGenerator';
 import OperationalMetricsPanel from './OperationalMetricsPanel';
+import { TransposedTable } from '@/components/ui/transposed-table';
 
 interface ReportPreviewProps {
   modelId: string;
@@ -80,7 +81,7 @@ const VARIABLE_FORMATS: Record<string, 'currency' | 'percentage' | 'number'> = {
   'issuance_flag': 'number',
 };
 
-// Helper function to format values for display
+// Helper functions to format values for display
 const formatVariableValue = (key: string, value: number): string => {
   const format = VARIABLE_FORMATS[key] || 'number';
   
@@ -91,6 +92,37 @@ const formatVariableValue = (key: string, value: number): string => {
     return `${value.toFixed(1)}%`;
   }
   return Math.round(value).toLocaleString();
+};
+
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+};
+
+const formatPercent = (value: number | null, decimals: number = 1): string => {
+  if (value === null || value === undefined || isNaN(value)) return "–";
+  if (value === Infinity) return "∞";
+  return `${value.toFixed(decimals)}%`;
+};
+
+const formatNumber = (value: number | null, decimals: number = 2): string => {
+  if (value === null || value === undefined || isNaN(value)) return "–";
+  if (value === Infinity) return "∞";
+  return value.toFixed(decimals);
+};
+
+const formatIRR = (irr: number | null): string => {
+  if (irr === null || typeof irr !== 'number' || isNaN(irr)) return "n/a";
+  return formatPercent(irr * 100, 1);
+};
+
+const formatPayback = (pb: number | null): string => {
+  if (pb === null || typeof pb !== 'number' || isNaN(pb)) return "> horizon";
+  return `${pb.toFixed(1)} years`;
 };
 
 const ReportPreview: React.FC<ReportPreviewProps> = ({ 
@@ -786,6 +818,473 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* COMPREHENSIVE DETAILED METRICS - All 7 Sections */}
+          {comprehensiveMetrics && (
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-3xl font-bold mb-2">Comprehensive Financial Metrics</h2>
+                <p className="text-muted-foreground mb-6">Detailed breakdown of all financial metrics across the project lifetime</p>
+              </div>
+
+              {/* Section 1: Returns & NPV (Detailed) */}
+              <div>
+                <h3 className="text-2xl font-semibold mb-4">1. Returns & NPV Analysis</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Equity Returns (Levered)</CardTitle>
+                      <CardDescription>Returns to equity holders after debt service</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-muted-foreground">IRR:</span>
+                        <span className="font-mono text-lg">{formatIRR(comprehensiveMetrics.returns?.equity?.irr)}</span>
+                      </div>
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-muted-foreground">NPV:</span>
+                        <span className="font-mono text-base">{formatCurrency(comprehensiveMetrics.returns?.equity?.npv || 0)}</span>
+                      </div>
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-muted-foreground">MIRR:</span>
+                        <span className="font-mono text-base">{formatIRR(comprehensiveMetrics.returns?.equity?.mirr)}</span>
+                      </div>
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-muted-foreground">Payback:</span>
+                        <span className="font-mono text-base">{formatPayback(comprehensiveMetrics.returns?.equity?.payback)}</span>
+                      </div>
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-muted-foreground">Discounted Payback:</span>
+                        <span className="font-mono text-base">{formatPayback(comprehensiveMetrics.returns?.equity?.discountedPayback)}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Project Returns (Unlevered)</CardTitle>
+                      <CardDescription>Returns before financing considerations</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">IRR:</span>
+                        <span className="font-mono">{formatIRR(comprehensiveMetrics.returns?.project?.irr)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">NPV:</span>
+                        <span className="font-mono">{formatCurrency(comprehensiveMetrics.returns?.project?.npv || 0)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">MIRR:</span>
+                        <span className="font-mono">{formatIRR(comprehensiveMetrics.returns?.project?.mirr)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Payback:</span>
+                        <span className="font-mono">{formatPayback(comprehensiveMetrics.returns?.project?.payback)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Discounted Payback:</span>
+                        <span className="font-mono">{formatPayback(comprehensiveMetrics.returns?.project?.discountedPayback)}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Investor Returns (Pre-purchase)</CardTitle>
+                      <CardDescription>Returns to carbon stream investor</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-muted-foreground">IRR:</span>
+                        <span className="font-mono text-lg">{formatIRR(comprehensiveMetrics.returns?.investor?.irr)}</span>
+                      </div>
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-muted-foreground">NPV:</span>
+                        <span className="font-mono text-base">{formatCurrency(comprehensiveMetrics.returns?.investor?.npv || 0)}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Section 2: Profitability & Margins (Detailed) */}
+              {comprehensiveMetrics.profitability && (
+                <div>
+                  <h3 className="text-2xl font-semibold mb-4">2. Profitability & Margins</h3>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Income Statement Metrics by Year</CardTitle>
+                      <CardDescription>Revenue, costs, and profitability breakdown</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <TransposedTable
+                        years={comprehensiveMetrics.profitability.yearly.map(y => y.year)}
+                        showTotal
+                        rows={[
+                          {
+                            metric: 'Revenue',
+                            values: comprehensiveMetrics.profitability.yearly.map(y => formatCurrency(y.revenue)),
+                            total: formatCurrency(comprehensiveMetrics.profitability.total.revenue)
+                          },
+                          {
+                            metric: 'COGS',
+                            values: comprehensiveMetrics.profitability.yearly.map(y => formatCurrency(y.cogs)),
+                            total: formatCurrency(comprehensiveMetrics.profitability.total.cogs)
+                          },
+                          {
+                            metric: 'Gross Profit',
+                            values: comprehensiveMetrics.profitability.yearly.map(y => formatCurrency(y.grossProfit)),
+                            total: formatCurrency(comprehensiveMetrics.profitability.total.grossProfit)
+                          },
+                          {
+                            metric: 'OPEX',
+                            values: comprehensiveMetrics.profitability.yearly.map(y => formatCurrency(y.opex)),
+                            total: formatCurrency(comprehensiveMetrics.profitability.total.opex)
+                          },
+                          {
+                            metric: 'EBITDA',
+                            values: comprehensiveMetrics.profitability.yearly.map(y => formatCurrency(y.ebitda)),
+                            total: formatCurrency(comprehensiveMetrics.profitability.total.ebitda),
+                            className: 'bg-accent/20 font-bold'
+                          },
+                          {
+                            metric: 'Depreciation',
+                            values: comprehensiveMetrics.profitability.yearly.map(y => formatCurrency(y.depreciation)),
+                          },
+                          {
+                            metric: 'Interest',
+                            values: comprehensiveMetrics.profitability.yearly.map(y => formatCurrency(y.interest)),
+                          },
+                          {
+                            metric: 'EBT',
+                            values: comprehensiveMetrics.profitability.yearly.map(y => formatCurrency(y.ebt)),
+                          },
+                          {
+                            metric: 'Tax',
+                            values: comprehensiveMetrics.profitability.yearly.map(y => formatCurrency(y.tax)),
+                          },
+                          {
+                            metric: 'Net Income',
+                            values: comprehensiveMetrics.profitability.yearly.map(y => formatCurrency(y.netIncome)),
+                            total: formatCurrency(comprehensiveMetrics.profitability.total.netIncome),
+                            className: 'bg-primary/10 font-bold'
+                          },
+                          {
+                            metric: 'Gross Margin %',
+                            values: comprehensiveMetrics.profitability.yearly.map(y => formatPercent(y.grossMargin)),
+                          },
+                          {
+                            metric: 'EBITDA Margin %',
+                            values: comprehensiveMetrics.profitability.yearly.map(y => formatPercent(y.ebitdaMargin)),
+                          },
+                          {
+                            metric: 'Net Margin %',
+                            values: comprehensiveMetrics.profitability.yearly.map(y => formatPercent(y.netMargin)),
+                          },
+                        ]}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Section 3: Unit Economics (Detailed) */}
+              {comprehensiveMetrics.unitEconomics && (
+                <div>
+                  <h3 className="text-2xl font-semibold mb-4">3. Unit Economics</h3>
+                  <div className="space-y-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Per Credit Economics</CardTitle>
+                        <CardDescription>Cost and revenue per issued carbon credit</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <TransposedTable
+                          years={comprehensiveMetrics.unitEconomics.yearly.map(y => y.year)}
+                          showTotal
+                          totalLabel="Average"
+                          rows={[
+                            {
+                              metric: 'Issued Credits',
+                              values: comprehensiveMetrics.unitEconomics.yearly.map(y => formatNumber(y.issuedCredits, 0)),
+                              total: formatNumber(comprehensiveMetrics.unitEconomics.total.totalIssued, 0)
+                            },
+                            {
+                              metric: 'WA Price',
+                              values: comprehensiveMetrics.unitEconomics.yearly.map(y => formatCurrency(y.waPrice)),
+                              total: formatCurrency(comprehensiveMetrics.unitEconomics.total.avgWaPrice)
+                            },
+                            {
+                              metric: 'COGS/Credit',
+                              values: comprehensiveMetrics.unitEconomics.yearly.map(y => formatCurrency(y.cogsPerCredit)),
+                              total: formatCurrency(comprehensiveMetrics.unitEconomics.total.avgCogsPerCredit)
+                            },
+                            {
+                              metric: 'GP/Credit',
+                              values: comprehensiveMetrics.unitEconomics.yearly.map(y => formatCurrency(y.gpPerCredit)),
+                            },
+                            {
+                              metric: 'OPEX/Credit',
+                              values: comprehensiveMetrics.unitEconomics.yearly.map(y => formatCurrency(y.opexPerCredit)),
+                            },
+                            {
+                              metric: 'LCOC',
+                              values: comprehensiveMetrics.unitEconomics.yearly.map(y => formatCurrency(y.lcoc)),
+                              total: formatCurrency(comprehensiveMetrics.unitEconomics.total.avgLcoc)
+                            },
+                            {
+                              metric: 'All-in Cost',
+                              values: comprehensiveMetrics.unitEconomics.yearly.map(y => formatCurrency(y.allInCostPerCredit)),
+                            },
+                          ]}
+                        />
+                      </CardContent>
+                    </Card>
+
+                    {comprehensiveMetrics.breakEven && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Break-even Analysis</CardTitle>
+                          <CardDescription>Price and volume thresholds for profitability</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <TransposedTable
+                            years={comprehensiveMetrics.breakEven.yearly.map(y => y.year)}
+                            rows={[
+                              {
+                                metric: 'BE Price (Oper)',
+                                values: comprehensiveMetrics.breakEven.yearly.map(y => formatCurrency(y.bePriceOper)),
+                              },
+                              {
+                                metric: 'Realized Price',
+                                values: comprehensiveMetrics.breakEven.yearly.map(y => formatCurrency(y.realizedPrice)),
+                              },
+                              {
+                                metric: 'Safety Spread',
+                                values: comprehensiveMetrics.breakEven.yearly.map(y => formatCurrency(y.safetySpread)),
+                              },
+                              {
+                                metric: 'BE Volume',
+                                values: comprehensiveMetrics.breakEven.yearly.map(y => formatNumber(y.beVolumeOper, 0)),
+                              },
+                            ]}
+                          />
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Section 4: Working Capital Management (Detailed) */}
+              {comprehensiveMetrics.workingCapital && (
+                <div>
+                  <h3 className="text-2xl font-semibold mb-4">4. Working Capital Management</h3>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>AR, AP, and Cash Conversion Metrics</CardTitle>
+                      <CardDescription>Working capital efficiency by year</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <TransposedTable
+                        years={comprehensiveMetrics.workingCapital.yearly.map(y => y.year)}
+                        rows={[
+                          {
+                            metric: 'AR',
+                            values: comprehensiveMetrics.workingCapital.yearly.map(y => formatCurrency(y.ar)),
+                          },
+                          {
+                            metric: 'AP',
+                            values: comprehensiveMetrics.workingCapital.yearly.map(y => formatCurrency(y.ap)),
+                          },
+                          {
+                            metric: 'NWC',
+                            values: comprehensiveMetrics.workingCapital.yearly.map(y => formatCurrency(y.nwc)),
+                          },
+                          {
+                            metric: 'Revenue',
+                            values: comprehensiveMetrics.workingCapital.yearly.map(y => formatCurrency(y.revenue)),
+                          },
+                          {
+                            metric: 'DSO (days)',
+                            values: comprehensiveMetrics.workingCapital.yearly.map(y => formatNumber(y.dso, 0)),
+                          },
+                          {
+                            metric: 'DPO (days)',
+                            values: comprehensiveMetrics.workingCapital.yearly.map(y => formatNumber(y.dpo, 0)),
+                          },
+                          {
+                            metric: 'NWC % Rev',
+                            values: comprehensiveMetrics.workingCapital.yearly.map(y => formatPercent(y.nwcPct)),
+                          },
+                        ]}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Section 5: Liquidity & Debt (Detailed) */}
+              {comprehensiveMetrics.liquidity && comprehensiveMetrics.debt && (
+                <div>
+                  <h3 className="text-2xl font-semibold mb-4">5. Liquidity & Debt</h3>
+                  <div className="space-y-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Liquidity Ratios</CardTitle>
+                        <CardDescription>Balance sheet health and solvency metrics</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <TransposedTable
+                          years={comprehensiveMetrics.liquidity.yearly.map(y => y.year)}
+                          rows={[
+                            {
+                              metric: 'Cash',
+                              values: comprehensiveMetrics.liquidity.yearly.map(y => formatCurrency(y.cash)),
+                            },
+                            {
+                              metric: 'Current Ratio',
+                              values: comprehensiveMetrics.liquidity.yearly.map(y => formatNumber(y.currentRatio)),
+                            },
+                            {
+                              metric: 'Cash Ratio',
+                              values: comprehensiveMetrics.liquidity.yearly.map(y => formatNumber(y.cashRatio)),
+                            },
+                            {
+                              metric: 'D/E',
+                              values: comprehensiveMetrics.liquidity.yearly.map(y => formatNumber(y.debtToEquity)),
+                            },
+                            {
+                              metric: 'Net Debt/EBITDA',
+                              values: comprehensiveMetrics.liquidity.yearly.map(y => formatNumber(y.netDebtToEbitda)),
+                            },
+                            {
+                              metric: 'Interest Coverage',
+                              values: comprehensiveMetrics.liquidity.yearly.map(y => formatNumber(y.interestCoverage)),
+                            },
+                          ]}
+                        />
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Debt Service & Coverage</CardTitle>
+                        <CardDescription>Debt schedule and DSCR by year</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <TransposedTable
+                          years={comprehensiveMetrics.debt.yearly.map(y => y.year)}
+                          rows={[
+                            {
+                              metric: 'Beg Balance',
+                              values: comprehensiveMetrics.debt.yearly.map(y => formatCurrency(y.beginning)),
+                            },
+                            {
+                              metric: 'Draw',
+                              values: comprehensiveMetrics.debt.yearly.map(y => formatCurrency(y.draw)),
+                            },
+                            {
+                              metric: 'Principal',
+                              values: comprehensiveMetrics.debt.yearly.map(y => formatCurrency(y.principal)),
+                            },
+                            {
+                              metric: 'End Balance',
+                              values: comprehensiveMetrics.debt.yearly.map(y => formatCurrency(y.ending)),
+                            },
+                            {
+                              metric: 'Interest',
+                              values: comprehensiveMetrics.debt.yearly.map(y => formatCurrency(y.interest)),
+                            },
+                            {
+                              metric: 'Debt Service',
+                              values: comprehensiveMetrics.debt.yearly.map(y => formatCurrency(y.debtService)),
+                            },
+                            {
+                              metric: 'DSCR',
+                              values: comprehensiveMetrics.debt.yearly.map(y => `${formatNumber(y.dscr)}x`),
+                            },
+                          ]}
+                        />
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              )}
+
+              {/* Section 6: Carbon KPIs (Detailed) */}
+              {comprehensiveMetrics.carbonKPIs && (
+                <div>
+                  <h3 className="text-2xl font-semibold mb-4">6. Carbon KPIs</h3>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Carbon Credit Metrics</CardTitle>
+                      <CardDescription>Generation, issuance, and pricing by year</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <TransposedTable
+                        years={comprehensiveMetrics.carbonKPIs.yearly.map(y => y.year)}
+                        showTotal
+                        rows={[
+                          {
+                            metric: 'Generated',
+                            values: comprehensiveMetrics.carbonKPIs.yearly.map(y => formatNumber(y.generated, 0)),
+                            total: formatNumber(comprehensiveMetrics.carbonKPIs.totalGenerated, 0)
+                          },
+                          {
+                            metric: 'Issued',
+                            values: comprehensiveMetrics.carbonKPIs.yearly.map(y => formatNumber(y.issued, 0)),
+                            total: formatNumber(comprehensiveMetrics.carbonKPIs.totalIssued, 0)
+                          },
+                          {
+                            metric: 'Issuance %',
+                            values: comprehensiveMetrics.carbonKPIs.yearly.map(y => formatPercent(y.issuanceRatio, 0)),
+                          },
+                          {
+                            metric: 'PP Delivered',
+                            values: comprehensiveMetrics.carbonKPIs.yearly.map(y => formatNumber(y.purchasedDelivered, 0)),
+                          },
+                          {
+                            metric: 'PP Remaining',
+                            values: comprehensiveMetrics.carbonKPIs.yearly.map(y => formatNumber(y.remainingPurchased, 0)),
+                          },
+                          {
+                            metric: 'WA Price',
+                            values: comprehensiveMetrics.carbonKPIs.yearly.map(y => formatCurrency(y.waPrice)),
+                          },
+                          {
+                            metric: 'Spot Price',
+                            values: comprehensiveMetrics.carbonKPIs.yearly.map(y => formatCurrency(y.spotPrice)),
+                          },
+                        ]}
+                      />
+                      {comprehensiveMetrics.carbonKPIs.impliedPPPrice !== null && (
+                        <div className="mt-4 p-4 bg-muted rounded-lg">
+                          <p className="text-sm">
+                            <span className="font-medium">Implied Pre-purchase Price:</span>{" "}
+                            <span className="font-mono">{formatCurrency(comprehensiveMetrics.carbonKPIs.impliedPPPrice)}</span> per credit
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Section 7: Charts Note */}
+              <div>
+                <h3 className="text-2xl font-semibold mb-4">7. Financial Charts & Visualizations</h3>
+                <Card>
+                  <CardContent className="p-6">
+                    <p className="text-muted-foreground">
+                      Interactive financial charts (revenue trends, profitability, cash position, DSCR, cumulative NPV, etc.) are available on the Financial Metrics page of the platform.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           )}
 
           {/* Financial Statements */}
