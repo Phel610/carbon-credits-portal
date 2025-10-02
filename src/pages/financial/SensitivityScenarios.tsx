@@ -1249,14 +1249,6 @@ const SensitivityScenarios = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Model
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(`/financial/models/${modelId}/scenarios/trash`)}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            View Trash
-          </Button>
         </div>
         
         <div className="flex items-center justify-between">
@@ -1572,8 +1564,9 @@ const SensitivityScenarios = () => {
               />
               <div className="flex gap-2 items-center">
                 <HelpTooltip 
-                        content={`Probability Weighting allows you to assign likelihood percentages to different scenarios, creating a probability-weighted expected outcome. This is especially useful for:
+                        content={`Probability Weighting allows you to assign likelihood percentages to different scenarios, creating a probability-weighted expected outcome. 
 
+This is especially useful for:
 1. Risk analysis - weighing best/base/worst cases
 2. Decision-making under uncertainty
 3. Portfolio planning
@@ -1789,7 +1782,17 @@ Example: Assign 20% to pessimistic, 60% to base case, and 20% to optimistic scen
             {/* Saved Scenarios List */}
             <Card>
               <CardHeader>
-                <CardTitle>Saved Scenarios</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Saved Scenarios</CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/financial/models/${modelId}/scenarios/trash`)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    View Deleted Scenarios
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {scenarios.length === 0 ? (
@@ -1855,29 +1858,29 @@ Example: Assign 20% to pessimistic, 60% to base case, and 20% to optimistic scen
                               
                               {/* Delete button in header */}
                               {!scenario.isBaseCase && (
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <HelpTooltip content="Delete this entire scenario">
+                                <HelpTooltip content="Move this scenario to trash (deleted after 30 days)">
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
                                       <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
                                         <Trash2 className="h-4 w-4" />
                                       </Button>
-                                    </HelpTooltip>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Move to Trash</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Are you sure you want to move "{scenario.name}" to trash? It will be permanently deleted after 30 days.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => deleteScenario(scenario.id)}>
-                                        Move to Trash
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Move to Trash</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Are you sure you want to move "{scenario.name}" to trash? It will be permanently deleted after 30 days.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => deleteScenario(scenario.id)}>
+                                          Move to Trash
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </HelpTooltip>
                               )}
                             </div>
 
