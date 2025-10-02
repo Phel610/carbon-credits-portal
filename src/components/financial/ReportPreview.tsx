@@ -39,26 +39,37 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
   const [generating, setGenerating] = useState(false);
   const [financialData, setFinancialData] = useState<any>(null);
   const [aiCommentary, setAiCommentary] = useState<AICommentary | null>(null);
-  const [modelInputs, setModelInputs] = useState<ModelInputData | null>(null);
+  const [modelInputs, setModelInputs] = useState<any>(null);
+  const [scenarios, setScenarios] = useState<any[]>([]);
+  const [comprehensiveMetrics, setComprehensiveMetrics] = useState<any>(null);
   
   // Dynamic imports for table components to avoid module resolution issues
   const [IncomeStatementTable, setIncomeStatementTable] = useState<any>(null);
   const [BalanceSheetTable, setBalanceSheetTable] = useState<any>(null);
   const [CashFlowStatementTable, setCashFlowStatementTable] = useState<any>(null);
+  const [DebtScheduleTable, setDebtScheduleTable] = useState<any>(null);
+  const [FreeCashFlowTable, setFreeCashFlowTable] = useState<any>(null);
+  const [CarbonStreamTable, setCarbonStreamTable] = useState<any>(null);
 
   useEffect(() => {
     // Load table components dynamically
     const loadComponents = async () => {
       try {
-        const [incomeModule, balanceModule, cashFlowModule] = await Promise.all([
+        const [incomeModule, balanceModule, cashFlowModule, debtModule, fcfModule, carbonModule] = await Promise.all([
           import('./IncomeStatementTable'),
           import('./BalanceSheetTable'),
-          import('./CashFlowStatementTable')
+          import('./CashFlowStatementTable'),
+          import('./DebtScheduleTable'),
+          import('./FreeCashFlowTable'),
+          import('./CarbonStreamTable')
         ]);
         
         setIncomeStatementTable(() => incomeModule.default);
         setBalanceSheetTable(() => balanceModule.default);
         setCashFlowStatementTable(() => cashFlowModule.default);
+        setDebtScheduleTable(() => debtModule.default);
+        setFreeCashFlowTable(() => fcfModule.default);
+        setCarbonStreamTable(() => carbonModule.default);
       } catch (error) {
         console.error('Failed to load table components:', error);
         toast({
@@ -96,6 +107,47 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
       const engine = new FinancialCalculationEngine(transformedInputs);
       const results = engine.calculateFinancialStatements();
       setFinancialData(results);
+
+      // Fetch saved scenarios
+      const { data: scenariosData, error: scenariosError } = await supabase
+        .from('model_scenarios')
+        .select('*')
+        .eq('model_id', modelId)
+        .is('deleted_at', null);
+
+      if (scenariosError) throw scenariosError;
+      
+      // Process scenarios with their metrics
+      const processedScenarios = scenariosData?.map(scenario => {
+        const scenarioData = scenario.scenario_data as any;
+        const scenarioEngine = new FinancialCalculationEngine(scenarioData);
+        const scenarioResults = scenarioEngine.calculateFinancialStatements();
+        
+        return {
+          scenario_name: scenario.scenario_name,
+          is_base_case: scenario.is_base_case || false,
+          notes: scenario.notes,
+          probability: scenarioData.probability || 0,
+          metrics: {
+            equityNPV: scenarioResults.metrics?.equity_npv || 0,
+            equityIRR: scenarioResults.metrics?.equity_irr || 0,
+            projectNPV: scenarioResults.metrics?.company_npv || 0,
+          },
+          changes: [],
+        };
+      }) || [];
+      
+      setScenarios(processedScenarios);
+
+      // Calculate comprehensive metrics
+      import('@/lib/financial/metricsCalculator').then((module) => {
+        const comprehensiveMetrics = module.calculateComprehensiveMetrics(
+          results.incomeStatements,
+          results.balanceSheets,
+          results.cashFlowStatements
+        );
+        setComprehensiveMetrics(comprehensiveMetrics);
+      });
 
       // Generate AI commentary if needed
       if (reportType === 'ai-assisted') {
@@ -206,7 +258,15 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
   const handleDownloadPDF = async () => {
     setGenerating(true);
     try {
-      await generatePDF(financialData, modelData, reportType, aiCommentary || undefined);
+      await generatePDF(
+        financialData, 
+        modelData, 
+        reportType, 
+        modelInputs,
+        scenarios,
+        comprehensiveMetrics,
+        aiCommentary || undefined
+      );
       toast({
         title: "Success",
         description: "PDF report generated successfully",
@@ -412,7 +472,130 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                   </Card>
                 )}
               </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Debt Schedule</h3>
+                {DebtScheduleTable ? (
+                  <DebtScheduleTable statements={financialData.debtSchedule || []} />
+                ) : (
+                  <Card>
+                    <CardContent className="p-6">
+                      <p className="text-muted-foreground">Loading Debt Schedule component...</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Carbon Stream</h3>
+                {CarbonStreamTable ? (
+                  <CarbonStreamTable statements={financialData.carbonStream || []} investorIRR={comprehensiveMetrics?.returns?.equityIRR || 0} />
+                ) : (
+                  <Card>
+                    <CardContent className="p-6">
+                      <p className="text-muted-foreground">Loading Carbon Stream component...</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Free Cash Flow to Equity</h3>
+                {FreeCashFlowTable ? (
+                  <FreeCashFlowTable statements={financialData.freeCashFlow || []} />
+                ) : (
+                  <Card>
+                    <CardContent className="p-6">
+                      <p className="text-muted-foreground">Loading Free Cash Flow component...</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </>
+          )}
+
+          {/* Comprehensive Metrics Display */}
+          {comprehensiveMetrics && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Comprehensive Metrics Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-4 border rounded-lg">
+                    <p className="text-2xl font-bold text-primary">
+                      ${comprehensiveMetrics.returns?.equityNPV?.toLocaleString() || 0}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Equity NPV</p>
+                  </div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <p className="text-2xl font-bold text-primary">
+                      {((comprehensiveMetrics.returns?.equityIRR || 0) * 100).toFixed(1)}%
+                    </p>
+                    <p className="text-sm text-muted-foreground">Equity IRR</p>
+                  </div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <p className="text-2xl font-bold text-primary">
+                      ${comprehensiveMetrics.returns?.projectNPV?.toLocaleString() || 0}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Project NPV</p>
+                  </div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <p className="text-2xl font-bold text-primary">
+                      {((comprehensiveMetrics.returns?.projectIRR || 0) * 100).toFixed(1)}%
+                    </p>
+                    <p className="text-sm text-muted-foreground">Project IRR</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Scenarios Display */}
+          {scenarios.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Saved Scenarios ({scenarios.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {scenarios.map((scenario, index) => (
+                    <div key={index} className="border-b pb-4 last:border-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold">{scenario.scenario_name}</h4>
+                        {scenario.is_base_case && (
+                          <Badge variant="secondary">Base Case</Badge>
+                        )}
+                      </div>
+                      {scenario.probability > 0 && (
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Probability: {(scenario.probability * 100).toFixed(0)}%
+                        </p>
+                      )}
+                      {scenario.metrics && (
+                        <div className="grid grid-cols-3 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Equity NPV: </span>
+                            <span className="font-medium">${scenario.metrics.equityNPV?.toLocaleString() || 0}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Equity IRR: </span>
+                            <span className="font-medium">{((scenario.metrics.equityIRR || 0) * 100).toFixed(1)}%</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Project NPV: </span>
+                            <span className="font-medium">${scenario.metrics.projectNPV?.toLocaleString() || 0}</span>
+                          </div>
+                        </div>
+                      )}
+                      {scenario.notes && (
+                        <p className="text-sm text-muted-foreground mt-2 italic">{scenario.notes}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* AI Commentary for Scenarios and Investor Highlights */}
