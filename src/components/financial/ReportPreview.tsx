@@ -591,25 +591,25 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 border rounded-lg">
                     <p className="text-2xl font-bold text-primary">
-                      ${comprehensiveMetrics.returns?.equityNPV?.toLocaleString() || 0}
+                      ${(comprehensiveMetrics.returns?.equity?.npv || 0).toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Equity NPV</p>
                   </div>
                   <div className="text-center p-4 border rounded-lg">
                     <p className="text-2xl font-bold text-primary">
-                      {((comprehensiveMetrics.returns?.equityIRR || 0) * 100).toFixed(1)}%
+                      {((comprehensiveMetrics.returns?.equity?.irr || 0) * 100).toFixed(1)}%
                     </p>
                     <p className="text-sm text-muted-foreground">Equity IRR</p>
                   </div>
                   <div className="text-center p-4 border rounded-lg">
                     <p className="text-2xl font-bold text-primary">
-                      ${comprehensiveMetrics.returns?.projectNPV?.toLocaleString() || 0}
+                      ${(comprehensiveMetrics.returns?.project?.npv || 0).toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Project NPV</p>
                   </div>
                   <div className="text-center p-4 border rounded-lg">
                     <p className="text-2xl font-bold text-primary">
-                      {((comprehensiveMetrics.returns?.projectIRR || 0) * 100).toFixed(1)}%
+                      {((comprehensiveMetrics.returns?.project?.irr || 0) * 100).toFixed(1)}%
                     </p>
                     <p className="text-sm text-muted-foreground">Project IRR</p>
                   </div>
@@ -643,7 +643,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                         <div className="grid grid-cols-3 gap-2 text-sm">
                           <div>
                             <span className="text-muted-foreground">Equity NPV: </span>
-                            <span className="font-medium">${scenario.metrics.equityNPV?.toLocaleString() || 0}</span>
+                            <span className="font-medium">${(scenario.metrics.equityNPV || 0).toLocaleString()}</span>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Equity IRR: </span>
@@ -651,7 +651,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
                           </div>
                           <div>
                             <span className="text-muted-foreground">Project NPV: </span>
-                            <span className="font-medium">${scenario.metrics.projectNPV?.toLocaleString() || 0}</span>
+                            <span className="font-medium">${(scenario.metrics.projectNPV || 0).toLocaleString()}</span>
                           </div>
                         </div>
                       )}
