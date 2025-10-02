@@ -542,7 +542,8 @@ const SensitivityScenarios = () => {
       ];
 
       setSensitivities(sensitivityVars);
-      await calculateMetrics(sensitivityVars);
+      await calculateMetrics(sensitivityVars, true);
+      setIsInitialLoad(false);
 
     } catch (error) {
       console.error('Error fetching base values:', error);
@@ -961,7 +962,7 @@ const SensitivityScenarios = () => {
     try {
       const { error } = await supabase
         .from('model_scenarios')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', scenarioId);
 
       if (error) throw error;
@@ -969,14 +970,15 @@ const SensitivityScenarios = () => {
       setSelectedScenarioIds(prev => prev.filter(id => id !== scenarioId));
       
       toast({
-        title: "Scenario Deleted",
+        title: "Scenario Moved to Trash",
+        description: "Will be permanently deleted in 30 days",
       });
       await fetchScenarios();
     } catch (error) {
       console.error('Error deleting scenario:', error);
       toast({
         title: "Error",
-        description: "Failed to delete scenario",
+        description: "Failed to move scenario to trash",
         variant: "destructive",
       });
     }
@@ -1246,6 +1248,14 @@ const SensitivityScenarios = () => {
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Model
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/financial/models/${modelId}/scenarios/trash`)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            View Trash
           </Button>
         </div>
         
@@ -1855,15 +1865,15 @@ Example: Assign 20% to pessimistic, 60% to base case, and 20% to optimistic scen
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
                                     <AlertDialogHeader>
-                                      <AlertDialogTitle>Delete Scenario</AlertDialogTitle>
+                                      <AlertDialogTitle>Move to Trash</AlertDialogTitle>
                                       <AlertDialogDescription>
-                                        Are you sure you want to delete "{scenario.name}"? This action cannot be undone.
+                                        Are you sure you want to move "{scenario.name}" to trash? It will be permanently deleted after 30 days.
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                                       <AlertDialogAction onClick={() => deleteScenario(scenario.id)}>
-                                        Delete
+                                        Move to Trash
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>

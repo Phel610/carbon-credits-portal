@@ -40,7 +40,7 @@ export const HelpTooltip = ({
           )}
         </TooltipTrigger>
         <TooltipContent side={side} align={align} className="max-w-xs">
-          <p className="text-xs leading-relaxed">{content}</p>
+          <p className="text-xs leading-relaxed whitespace-pre-line">{content}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
