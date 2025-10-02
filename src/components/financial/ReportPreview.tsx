@@ -237,9 +237,12 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
             const scenarioResult = scenarioEngine.calculateFinancialStatements();
 
             return {
-              name: scenario.scenario_name || `Scenario ${scenario.id}`,
+              scenario_name: scenario.scenario_name,
+              is_base_case: scenario.is_base_case || false,
+              notes: scenario.notes,
+              probability: scenarioInputs.probability || scenarioData.probability || 0,
               metrics: scenarioResult.metrics,
-              probability: scenarioInputs.probability || 0,
+              changes: scenarioData.changes || []
             };
           } catch (error) {
             console.error(`Failed to process scenario "${scenario.scenario_name}":`, error);
