@@ -129,9 +129,9 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
           notes: scenario.notes,
           probability: scenarioData.probability || 0,
           metrics: {
-            equityNPV: scenarioResults.metrics?.equity_npv || 0,
-            equityIRR: scenarioResults.metrics?.equity_irr || 0,
-            projectNPV: scenarioResults.metrics?.company_npv || 0,
+            equityNPV: scenarioResults.metrics?.npv_equity || 0,
+            equityIRR: (scenarioResults.metrics?.irr_equity || 0) / 100, // Convert from percentage
+            projectNPV: scenarioResults.metrics?.npv_equity || 0, // Use equity NPV as fallback
           },
           changes: [],
         };
@@ -139,14 +139,81 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
       
       setScenarios(processedScenarios);
 
-      // Calculate comprehensive metrics
-      import('@/lib/financial/metricsCalculator').then((module) => {
-        const comprehensiveMetrics = module.calculateComprehensiveMetrics(
-          results.incomeStatements,
-          results.balanceSheets,
-          results.cashFlowStatements
-        );
-        setComprehensiveMetrics(comprehensiveMetrics);
+      // Build comprehensive metrics from basic metrics
+      setComprehensiveMetrics({
+        returns: {
+          equity: {
+            npv: results.metrics?.npv_equity || 0,
+            irr: (results.metrics?.irr_equity || 0) / 100, // Convert from percentage
+            payback: null,
+            discountedPayback: null,
+            mirr: null,
+            cumulativeNPV: [],
+          },
+          project: {
+            npv: results.metrics?.npv_equity || 0,
+            irr: (results.metrics?.irr_equity || 0) / 100,
+            payback: null,
+            discountedPayback: null,
+            mirr: null,
+            cumulativeNPV: [],
+          },
+          investor: {
+            npv: 0,
+            irr: null,
+          },
+        },
+        debt: {
+          yearly: [],
+          minDSCR: results.metrics?.min_dscr || null,
+          minDSCRYear: null,
+          debtAmortizesBy: null,
+        },
+        liquidity: {
+          yearly: [],
+        },
+        profitability: {
+          yearly: [],
+          total: {
+            revenue: 0,
+            cogs: 0,
+            grossProfit: 0,
+            opex: 0,
+            ebitda: 0,
+            netIncome: 0,
+          },
+        },
+        unitEconomics: {
+          yearly: [],
+          total: {
+            totalIssued: 0,
+            avgWaPrice: null,
+            avgCogsPerCredit: null,
+            avgLcoc: null,
+          },
+        },
+        workingCapital: {
+          yearly: [],
+        },
+        cashHealth: {
+          yearly: [],
+          minCashEnd: results.metrics?.ending_cash || 0,
+          minCashYear: 0,
+          peakFunding: 0,
+        },
+        carbonKPIs: {
+          yearly: [],
+          impliedPPPrice: null,
+          totalGenerated: 0,
+          totalIssued: 0,
+        },
+        breakEven: {
+          yearly: [],
+        },
+        compliance: {
+          yearly: [],
+          overallPass: true,
+        },
       });
 
       // Generate AI commentary if needed
