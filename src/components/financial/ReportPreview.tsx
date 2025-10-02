@@ -111,9 +111,16 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
       setModelInputs(transformedInputs);
 
       // Calculate financial statements
-      const engine = new FinancialCalculationEngine(transformedInputs);
-      const results = engine.calculateFinancialStatements();
-      setFinancialData(results);
+      let results;
+      try {
+        const engine = new FinancialCalculationEngine(transformedInputs);
+        results = engine.calculateFinancialStatements();
+        setFinancialData(results);
+      } catch (error) {
+        console.error('Calculation engine error:', error);
+        console.log('Input data that caused error:', transformedInputs);
+        throw new Error(`Failed to calculate financial statements: ${error instanceof Error ? error.message : String(error)}`);
+      }
 
       // Calculate comprehensive metrics using metricsCalculator
       const yearlyFinancials: YearlyFinancials[] = results.incomeStatements.map((income: any, idx: number) => ({
@@ -327,68 +334,83 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
   };
 
   const transformInputsToModelData = (inputs: any[]): any => {
-    const years = Array.from({ length: modelData.end_year - modelData.start_year + 1 }, (_, i) => modelData.start_year + i);
+    console.log('Raw inputs from database:', inputs);
     
-    // Group inputs by category and parse real database data
-    const inputsByCategory: Record<string, Record<string, any>> = {};
+    const years = Array.from(
+      { length: modelData.end_year - modelData.start_year + 1 },
+      (_, i) => modelData.start_year + i
+    );
+
+    // Group inputs by category -> input_key -> year -> value
+    const grouped: Record<string, Record<string, Map<number | string, any>>> = {};
+    
     inputs?.forEach(input => {
-      if (!inputsByCategory[input.category]) {
-        inputsByCategory[input.category] = {};
+      if (!grouped[input.category]) {
+        grouped[input.category] = {};
       }
-      inputsByCategory[input.category][input.input_key] = input.input_value;
+      if (!grouped[input.category][input.input_key]) {
+        grouped[input.category][input.input_key] = new Map();
+      }
+      
+      // Extract .value from input_value object
+      const actualValue = input.input_value?.value !== undefined 
+        ? input.input_value.value 
+        : input.input_value;
+      
+      if (input.year !== null) {
+        // Yearly input
+        grouped[input.category][input.input_key].set(input.year, actualValue);
+      } else {
+        // Single value (like rates)
+        grouped[input.category][input.input_key].set('single', actualValue);
+      }
     });
-
-    // Helper function to parse yearly arrays
-    const parseYearlyArray = (category: string, key: string, defaultValue: any[] = []): any[] => {
-      const value = inputsByCategory[category]?.[key];
-      if (Array.isArray(value)) return value.slice(0, years.length);
-      if (typeof value === 'object' && value !== null) {
-        // Handle object format with year keys
-        return years.map(year => value[year] || 0);
-      }
-      return defaultValue.slice(0, years.length);
+    
+    console.log('Grouped inputs:', grouped);
+    
+    // Helper to build year array
+    const buildYearArray = (category: string, key: string, defaultArray: any[]): any[] => {
+      const map = grouped[category]?.[key];
+      if (!map) return defaultArray;
+      return years.map(year => map.get(year) ?? 0);
     };
-
-    // Helper function to parse single values
-    const parseValue = (category: string, key: string, defaultValue: any): any => {
-      const value = inputsByCategory[category]?.[key];
-      return value !== undefined && value !== null ? value : defaultValue;
+    
+    // Helper to get single value
+    const getSingleValue = (category: string, key: string, defaultValue: any): any => {
+      const map = grouped[category]?.[key];
+      if (!map) return defaultValue;
+      return map.get('single') ?? defaultValue;
     };
 
     const transformed = {
       years,
-      // Operational metrics from database
-      credits_generated: parseYearlyArray('operational', 'credits_generated', [10000, 12000, 15000, 18000, 20000]),
-      price_per_credit: parseYearlyArray('operational', 'price_per_credit', [15, 16, 17, 18, 19]),
-      issuance_flag: parseYearlyArray('operational', 'issuance_flag', [0, 1, 1, 1, 1]),
+      // Operational metrics - use 'operational_metrics' not 'operational'
+      credits_generated: buildYearArray('operational_metrics', 'credits_generated', years.map(() => 0)),
+      price_per_credit: buildYearArray('operational_metrics', 'price_per_credit', years.map(() => 0)),
+      issuance_flag: buildYearArray('operational_metrics', 'issuance_flag', years.map(() => 0)),
       
-      // Expenses from database (should be negative)
-      cogs_rate: parseValue('expenses', 'cogs_rate', 0.15),
-      feasibility_costs: parseYearlyArray('expenses', 'feasibility_costs', [-50000, 0, 0, 0, 0]),
-      pdd_costs: parseYearlyArray('expenses', 'pdd_costs', [-75000, 0, 0, 0, 0]),
-      mrv_costs: parseYearlyArray('expenses', 'mrv_costs', [-40000, -15000, -15000, -15000, -15000]),
-      staff_costs: parseYearlyArray('expenses', 'staff_costs', [-100000, -100000, -100000, -100000, -100000]),
-      depreciation: parseYearlyArray('expenses', 'depreciation', [-10000, -10000, -10000, -10000, -10000]),
-      income_tax_rate: parseValue('expenses', 'income_tax_rate', 0.25),
+      // Expenses
+      cogs_rate: getSingleValue('expenses', 'cogs_rate', 0.15),
+      feasibility_costs: buildYearArray('expenses', 'feasibility_costs', years.map(() => 0)),
+      pdd_costs: buildYearArray('expenses', 'pdd_costs', years.map(() => 0)),
+      mrv_costs: buildYearArray('expenses', 'mrv_costs', years.map(() => 0)),
+      staff_costs: buildYearArray('expenses', 'staff_costs', years.map(() => 0)),
+      depreciation: buildYearArray('expenses', 'depreciation', years.map(() => 0)),
+      income_tax_rate: getSingleValue('expenses', 'income_tax_rate', 0.25),
+      ar_rate: getSingleValue('expenses', 'ar_rate', 0.05),
+      ap_rate: getSingleValue('expenses', 'ap_rate', 0.10),
       
-      // Working capital rates from database
-      ar_rate: parseValue('expenses', 'ar_rate', 0.05),
-      ap_rate: parseValue('expenses', 'ap_rate', 0.10),
-      
-      // CAPEX and financing from database
-      capex: parseYearlyArray('expenses', 'capex', [-200000, -100000, 0, 0, 0]),
-      equity_injection: parseYearlyArray('financing', 'equity_injection', [500000, 0, 0, 0, 0]),
-      interest_rate: parseValue('financing', 'interest_rate', 0.08),
-      debt_duration_years: parseValue('financing', 'debt_duration_years', 5),
-      debt_draw: parseYearlyArray('financing', 'debt_draw', [300000, 0, 0, 0, 0]),
-      
-      // Pre-purchase agreements from database
-      purchase_amount: parseYearlyArray('financing', 'purchase_amount', [0, 50000, 0, 0, 0]),
-      purchase_share: parseValue('financing', 'purchase_share', 0.30),
-      
-      // Returns from database
-      discount_rate: parseValue('financing', 'discount_rate', 0.12),
-      initial_equity_t0: parseValue('financing', 'initial_equity_t0', 100000),
+      // CAPEX and financing
+      capex: buildYearArray('expenses', 'capex', years.map(() => 0)),
+      equity_injection: buildYearArray('financing', 'equity_injection', years.map(() => 0)),
+      interest_rate: getSingleValue('financing', 'interest_rate', 0.08),
+      debt_duration_years: getSingleValue('financing', 'debt_duration_years', 5),
+      debt_draw: buildYearArray('financing', 'debt_draw', years.map(() => 0)),
+      purchase_amount: buildYearArray('financing', 'purchase_amount', years.map(() => 0)),
+      purchase_share: getSingleValue('financing', 'purchase_share', 0.30),
+      discount_rate: getSingleValue('financing', 'discount_rate', 0.12),
+      initial_equity_t0: getSingleValue('financing', 'initial_equity_t0', 0),
+      opening_cash_y1: getSingleValue('financing', 'opening_cash_y1', 0),
     };
 
     console.log('Transformed financial data from database inputs:', transformed);
