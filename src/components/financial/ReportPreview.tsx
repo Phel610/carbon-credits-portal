@@ -227,22 +227,19 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
 
       if (scenariosError) throw scenariosError;
       
-      // Process scenarios with their comprehensive metrics
+      // Process scenarios with their pre-calculated metrics
         const processedScenarios = scenariosData?.map(scenario => {
           try {
             const scenarioData = scenario.scenario_data as any;
-            // Extract the inputs object from scenario_data
-            const scenarioInputs = scenarioData.inputs || scenarioData;
-            const scenarioEngine = new FinancialCalculationEngine(scenarioInputs);
-            const scenarioResult = scenarioEngine.calculateFinancialStatements();
-
+            
+            // Scenarios are saved with pre-calculated metrics, just use them directly
             return {
               scenario_name: scenario.scenario_name,
               is_base_case: scenario.is_base_case || false,
               notes: scenario.notes,
-              probability: scenarioInputs.probability || scenarioData.probability || 0,
-              metrics: scenarioResult.metrics,
-              changes: scenarioData.changes || []
+              probability: (scenarioData.probability || 0) / 100, // Convert from whole number to decimal
+              metrics: scenarioData.metrics, // Use pre-calculated metrics from database
+              changes: scenarioData.variables || [] // Database stores changes as 'variables'
             };
           } catch (error) {
             console.error(`Failed to process scenario "${scenario.scenario_name}":`, error);
