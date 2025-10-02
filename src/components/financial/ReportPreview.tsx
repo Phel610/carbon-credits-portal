@@ -12,6 +12,8 @@ import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, Cartesia
 import { toast } from '@/hooks/use-toast';
 import { generatePDF } from '@/lib/utils/pdfGenerator';
 import OperationalMetricsPanel from './OperationalMetricsPanel';
+import ExpensesPanel from './ExpensesPanel';
+import FinancingPanel from './FinancingPanel';
 import { TransposedTable } from '@/components/ui/transposed-table';
 
 interface ReportPreviewProps {
@@ -707,6 +709,22 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
               issuance_flag: modelInputs.issuance_flag?.[idx] || 0,
                 credits_issued: (modelInputs.credits_generated[idx] || 0) * (modelInputs.issuance_flag[idx] || 0),
               }))} 
+            />
+          )}
+
+          {/* Expenses Panel */}
+          {modelInputs && (
+            <ExpensesPanel 
+              modelInputs={modelInputs}
+              years={modelInputs.years}
+            />
+          )}
+
+          {/* Financing Panel */}
+          {modelInputs && (
+            <FinancingPanel 
+              modelInputs={modelInputs}
+              years={modelInputs.years}
             />
           )}
 
