@@ -1197,13 +1197,9 @@ export default function FinancialMetrics() {
           {scenariosExist ? 'View Scenarios' : 'Create Scenarios'}
         </Button>
       </div>
+      </div>
 
       <FinancialMetricsGuide open={showGuide} onOpenChange={setShowGuide} />
-    </FinancialPlatformLayout>
-          {scenariosExist ? 'Review Scenarios' : 'Create Scenarios'}
-        </Button>
-      </div>
-    </div>
     </FinancialPlatformLayout>
   );
 }
