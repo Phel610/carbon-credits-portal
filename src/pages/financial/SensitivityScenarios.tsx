@@ -15,6 +15,8 @@ import {
   TrendingUp, 
   TrendingDown, 
   Target,
+  Receipt,
+  Landmark,
   AlertTriangle,
   Loader2,
   Trash2,
@@ -290,7 +292,7 @@ const SensitivityScenarios = () => {
           unit: 'tCO2e',
           min: 0,
           max: 100000,
-          step: 500,
+          step: 100,
           format: 'number',
           basePattern: creditsGeneratedPattern
         },
@@ -302,7 +304,7 @@ const SensitivityScenarios = () => {
           unit: '$/tCO2e',
           min: 0,
           max: 100,
-          step: 1,
+          step: 0.5,
           format: 'currency',
           basePattern: pricePerCreditPattern
         },
@@ -328,7 +330,7 @@ const SensitivityScenarios = () => {
           unit: '$',
           min: 0,
           max: 500000,
-          step: 10000,
+          step: 1000,
           format: 'currency',
           basePattern: staffCostsPattern
         },
@@ -340,7 +342,7 @@ const SensitivityScenarios = () => {
       unit: '$',
       min: 0,
       max: 200000,
-      step: 5000,
+      step: 1000,
       format: 'currency',
       basePattern: mrvCostsPattern
     },
@@ -352,7 +354,7 @@ const SensitivityScenarios = () => {
           unit: '$',
           min: 0,
           max: 200000,
-          step: 5000,
+          step: 1000,
           format: 'currency',
           basePattern: pddCostsPattern
         },
@@ -364,7 +366,7 @@ const SensitivityScenarios = () => {
           unit: '$',
           min: 0,
           max: 150000,
-          step: 5000,
+          step: 1000,
           format: 'currency',
           basePattern: feasibilityCostsPattern
         },
@@ -376,7 +378,7 @@ const SensitivityScenarios = () => {
           unit: '$',
           min: 0,
           max: 5000000,
-          step: 25000,
+          step: 5000,
           format: 'currency',
           basePattern: capexPattern
         },
@@ -388,7 +390,7 @@ const SensitivityScenarios = () => {
           unit: '$',
           min: 0,
           max: 500000,
-          step: 10000,
+          step: 1000,
           format: 'currency',
           basePattern: depreciationPattern
         },
@@ -457,7 +459,7 @@ const SensitivityScenarios = () => {
           unit: '$',
           min: 0,
           max: 3000000,
-          step: 50000,
+          step: 10000,
           format: 'currency',
           basePattern: debtDrawPattern
         },
@@ -491,7 +493,7 @@ const SensitivityScenarios = () => {
           unit: '$',
           min: 0,
           max: 1000000,
-          step: 10000,
+          step: 5000,
           format: 'currency',
           basePattern: purchaseAmountPattern
         },
@@ -503,7 +505,7 @@ const SensitivityScenarios = () => {
           unit: '$',
           min: 0,
           max: 2000000,
-          step: 50000,
+          step: 10000,
           format: 'currency',
           basePattern: equityInjectionPattern
         },
@@ -515,7 +517,7 @@ const SensitivityScenarios = () => {
           unit: '$',
           min: 0,
           max: 1000000,
-          step: 10000,
+          step: 5000,
           format: 'currency'
         },
         {
@@ -526,7 +528,7 @@ const SensitivityScenarios = () => {
           unit: '$',
           min: 0,
           max: 1000000,
-          step: 10000,
+          step: 5000,
           format: 'currency'
         },
         {
@@ -537,7 +539,7 @@ const SensitivityScenarios = () => {
           unit: '$',
           min: 0,
           max: 2000000,
-          step: 25000,
+          step: 10000,
           format: 'currency'
         }
       ];
@@ -1443,10 +1445,12 @@ const SensitivityScenarios = () => {
               <CardContent className="space-y-6">
                 {/* Operational Metrics */}
                 <div>
-                  <h3 className="font-semibold mb-4 flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    Operational Metrics
-                  </h3>
+                  <div className="bg-muted/30 -mx-6 px-6 py-3 rounded-lg mb-4">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Target className="h-4 w-4" />
+                      Operational Metrics
+                    </h3>
+                  </div>
                   <div className="space-y-6">
                     {sensitivities
                       .filter(s => ['credits_generated', 'price_per_credit'].includes(s.key))
@@ -1526,7 +1530,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-2">
+                          <div className="relative pt-8">
                             <Slider
                               value={[variable.currentValue]}
                               onValueChange={(value) => handleSensitivityChange(variable.key, value)}
@@ -1538,7 +1542,7 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-0 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-2 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
@@ -1547,6 +1551,25 @@ const SensitivityScenarios = () => {
                                 BASE
                               </div>
                             </div>
+                          </div>
+                          
+                          {/* Manual Input Field */}
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs text-muted-foreground whitespace-nowrap">
+                              Precise:
+                            </Label>
+                            <Input
+                              type="number"
+                              value={variable.currentValue}
+                              onChange={(e) => {
+                                const newValue = parseFloat(e.target.value) || 0;
+                                const clampedValue = Math.max(variable.min, Math.min(variable.max, newValue));
+                                handleSensitivityChange(variable.key, [clampedValue]);
+                              }}
+                              className="h-8 flex-1 text-sm"
+                              step={variable.format === 'percentage' ? 0.1 : variable.format === 'currency' ? 0.01 : 1}
+                            />
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">{variable.unit}</span>
                           </div>
                           
                           {/* Min/Max Range Labels */}
@@ -1565,11 +1588,21 @@ const SensitivityScenarios = () => {
                   </div>
                 </div>
 
-                <Separator />
+                {/* Enhanced Separator */}
+                <div className="relative my-8">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t-2 border-primary/20" />
+                  </div>
+                </div>
 
                 {/* Expenses */}
                 <div>
-                  <h3 className="font-semibold mb-4">Expenses</h3>
+                  <div className="bg-muted/30 -mx-6 px-6 py-3 rounded-lg mb-4">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Receipt className="h-4 w-4" />
+                      Expenses
+                    </h3>
+                  </div>
                   <div className="space-y-6">
                     {sensitivities
                       .filter(s => ['cogs_rate', 'staff_costs', 'mrv_costs', 'pdd_costs', 'feasibility_costs', 'capex', 'depreciation', 'income_tax_rate', 'ar_rate', 'ap_rate'].includes(s.key))
@@ -1649,7 +1682,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-2">
+                          <div className="relative pt-8">
                             <Slider
                               value={[variable.currentValue]}
                               onValueChange={(value) => handleSensitivityChange(variable.key, value)}
@@ -1661,7 +1694,7 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-0 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-2 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
@@ -1670,6 +1703,25 @@ const SensitivityScenarios = () => {
                                 BASE
                               </div>
                             </div>
+                          </div>
+                          
+                          {/* Manual Input Field */}
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs text-muted-foreground whitespace-nowrap">
+                              Precise:
+                            </Label>
+                            <Input
+                              type="number"
+                              value={variable.currentValue}
+                              onChange={(e) => {
+                                const newValue = parseFloat(e.target.value) || 0;
+                                const clampedValue = Math.max(variable.min, Math.min(variable.max, newValue));
+                                handleSensitivityChange(variable.key, [clampedValue]);
+                              }}
+                              className="h-8 flex-1 text-sm"
+                              step={variable.format === 'percentage' ? 0.1 : variable.format === 'currency' ? 0.01 : 1}
+                            />
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">{variable.unit}</span>
                           </div>
                           
                           {/* Min/Max Range Labels */}
@@ -1688,11 +1740,21 @@ const SensitivityScenarios = () => {
                   </div>
                 </div>
 
-                <Separator />
+                {/* Enhanced Separator */}
+                <div className="relative my-8">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t-2 border-primary/20" />
+                  </div>
+                </div>
 
                 {/* Financing */}
                 <div>
-                  <h3 className="font-semibold mb-4">Financing</h3>
+                  <div className="bg-muted/30 -mx-6 px-6 py-3 rounded-lg mb-4">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Landmark className="h-4 w-4" />
+                      Financing
+                    </h3>
+                  </div>
                   <div className="space-y-6">
                     {sensitivities
                       .filter(s => ['discount_rate', 'interest_rate', 'debt_draw', 'debt_duration_years', 'purchase_share', 'purchase_amount', 'equity_injection', 'initial_equity_t0', 'opening_cash_y1', 'initial_ppe'].includes(s.key))
@@ -1772,7 +1834,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-2">
+                          <div className="relative pt-8">
                             <Slider
                               value={[variable.currentValue]}
                               onValueChange={(value) => handleSensitivityChange(variable.key, value)}
@@ -1784,7 +1846,7 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-0 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-2 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
@@ -1793,6 +1855,25 @@ const SensitivityScenarios = () => {
                                 BASE
                               </div>
                             </div>
+                          </div>
+                          
+                          {/* Manual Input Field */}
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs text-muted-foreground whitespace-nowrap">
+                              Precise:
+                            </Label>
+                            <Input
+                              type="number"
+                              value={variable.currentValue}
+                              onChange={(e) => {
+                                const newValue = parseFloat(e.target.value) || 0;
+                                const clampedValue = Math.max(variable.min, Math.min(variable.max, newValue));
+                                handleSensitivityChange(variable.key, [clampedValue]);
+                              }}
+                              className="h-8 flex-1 text-sm"
+                              step={variable.format === 'percentage' ? 0.1 : variable.format === 'currency' ? 0.01 : 1}
+                            />
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">{variable.unit}</span>
                           </div>
                           
                           {/* Min/Max Range Labels */}
