@@ -1444,8 +1444,8 @@ const SensitivityScenarios = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Operational Metrics */}
-                <div>
-                  <div className="bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-950/30 dark:to-transparent -mx-6 px-6 py-4 rounded-lg mb-6 border-l-4 border-blue-500">
+                <Card className="p-6 bg-card/50 border-2 border-blue-200 dark:border-blue-800 shadow-sm">
+                  <div className="bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-950/30 dark:to-transparent px-4 py-4 rounded-lg mb-6 border-l-4 border-blue-500">
                     <h3 className="font-bold text-lg flex items-center gap-2 text-blue-900 dark:text-blue-100">
                       <div className="p-1.5 bg-blue-500 rounded">
                         <Target className="h-4 w-4 text-white" />
@@ -1547,12 +1547,12 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-8 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-12 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
                             >
-                              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
                                 BASE
                               </div>
                             </div>
@@ -1591,23 +1591,14 @@ const SensitivityScenarios = () => {
                         </div>
                       ))}
                   </div>
-                </div>
+                </Card>
 
-                {/* Enhanced Separator */}
-                <div className="relative my-12">
-                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                    <span className="w-full border-t-4 border-primary/40" />
-                  </div>
-                  <div className="relative flex justify-center">
-                    <span className="bg-background px-4 text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                      • • •
-                    </span>
-                  </div>
-                </div>
+                {/* Separator */}
+                <div className="my-8" />
 
                 {/* Expenses */}
-                <div>
-                  <div className="bg-gradient-to-r from-orange-50 to-transparent dark:from-orange-950/30 dark:to-transparent -mx-6 px-6 py-4 rounded-lg mb-6 border-l-4 border-orange-500">
+                <Card className="p-6 bg-card/50 border-2 border-orange-200 dark:border-orange-800 shadow-sm">
+                  <div className="bg-gradient-to-r from-orange-50 to-transparent dark:from-orange-950/30 dark:to-transparent px-4 py-4 rounded-lg mb-6 border-l-4 border-orange-500">
                     <h3 className="font-bold text-lg flex items-center gap-2 text-orange-900 dark:text-orange-100">
                       <div className="p-1.5 bg-orange-500 rounded">
                         <Receipt className="h-4 w-4 text-white" />
@@ -1709,12 +1700,12 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-8 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-12 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
                             >
-                              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
                                 BASE
                               </div>
                             </div>
@@ -1753,23 +1744,14 @@ const SensitivityScenarios = () => {
                         </div>
                       ))}
                   </div>
-                </div>
+                </Card>
 
-                {/* Enhanced Separator */}
-                <div className="relative my-12">
-                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                    <span className="w-full border-t-4 border-primary/40" />
-                  </div>
-                  <div className="relative flex justify-center">
-                    <span className="bg-background px-4 text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                      • • •
-                    </span>
-                  </div>
-                </div>
+                {/* Separator */}
+                <div className="my-8" />
 
                 {/* Financing */}
-                <div>
-                  <div className="bg-gradient-to-r from-green-50 to-transparent dark:from-green-950/30 dark:to-transparent -mx-6 px-6 py-4 rounded-lg mb-6 border-l-4 border-green-500">
+                <Card className="p-6 bg-card/50 border-2 border-green-200 dark:border-green-800 shadow-sm">
+                  <div className="bg-gradient-to-r from-green-50 to-transparent dark:from-green-950/30 dark:to-transparent px-4 py-4 rounded-lg mb-6 border-l-4 border-green-500">
                     <h3 className="font-bold text-lg flex items-center gap-2 text-green-900 dark:text-green-100">
                       <div className="p-1.5 bg-green-500 rounded">
                         <Landmark className="h-4 w-4 text-white" />
@@ -1871,12 +1853,12 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-8 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-12 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
                             >
-                              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
                                 BASE
                               </div>
                             </div>
@@ -1915,7 +1897,7 @@ const SensitivityScenarios = () => {
                         </div>
                       ))}
                   </div>
-                </div>
+                </Card>
               </CardContent>
             </Card>
 
