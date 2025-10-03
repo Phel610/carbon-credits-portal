@@ -25,7 +25,8 @@ import {
   CheckSquare,
   HelpCircle,
   CheckCircle,
-  Pencil
+  Pencil,
+  RotateCcw
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -1450,32 +1451,114 @@ const SensitivityScenarios = () => {
                     {sensitivities
                       .filter(s => ['credits_generated', 'price_per_credit'].includes(s.key))
                       .map(variable => (
-                        <div key={variable.key} className="space-y-2">
+                        <div key={variable.key} className="space-y-3">
+                          {/* Header with variable name and reset button */}
                           <div className="flex items-center justify-between">
-                            <Label>{variable.name}</Label>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline">
+                            <Label className="font-medium">{variable.name}</Label>
+                            {Math.abs(variable.currentValue - variable.baseValue) > 0.01 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSensitivityChange(variable.key, [variable.baseValue])}
+                                className="h-7 px-2 text-xs"
+                              >
+                                <RotateCcw className="h-3 w-3 mr-1" />
+                                Reset
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {/* Three-column value display */}
+                          <div className="grid grid-cols-3 gap-2 text-xs">
+                            {/* Base Value */}
+                            <div className="text-center p-2 bg-blue-50 dark:bg-blue-950 rounded border border-blue-200 dark:border-blue-800">
+                              <div className="text-muted-foreground mb-1 uppercase font-semibold text-[10px]">Base</div>
+                              <div className="font-mono font-semibold text-blue-700 dark:text-blue-300">
+                                {formatValue(variable.baseValue, variable.format)}
+                              </div>
+                            </div>
+                            
+                            {/* Current Value */}
+                            <div className={`text-center p-2 rounded border ${
+                              variable.currentValue > variable.baseValue 
+                                ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"
+                                : variable.currentValue < variable.baseValue
+                                ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800"
+                                : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+                            }`}>
+                              <div className="text-muted-foreground mb-1 uppercase font-semibold text-[10px]">Current</div>
+                              <div className={`font-mono font-semibold ${
+                                variable.currentValue > variable.baseValue 
+                                  ? "text-green-700 dark:text-green-300"
+                                  : variable.currentValue < variable.baseValue
+                                  ? "text-red-700 dark:text-red-300"
+                                  : "text-gray-700 dark:text-gray-300"
+                              }`}>
                                 {formatValue(variable.currentValue, variable.format)}
-                              </Badge>
-                              {Math.abs(variable.currentValue - variable.baseValue) > 0.01 && (
-                                <Badge variant="secondary">
-                                  {variable.currentValue > variable.baseValue ? '+' : ''}
-                                  {((variable.currentValue - variable.baseValue) / variable.baseValue * 100).toFixed(0)}%
-                                </Badge>
-                              )}
+                              </div>
+                            </div>
+                            
+                            {/* Change Percentage */}
+                            <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800">
+                              <div className="text-muted-foreground mb-1 uppercase font-semibold text-[10px]">Change</div>
+                              <div className={`font-mono font-semibold flex items-center justify-center gap-1 ${
+                                variable.currentValue > variable.baseValue 
+                                  ? "text-green-700 dark:text-green-300"
+                                  : variable.currentValue < variable.baseValue
+                                  ? "text-red-700 dark:text-red-300"
+                                  : "text-gray-500"
+                              }`}>
+                                {Math.abs(variable.currentValue - variable.baseValue) > 0.01 ? (
+                                  <>
+                                    {variable.currentValue > variable.baseValue ? (
+                                      <TrendingUp className="h-3 w-3" />
+                                    ) : (
+                                      <TrendingDown className="h-3 w-3" />
+                                    )}
+                                    {variable.currentValue > variable.baseValue ? '+' : ''}
+                                    {((variable.currentValue - variable.baseValue) / variable.baseValue * 100).toFixed(1)}%
+                                  </>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          <Slider
-                            value={[variable.currentValue]}
-                            onValueChange={(value) => handleSensitivityChange(variable.key, value)}
-                            min={variable.min}
-                            max={variable.max}
-                            step={variable.step}
-                            className="w-full"
-                          />
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>{formatValue(variable.min, variable.format)}</span>
-                            <span>{formatValue(variable.max, variable.format)}</span>
+                          
+                          {/* Enhanced Slider with Base Case Marker */}
+                          <div className="relative pt-2">
+                            <Slider
+                              value={[variable.currentValue]}
+                              onValueChange={(value) => handleSensitivityChange(variable.key, value)}
+                              min={variable.min}
+                              max={variable.max}
+                              step={variable.step}
+                              className="w-full"
+                            />
+                            
+                            {/* Base Case Marker Line */}
+                            <div 
+                              className="absolute top-0 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              style={{
+                                left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
+                              }}
+                            >
+                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                                BASE
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Min/Max Range Labels */}
+                          <div className="flex justify-between text-xs text-muted-foreground px-1">
+                            <span className="font-mono">
+                              <span className="text-[10px] uppercase tracking-wider">Min: </span>
+                              {formatValue(variable.min, variable.format)}
+                            </span>
+                            <span className="font-mono">
+                              <span className="text-[10px] uppercase tracking-wider">Max: </span>
+                              {formatValue(variable.max, variable.format)}
+                            </span>
                           </div>
                         </div>
                       ))}
@@ -1491,32 +1574,114 @@ const SensitivityScenarios = () => {
                     {sensitivities
                       .filter(s => ['cogs_rate', 'staff_costs', 'mrv_costs', 'pdd_costs', 'feasibility_costs', 'capex', 'depreciation', 'income_tax_rate', 'ar_rate', 'ap_rate'].includes(s.key))
                       .map(variable => (
-                        <div key={variable.key} className="space-y-2">
+                        <div key={variable.key} className="space-y-3">
+                          {/* Header with variable name and reset button */}
                           <div className="flex items-center justify-between">
-                            <Label>{variable.name}</Label>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline">
+                            <Label className="font-medium">{variable.name}</Label>
+                            {Math.abs(variable.currentValue - variable.baseValue) > 0.01 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSensitivityChange(variable.key, [variable.baseValue])}
+                                className="h-7 px-2 text-xs"
+                              >
+                                <RotateCcw className="h-3 w-3 mr-1" />
+                                Reset
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {/* Three-column value display */}
+                          <div className="grid grid-cols-3 gap-2 text-xs">
+                            {/* Base Value */}
+                            <div className="text-center p-2 bg-blue-50 dark:bg-blue-950 rounded border border-blue-200 dark:border-blue-800">
+                              <div className="text-muted-foreground mb-1 uppercase font-semibold text-[10px]">Base</div>
+                              <div className="font-mono font-semibold text-blue-700 dark:text-blue-300">
+                                {formatValue(variable.baseValue, variable.format)}
+                              </div>
+                            </div>
+                            
+                            {/* Current Value */}
+                            <div className={`text-center p-2 rounded border ${
+                              variable.currentValue > variable.baseValue 
+                                ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"
+                                : variable.currentValue < variable.baseValue
+                                ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800"
+                                : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+                            }`}>
+                              <div className="text-muted-foreground mb-1 uppercase font-semibold text-[10px]">Current</div>
+                              <div className={`font-mono font-semibold ${
+                                variable.currentValue > variable.baseValue 
+                                  ? "text-green-700 dark:text-green-300"
+                                  : variable.currentValue < variable.baseValue
+                                  ? "text-red-700 dark:text-red-300"
+                                  : "text-gray-700 dark:text-gray-300"
+                              }`}>
                                 {formatValue(variable.currentValue, variable.format)}
-                              </Badge>
-                              {Math.abs(variable.currentValue - variable.baseValue) > 0.01 && (
-                                <Badge variant="secondary">
-                                  {variable.currentValue > variable.baseValue ? '+' : ''}
-                                  {((variable.currentValue - variable.baseValue) / variable.baseValue * 100).toFixed(0)}%
-                                </Badge>
-                              )}
+                              </div>
+                            </div>
+                            
+                            {/* Change Percentage */}
+                            <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800">
+                              <div className="text-muted-foreground mb-1 uppercase font-semibold text-[10px]">Change</div>
+                              <div className={`font-mono font-semibold flex items-center justify-center gap-1 ${
+                                variable.currentValue > variable.baseValue 
+                                  ? "text-green-700 dark:text-green-300"
+                                  : variable.currentValue < variable.baseValue
+                                  ? "text-red-700 dark:text-red-300"
+                                  : "text-gray-500"
+                              }`}>
+                                {Math.abs(variable.currentValue - variable.baseValue) > 0.01 ? (
+                                  <>
+                                    {variable.currentValue > variable.baseValue ? (
+                                      <TrendingUp className="h-3 w-3" />
+                                    ) : (
+                                      <TrendingDown className="h-3 w-3" />
+                                    )}
+                                    {variable.currentValue > variable.baseValue ? '+' : ''}
+                                    {((variable.currentValue - variable.baseValue) / variable.baseValue * 100).toFixed(1)}%
+                                  </>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          <Slider
-                            value={[variable.currentValue]}
-                            onValueChange={(value) => handleSensitivityChange(variable.key, value)}
-                            min={variable.min}
-                            max={variable.max}
-                            step={variable.step}
-                            className="w-full"
-                          />
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>{formatValue(variable.min, variable.format)}</span>
-                            <span>{formatValue(variable.max, variable.format)}</span>
+                          
+                          {/* Enhanced Slider with Base Case Marker */}
+                          <div className="relative pt-2">
+                            <Slider
+                              value={[variable.currentValue]}
+                              onValueChange={(value) => handleSensitivityChange(variable.key, value)}
+                              min={variable.min}
+                              max={variable.max}
+                              step={variable.step}
+                              className="w-full"
+                            />
+                            
+                            {/* Base Case Marker Line */}
+                            <div 
+                              className="absolute top-0 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              style={{
+                                left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
+                              }}
+                            >
+                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                                BASE
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Min/Max Range Labels */}
+                          <div className="flex justify-between text-xs text-muted-foreground px-1">
+                            <span className="font-mono">
+                              <span className="text-[10px] uppercase tracking-wider">Min: </span>
+                              {formatValue(variable.min, variable.format)}
+                            </span>
+                            <span className="font-mono">
+                              <span className="text-[10px] uppercase tracking-wider">Max: </span>
+                              {formatValue(variable.max, variable.format)}
+                            </span>
                           </div>
                         </div>
                       ))}
@@ -1532,32 +1697,114 @@ const SensitivityScenarios = () => {
                     {sensitivities
                       .filter(s => ['discount_rate', 'interest_rate', 'debt_draw', 'debt_duration_years', 'purchase_share', 'purchase_amount', 'equity_injection', 'initial_equity_t0', 'opening_cash_y1', 'initial_ppe'].includes(s.key))
                       .map(variable => (
-                        <div key={variable.key} className="space-y-2">
+                        <div key={variable.key} className="space-y-3">
+                          {/* Header with variable name and reset button */}
                           <div className="flex items-center justify-between">
-                            <Label>{variable.name}</Label>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline">
+                            <Label className="font-medium">{variable.name}</Label>
+                            {Math.abs(variable.currentValue - variable.baseValue) > 0.01 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSensitivityChange(variable.key, [variable.baseValue])}
+                                className="h-7 px-2 text-xs"
+                              >
+                                <RotateCcw className="h-3 w-3 mr-1" />
+                                Reset
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {/* Three-column value display */}
+                          <div className="grid grid-cols-3 gap-2 text-xs">
+                            {/* Base Value */}
+                            <div className="text-center p-2 bg-blue-50 dark:bg-blue-950 rounded border border-blue-200 dark:border-blue-800">
+                              <div className="text-muted-foreground mb-1 uppercase font-semibold text-[10px]">Base</div>
+                              <div className="font-mono font-semibold text-blue-700 dark:text-blue-300">
+                                {formatValue(variable.baseValue, variable.format)}
+                              </div>
+                            </div>
+                            
+                            {/* Current Value */}
+                            <div className={`text-center p-2 rounded border ${
+                              variable.currentValue > variable.baseValue 
+                                ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"
+                                : variable.currentValue < variable.baseValue
+                                ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800"
+                                : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+                            }`}>
+                              <div className="text-muted-foreground mb-1 uppercase font-semibold text-[10px]">Current</div>
+                              <div className={`font-mono font-semibold ${
+                                variable.currentValue > variable.baseValue 
+                                  ? "text-green-700 dark:text-green-300"
+                                  : variable.currentValue < variable.baseValue
+                                  ? "text-red-700 dark:text-red-300"
+                                  : "text-gray-700 dark:text-gray-300"
+                              }`}>
                                 {formatValue(variable.currentValue, variable.format)}
-                              </Badge>
-                              {Math.abs(variable.currentValue - variable.baseValue) > 0.01 && (
-                                <Badge variant="secondary">
-                                  {variable.currentValue > variable.baseValue ? '+' : ''}
-                                  {((variable.currentValue - variable.baseValue) / variable.baseValue * 100).toFixed(0)}%
-                                </Badge>
-                              )}
+                              </div>
+                            </div>
+                            
+                            {/* Change Percentage */}
+                            <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800">
+                              <div className="text-muted-foreground mb-1 uppercase font-semibold text-[10px]">Change</div>
+                              <div className={`font-mono font-semibold flex items-center justify-center gap-1 ${
+                                variable.currentValue > variable.baseValue 
+                                  ? "text-green-700 dark:text-green-300"
+                                  : variable.currentValue < variable.baseValue
+                                  ? "text-red-700 dark:text-red-300"
+                                  : "text-gray-500"
+                              }`}>
+                                {Math.abs(variable.currentValue - variable.baseValue) > 0.01 ? (
+                                  <>
+                                    {variable.currentValue > variable.baseValue ? (
+                                      <TrendingUp className="h-3 w-3" />
+                                    ) : (
+                                      <TrendingDown className="h-3 w-3" />
+                                    )}
+                                    {variable.currentValue > variable.baseValue ? '+' : ''}
+                                    {((variable.currentValue - variable.baseValue) / variable.baseValue * 100).toFixed(1)}%
+                                  </>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          <Slider
-                            value={[variable.currentValue]}
-                            onValueChange={(value) => handleSensitivityChange(variable.key, value)}
-                            min={variable.min}
-                            max={variable.max}
-                            step={variable.step}
-                            className="w-full"
-                          />
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>{formatValue(variable.min, variable.format)}</span>
-                            <span>{formatValue(variable.max, variable.format)}</span>
+                          
+                          {/* Enhanced Slider with Base Case Marker */}
+                          <div className="relative pt-2">
+                            <Slider
+                              value={[variable.currentValue]}
+                              onValueChange={(value) => handleSensitivityChange(variable.key, value)}
+                              min={variable.min}
+                              max={variable.max}
+                              step={variable.step}
+                              className="w-full"
+                            />
+                            
+                            {/* Base Case Marker Line */}
+                            <div 
+                              className="absolute top-0 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              style={{
+                                left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
+                              }}
+                            >
+                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                                BASE
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Min/Max Range Labels */}
+                          <div className="flex justify-between text-xs text-muted-foreground px-1">
+                            <span className="font-mono">
+                              <span className="text-[10px] uppercase tracking-wider">Min: </span>
+                              {formatValue(variable.min, variable.format)}
+                            </span>
+                            <span className="font-mono">
+                              <span className="text-[10px] uppercase tracking-wider">Max: </span>
+                              {formatValue(variable.max, variable.format)}
+                            </span>
                           </div>
                         </div>
                       ))}
