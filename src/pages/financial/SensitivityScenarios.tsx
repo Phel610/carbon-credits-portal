@@ -1216,12 +1216,12 @@ const SensitivityScenarios = () => {
 
   const formatValue = (value: number, format: string): string => {
     if (format === 'currency') {
-      return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+      return `$${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
     }
     if (format === 'percentage') {
       return `${value.toFixed(1)}%`;
     }
-    return value.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    return value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 });
   };
 
   const getMetricChange = (current: number | null | undefined, base: number | null | undefined) => {
@@ -1445,17 +1445,22 @@ const SensitivityScenarios = () => {
               <CardContent className="space-y-6">
                 {/* Operational Metrics */}
                 <div>
-                  <div className="bg-muted/30 -mx-6 px-6 py-3 rounded-lg mb-4">
-                    <h3 className="font-semibold flex items-center gap-2">
-                      <Target className="h-4 w-4" />
+                  <div className="bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-950/30 dark:to-transparent -mx-6 px-6 py-4 rounded-lg mb-6 border-l-4 border-blue-500">
+                    <h3 className="font-bold text-lg flex items-center gap-2 text-blue-900 dark:text-blue-100">
+                      <div className="p-1.5 bg-blue-500 rounded">
+                        <Target className="h-4 w-4 text-white" />
+                      </div>
                       Operational Metrics
                     </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Control revenue drivers and carbon credit generation
+                    </p>
                   </div>
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     {sensitivities
                       .filter(s => ['credits_generated', 'price_per_credit'].includes(s.key))
                       .map(variable => (
-                        <div key={variable.key} className="space-y-3">
+                        <div key={variable.key} className="space-y-4 p-4 bg-muted/10 rounded-lg border border-border/50">
                           {/* Header with variable name and reset button */}
                           <div className="flex items-center justify-between">
                             <Label className="font-medium">{variable.name}</Label>
@@ -1530,7 +1535,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-8">
+                          <div className="relative pt-16">
                             <Slider
                               value={[variable.currentValue]}
                               onValueChange={(value) => handleSensitivityChange(variable.key, value)}
@@ -1542,12 +1547,12 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-2 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-8 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
                             >
-                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
                                 BASE
                               </div>
                             </div>
@@ -1589,25 +1594,35 @@ const SensitivityScenarios = () => {
                 </div>
 
                 {/* Enhanced Separator */}
-                <div className="relative my-8">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t-2 border-primary/20" />
+                <div className="relative my-12">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <span className="w-full border-t-4 border-primary/40" />
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-background px-4 text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                      • • •
+                    </span>
                   </div>
                 </div>
 
                 {/* Expenses */}
                 <div>
-                  <div className="bg-muted/30 -mx-6 px-6 py-3 rounded-lg mb-4">
-                    <h3 className="font-semibold flex items-center gap-2">
-                      <Receipt className="h-4 w-4" />
+                  <div className="bg-gradient-to-r from-orange-50 to-transparent dark:from-orange-950/30 dark:to-transparent -mx-6 px-6 py-4 rounded-lg mb-6 border-l-4 border-orange-500">
+                    <h3 className="font-bold text-lg flex items-center gap-2 text-orange-900 dark:text-orange-100">
+                      <div className="p-1.5 bg-orange-500 rounded">
+                        <Receipt className="h-4 w-4 text-white" />
+                      </div>
                       Expenses
                     </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Adjust operational costs and working capital assumptions
+                    </p>
                   </div>
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     {sensitivities
                       .filter(s => ['cogs_rate', 'staff_costs', 'mrv_costs', 'pdd_costs', 'feasibility_costs', 'capex', 'depreciation', 'income_tax_rate', 'ar_rate', 'ap_rate'].includes(s.key))
                       .map(variable => (
-                        <div key={variable.key} className="space-y-3">
+                        <div key={variable.key} className="space-y-4 p-4 bg-muted/10 rounded-lg border border-border/50">
                           {/* Header with variable name and reset button */}
                           <div className="flex items-center justify-between">
                             <Label className="font-medium">{variable.name}</Label>
@@ -1682,7 +1697,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-8">
+                          <div className="relative pt-16">
                             <Slider
                               value={[variable.currentValue]}
                               onValueChange={(value) => handleSensitivityChange(variable.key, value)}
@@ -1694,12 +1709,12 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-2 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-8 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
                             >
-                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
                                 BASE
                               </div>
                             </div>
@@ -1741,25 +1756,35 @@ const SensitivityScenarios = () => {
                 </div>
 
                 {/* Enhanced Separator */}
-                <div className="relative my-8">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t-2 border-primary/20" />
+                <div className="relative my-12">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <span className="w-full border-t-4 border-primary/40" />
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-background px-4 text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                      • • •
+                    </span>
                   </div>
                 </div>
 
                 {/* Financing */}
                 <div>
-                  <div className="bg-muted/30 -mx-6 px-6 py-3 rounded-lg mb-4">
-                    <h3 className="font-semibold flex items-center gap-2">
-                      <Landmark className="h-4 w-4" />
+                  <div className="bg-gradient-to-r from-green-50 to-transparent dark:from-green-950/30 dark:to-transparent -mx-6 px-6 py-4 rounded-lg mb-6 border-l-4 border-green-500">
+                    <h3 className="font-bold text-lg flex items-center gap-2 text-green-900 dark:text-green-100">
+                      <div className="p-1.5 bg-green-500 rounded">
+                        <Landmark className="h-4 w-4 text-white" />
+                      </div>
                       Financing
                     </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Modify funding structure and investment parameters
+                    </p>
                   </div>
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     {sensitivities
                       .filter(s => ['discount_rate', 'interest_rate', 'debt_draw', 'debt_duration_years', 'purchase_share', 'purchase_amount', 'equity_injection', 'initial_equity_t0', 'opening_cash_y1', 'initial_ppe'].includes(s.key))
                       .map(variable => (
-                        <div key={variable.key} className="space-y-3">
+                        <div key={variable.key} className="space-y-4 p-4 bg-muted/10 rounded-lg border border-border/50">
                           {/* Header with variable name and reset button */}
                           <div className="flex items-center justify-between">
                             <Label className="font-medium">{variable.name}</Label>
@@ -1834,7 +1859,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-8">
+                          <div className="relative pt-16">
                             <Slider
                               value={[variable.currentValue]}
                               onValueChange={(value) => handleSensitivityChange(variable.key, value)}
@@ -1846,12 +1871,12 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-2 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-8 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
                             >
-                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
                                 BASE
                               </div>
                             </div>
