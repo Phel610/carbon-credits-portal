@@ -1444,10 +1444,10 @@ const SensitivityScenarios = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Operational Metrics */}
-                <Card className="p-6 bg-card/50 border-2 border-blue-200 dark:border-blue-800 shadow-sm">
-                  <div className="bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-950/30 dark:to-transparent px-4 py-4 rounded-lg mb-6 border-l-4 border-blue-500">
-                    <h3 className="font-bold text-lg flex items-center gap-2 text-blue-900 dark:text-blue-100">
-                      <div className="p-1.5 bg-blue-500 rounded">
+                <Card className="p-6 bg-card/50 border-2 border-green-200 dark:border-green-800 shadow-sm">
+                  <div className="bg-gradient-to-r from-green-50 to-transparent dark:from-green-950/30 dark:to-transparent px-4 py-4 rounded-lg mb-6 border-l-4 border-green-500">
+                    <h3 className="font-bold text-lg flex items-center gap-2 text-green-900 dark:text-green-100">
+                      <div className="p-1.5 bg-green-500 rounded">
                         <Target className="h-4 w-4 text-white" />
                       </div>
                       Operational Metrics
@@ -1456,7 +1456,7 @@ const SensitivityScenarios = () => {
                       Control revenue drivers and carbon credit generation
                     </p>
                   </div>
-                  <div className="space-y-8">
+                  <div className="space-y-10">
                     {sensitivities
                       .filter(s => ['credits_generated', 'price_per_credit'].includes(s.key))
                       .map(variable => (
@@ -1535,7 +1535,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-16">
+                          <div className="relative pt-14">
                             <Slider
                               value={[variable.currentValue]}
                               onValueChange={(value) => handleSensitivityChange(variable.key, value)}
@@ -1547,12 +1547,12 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-12 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-11 h-2 w-0.5 bg-green-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
                             >
-                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-green-600 dark:text-green-400 whitespace-nowrap">
                                 BASE
                               </div>
                             </div>
@@ -1597,10 +1597,10 @@ const SensitivityScenarios = () => {
                 <div className="my-8" />
 
                 {/* Expenses */}
-                <Card className="p-6 bg-card/50 border-2 border-orange-200 dark:border-orange-800 shadow-sm">
-                  <div className="bg-gradient-to-r from-orange-50 to-transparent dark:from-orange-950/30 dark:to-transparent px-4 py-4 rounded-lg mb-6 border-l-4 border-orange-500">
-                    <h3 className="font-bold text-lg flex items-center gap-2 text-orange-900 dark:text-orange-100">
-                      <div className="p-1.5 bg-orange-500 rounded">
+                <Card className="p-6 bg-card/50 border-2 border-blue-200 dark:border-blue-800 shadow-sm">
+                  <div className="bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-950/30 dark:to-transparent px-4 py-4 rounded-lg mb-6 border-l-4 border-blue-500">
+                    <h3 className="font-bold text-lg flex items-center gap-2 text-blue-900 dark:text-blue-100">
+                      <div className="p-1.5 bg-blue-500 rounded">
                         <Receipt className="h-4 w-4 text-white" />
                       </div>
                       Expenses
@@ -1609,7 +1609,7 @@ const SensitivityScenarios = () => {
                       Adjust operational costs and working capital assumptions
                     </p>
                   </div>
-                  <div className="space-y-8">
+                  <div className="space-y-10">
                     {sensitivities
                       .filter(s => ['cogs_rate', 'staff_costs', 'mrv_costs', 'pdd_costs', 'feasibility_costs', 'capex', 'depreciation', 'income_tax_rate', 'ar_rate', 'ap_rate'].includes(s.key))
                       .map(variable => (
@@ -1688,7 +1688,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-16">
+                          <div className="relative pt-14">
                             <Slider
                               value={[variable.currentValue]}
                               onValueChange={(value) => handleSensitivityChange(variable.key, value)}
@@ -1700,7 +1700,7 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-12 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-11 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
@@ -1750,10 +1750,10 @@ const SensitivityScenarios = () => {
                 <div className="my-8" />
 
                 {/* Financing */}
-                <Card className="p-6 bg-card/50 border-2 border-green-200 dark:border-green-800 shadow-sm">
-                  <div className="bg-gradient-to-r from-green-50 to-transparent dark:from-green-950/30 dark:to-transparent px-4 py-4 rounded-lg mb-6 border-l-4 border-green-500">
-                    <h3 className="font-bold text-lg flex items-center gap-2 text-green-900 dark:text-green-100">
-                      <div className="p-1.5 bg-green-500 rounded">
+                <Card className="p-6 bg-card/50 border-2 border-orange-200 dark:border-orange-800 shadow-sm">
+                  <div className="bg-gradient-to-r from-orange-50 to-transparent dark:from-orange-950/30 dark:to-transparent px-4 py-4 rounded-lg mb-6 border-l-4 border-orange-500">
+                    <h3 className="font-bold text-lg flex items-center gap-2 text-orange-900 dark:text-orange-100">
+                      <div className="p-1.5 bg-orange-500 rounded">
                         <Landmark className="h-4 w-4 text-white" />
                       </div>
                       Financing
@@ -1762,7 +1762,7 @@ const SensitivityScenarios = () => {
                       Modify funding structure and investment parameters
                     </p>
                   </div>
-                  <div className="space-y-8">
+                  <div className="space-y-10">
                     {sensitivities
                       .filter(s => ['discount_rate', 'interest_rate', 'debt_draw', 'debt_duration_years', 'purchase_share', 'purchase_amount', 'equity_injection', 'initial_equity_t0', 'opening_cash_y1', 'initial_ppe'].includes(s.key))
                       .map(variable => (
@@ -1841,7 +1841,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-16">
+                          <div className="relative pt-14">
                             <Slider
                               value={[variable.currentValue]}
                               onValueChange={(value) => handleSensitivityChange(variable.key, value)}
@@ -1853,12 +1853,12 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-12 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-11 h-2 w-0.5 bg-orange-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
                             >
-                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-orange-600 dark:text-orange-400 whitespace-nowrap">
                                 BASE
                               </div>
                             </div>
