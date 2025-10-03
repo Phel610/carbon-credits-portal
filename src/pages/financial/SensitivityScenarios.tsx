@@ -1340,48 +1340,94 @@ const SensitivityScenarios = () => {
               </Card>
             )}
 
-            {/* Key Metrics Summary */}
-            {baseMetrics && currentMetrics && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Key Metrics Impact</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[
-                      { label: 'Equity NPV', key: 'equityNPV', format: 'currency' },
-                      { label: 'Equity IRR', key: 'equityIRR', format: 'percentage' },
-                      { label: 'Project NPV', key: 'projectNPV', format: 'currency' },
-                      { label: 'Payback Period', key: 'paybackPeriod', format: 'years' }
-                    ].map(metric => {
-                      const baseVal = baseMetrics.returns?.[metric.key];
-                      const currentVal = currentMetrics.returns?.[metric.key];
-                      const change = getMetricChange(currentVal, baseVal);
-                      
-                      return (
-                        <div key={metric.key} className="space-y-2">
-                          <div className="text-sm text-muted-foreground">{metric.label}</div>
-                          <div className="text-2xl font-bold">
-                            {metric.format === 'currency' 
-                              ? `$${(currentVal || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
-                              : metric.format === 'percentage'
-                              ? `${((currentVal || 0) * 100).toFixed(1)}%`
-                              : `${(currentVal || 0).toFixed(1)} yrs`
-                            }
-                          </div>
-                          {Math.abs(change) > 0.1 && (
-                            <div className={`text-sm flex items-center gap-1 ${change > 0 ? 'text-success' : 'text-destructive'}`}>
-                              {change > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                              {Math.abs(change).toFixed(1)}%
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+            {/* Returns & NPV Analysis */}
+            {baseMetrics && currentMetrics && (() => {
+              const discountRate = sensitivities.find(s => s.key === 'discount_rate')?.currentValue ?? 12;
+              
+              const formatIRR = (value: number | null) => value ? `${(value * 100).toFixed(1)}%` : 'n/a';
+              const formatCurrency = (value: number) => `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+              const formatPayback = (value: number | null) => value && value < 100 ? `${value.toFixed(1)} yrs` : '> horizon';
+              
+              const getChangeColor = (current: number | null, base: number | null) => {
+                if (!current || !base) return '';
+                const change = ((current - base) / Math.abs(base)) * 100;
+                if (Math.abs(change) < 0.1) return '';
+                return change > 0 ? 'text-success' : 'text-destructive';
+              };
+              
+              const renderMetricRow = (label: string, currentVal: number | null, baseVal: number | null, formatter: (val: number | null) => string) => {
+                const changeColor = getChangeColor(currentVal, baseVal);
+                const change = (currentVal && baseVal) ? (((currentVal - baseVal) / Math.abs(baseVal)) * 100) : 0;
+                
+                return (
+                  <div className="flex justify-between items-center py-1.5">
+                    <span className="text-sm text-muted-foreground">{label}:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-semibold">{formatter(currentVal)}</span>
+                      {Math.abs(change) > 0.1 && (
+                        <span className={`text-xs flex items-center gap-0.5 ${changeColor}`}>
+                          {change > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                          {Math.abs(change).toFixed(0)}%
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                );
+              };
+              
+              return (
+                <>
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold">Returns & NPV Analysis</h3>
+                    <p className="text-sm text-muted-foreground">Real-time impact on investment returns as you adjust variables</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Equity Returns (Levered) */}
+                    <Card className="border-2">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">Equity Returns (Levered)</CardTitle>
+                        <CardDescription className="text-xs">Returns to equity holders after debt service</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-1">
+                        {renderMetricRow('IRR', currentMetrics.returns?.equity?.irr, baseMetrics.returns?.equity?.irr, formatIRR)}
+                        {renderMetricRow(`NPV @ ${discountRate.toFixed(1)}%`, currentMetrics.returns?.equity?.npv, baseMetrics.returns?.equity?.npv, formatCurrency)}
+                        {renderMetricRow('MIRR', currentMetrics.returns?.equity?.mirr, baseMetrics.returns?.equity?.mirr, formatIRR)}
+                        {renderMetricRow('Payback', currentMetrics.returns?.equity?.payback, baseMetrics.returns?.equity?.payback, formatPayback)}
+                        {renderMetricRow('Discounted Payback', currentMetrics.returns?.equity?.discountedPayback, baseMetrics.returns?.equity?.discountedPayback, formatPayback)}
+                      </CardContent>
+                    </Card>
+
+                    {/* Project Returns (Unlevered) */}
+                    <Card className="border-2">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">Project Returns (Unlevered)</CardTitle>
+                        <CardDescription className="text-xs">Returns before financing considerations</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-1">
+                        {renderMetricRow('IRR', currentMetrics.returns?.project?.irr, baseMetrics.returns?.project?.irr, formatIRR)}
+                        {renderMetricRow(`NPV @ ${discountRate.toFixed(1)}%`, currentMetrics.returns?.project?.npv, baseMetrics.returns?.project?.npv, formatCurrency)}
+                        {renderMetricRow('MIRR', currentMetrics.returns?.project?.mirr, baseMetrics.returns?.project?.mirr, formatIRR)}
+                        {renderMetricRow('Payback', currentMetrics.returns?.project?.payback, baseMetrics.returns?.project?.payback, formatPayback)}
+                        {renderMetricRow('Discounted Payback', currentMetrics.returns?.project?.discountedPayback, baseMetrics.returns?.project?.discountedPayback, formatPayback)}
+                      </CardContent>
+                    </Card>
+
+                    {/* Investor Returns (Pre-purchase) */}
+                    <Card className="border-2">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">Investor Returns (Pre-purchase)</CardTitle>
+                        <CardDescription className="text-xs">Returns to carbon stream investor</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-1">
+                        {renderMetricRow('IRR', currentMetrics.returns?.investor?.irr, baseMetrics.returns?.investor?.irr, formatIRR)}
+                        {renderMetricRow(`NPV @ ${discountRate.toFixed(1)}%`, currentMetrics.returns?.investor?.npv, baseMetrics.returns?.investor?.npv, formatCurrency)}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              );
+            })()}
 
             {/* Sensitivity Variables */}
             <Card>
