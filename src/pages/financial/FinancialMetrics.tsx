@@ -14,6 +14,8 @@ import type { YearlyFinancials, ComprehensiveMetrics } from "@/lib/financial/met
 import { calculateComprehensiveMetrics } from "@/lib/financial/metricsCalculator";
 import { useToast } from "@/hooks/use-toast";
 import { TransposedTable } from "@/components/ui/transposed-table";
+import { FinancialMetricsGuide } from "@/components/help/FinancialMetricsGuide";
+import { HelpCircle } from "lucide-react";
 
 export default function FinancialMetrics() {
   const { id } = useParams();
@@ -25,6 +27,7 @@ export default function FinancialMetrics() {
   const [metrics, setMetrics] = useState<ComprehensiveMetrics | null>(null);
   const [discountRate, setDiscountRate] = useState(15);
   const [scenariosExist, setScenariosExist] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -345,6 +348,10 @@ export default function FinancialMetrics() {
           <h1 className="text-3xl font-bold mt-2">{modelName} – Financial Metrics</h1>
           <p className="text-muted-foreground">Comprehensive financial analysis and performance indicators</p>
         </div>
+        <Button variant="outline" size="sm" onClick={() => setShowGuide(true)}>
+          <HelpCircle className="h-4 w-4 mr-2" />
+          Help Guide
+        </Button>
       </div>
 
       {/* Executive Summary Cards */}
@@ -1187,6 +1194,12 @@ export default function FinancialMetrics() {
           onClick={() => navigate(`/financial/models/${id}/scenarios`)}
         >
           <BarChart3 className="mr-2 h-4 w-4" />
+          {scenariosExist ? 'View Scenarios' : 'Create Scenarios'}
+        </Button>
+      </div>
+
+      <FinancialMetricsGuide open={showGuide} onOpenChange={setShowGuide} />
+    </FinancialPlatformLayout>
           {scenariosExist ? 'Review Scenarios' : 'Create Scenarios'}
         </Button>
       </div>

@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { ReportsGuide } from '@/components/help/ReportsGuide';
+import { HelpCircle } from 'lucide-react';
 
 interface FinancialModel {
   id: string;
@@ -35,6 +37,7 @@ const FinancialReports = () => {
   const [models, setModels] = useState<FinancialModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingReport, setGeneratingReport] = useState<string | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     fetchModels();
@@ -135,11 +138,17 @@ const FinancialReports = () => {
     <FinancialPlatformLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Financial Reports</h1>
-          <p className="text-muted-foreground">
-            Generate comprehensive PDF reports for your carbon project financial models.
-          </p>
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">Financial Reports</h1>
+            <p className="text-muted-foreground">
+              Generate comprehensive PDF reports for your carbon project financial models.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setShowGuide(true)}>
+            <HelpCircle className="h-4 w-4 mr-2" />
+            Help Guide
+          </Button>
         </div>
 
         {/* Report Types Overview */}
@@ -396,6 +405,8 @@ const FinancialReports = () => {
           </CardContent>
         </Card>
       </div>
+
+      <ReportsGuide open={showGuide} onOpenChange={setShowGuide} />
     </FinancialPlatformLayout>
   );
 };

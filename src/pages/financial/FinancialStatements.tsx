@@ -26,6 +26,8 @@ import CarbonStreamTable from '@/components/financial/CarbonStreamTable';
 import FreeCashFlowTable from '@/components/financial/FreeCashFlowTable';
 import OperationalMetricsPanel from '@/components/financial/OperationalMetricsPanel';
 import AssumptionsPanel from '@/components/financial/AssumptionsPanel';
+import { FinancialStatementsGuide } from '@/components/help/FinancialStatementsGuide';
+import { HelpCircle } from 'lucide-react';
 
 interface FinancialModel {
   id: string;
@@ -44,6 +46,7 @@ const FinancialStatements = () => {
   const [activeTab, setActiveTab] = useState('income');
   const [statements, setStatements] = useState<any>(null);
   const [metricsExist, setMetricsExist] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -436,6 +439,10 @@ const FinancialStatements = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowGuide(true)}>
+              <HelpCircle className="h-4 w-4 mr-2" />
+              Help Guide
+            </Button>
             <Button 
               onClick={() => calculateStatements(model)} 
               disabled={calculating}

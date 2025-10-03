@@ -21,6 +21,8 @@ import { toast } from '@/hooks/use-toast';
 import OperationalMetricsForm from '@/components/financial/OperationalMetricsForm';
 import ExpensesForm from '@/components/financial/ExpensesForm';
 import FinancingForm from '@/components/financial/FinancingForm';
+import { ModelInputsGuide } from '@/components/help/ModelInputsGuide';
+import { HelpCircle } from 'lucide-react';
 
 
 interface FinancialModel {
@@ -44,6 +46,7 @@ const ModelInputs = () => {
     financing: false,
   });
   const [statementsExist, setStatementsExist] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -152,11 +155,17 @@ const ModelInputs = () => {
           </Button>
         </div>
 
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">{model.name} - Inputs</h1>
-          <p className="text-muted-foreground">
-            Configure all input parameters for your financial model ({model.start_year}-{model.end_year})
-          </p>
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">{model.name} - Inputs</h1>
+            <p className="text-muted-foreground">
+              Configure all input parameters for your financial model ({model.start_year}-{model.end_year})
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setShowGuide(true)}>
+            <HelpCircle className="h-4 w-4 mr-2" />
+            Help Guide
+          </Button>
         </div>
 
         {/* Progress Overview */}
@@ -239,6 +248,8 @@ const ModelInputs = () => {
           </Button>
         </div>
       </div>
+
+      <ModelInputsGuide open={showGuide} onOpenChange={setShowGuide} />
     </FinancialPlatformLayout>
   );
 };
