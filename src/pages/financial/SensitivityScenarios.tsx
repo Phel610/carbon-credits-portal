@@ -1460,7 +1460,7 @@ const SensitivityScenarios = () => {
                     {sensitivities
                       .filter(s => ['credits_generated', 'price_per_credit'].includes(s.key))
                       .map(variable => (
-                        <div key={variable.key} className="space-y-4 p-4 bg-muted/10 rounded-lg border border-border/50">
+                        <div key={variable.key} className="space-y-4 p-4 bg-muted/25 rounded-lg border border-border/60">
                           {/* Header with variable name and reset button */}
                           <div className="flex items-center justify-between">
                             <Label className="font-medium">{variable.name}</Label>
@@ -1613,7 +1613,7 @@ const SensitivityScenarios = () => {
                     {sensitivities
                       .filter(s => ['cogs_rate', 'staff_costs', 'mrv_costs', 'pdd_costs', 'feasibility_costs', 'capex', 'depreciation', 'income_tax_rate', 'ar_rate', 'ap_rate'].includes(s.key))
                       .map(variable => (
-                        <div key={variable.key} className="space-y-4 p-4 bg-muted/10 rounded-lg border border-border/50">
+                        <div key={variable.key} className="space-y-4 p-4 bg-muted/25 rounded-lg border border-border/60">
                           {/* Header with variable name and reset button */}
                           <div className="flex items-center justify-between">
                             <Label className="font-medium">{variable.name}</Label>
@@ -1766,7 +1766,7 @@ const SensitivityScenarios = () => {
                     {sensitivities
                       .filter(s => ['discount_rate', 'interest_rate', 'debt_draw', 'debt_duration_years', 'purchase_share', 'purchase_amount', 'equity_injection', 'initial_equity_t0', 'opening_cash_y1', 'initial_ppe'].includes(s.key))
                       .map(variable => (
-                        <div key={variable.key} className="space-y-4 p-4 bg-muted/10 rounded-lg border border-border/50">
+                        <div key={variable.key} className="space-y-4 p-4 bg-muted/25 rounded-lg border border-border/60">
                           {/* Header with variable name and reset button */}
                           <div className="flex items-center justify-between">
                             <Label className="font-medium">{variable.name}</Label>
