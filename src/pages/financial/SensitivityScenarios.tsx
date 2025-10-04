@@ -1547,7 +1547,7 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-3 h-1 w-0.5 bg-green-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-3 h-2 w-0.5 bg-green-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
@@ -1700,7 +1700,7 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-3 h-1 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-3 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
@@ -1853,7 +1853,7 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-3 h-1 w-0.5 bg-orange-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-3 h-2 w-0.5 bg-orange-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
