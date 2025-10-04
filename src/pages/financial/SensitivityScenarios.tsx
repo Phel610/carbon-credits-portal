@@ -1292,7 +1292,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-6 mt-10">
+                          <div className="relative pt-6 mt-10 my-[30px]">
                             <Slider value={[variable.currentValue]} onValueChange={value => handleSensitivityChange(variable.key, value)} min={variable.min} max={variable.max} step={variable.step} className="w-full" />
                             
                             {/* Base Case Marker Line */}
@@ -1392,7 +1392,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-6 mt-10 mx-0">
+                          <div className="relative pt-6 mt-10 mx-0 my-[30px]">
                             <Slider value={[variable.currentValue]} onValueChange={value => handleSensitivityChange(variable.key, value)} min={variable.min} max={variable.max} step={variable.step} className="w-full" />
                             
                             {/* Base Case Marker Line */}
@@ -1492,7 +1492,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-6 mt-10">
+                          <div className="relative pt-6 mt-10 my-[30px]">
                             <Slider value={[variable.currentValue]} onValueChange={value => handleSensitivityChange(variable.key, value)} min={variable.min} max={variable.max} step={variable.step} className="w-full" />
                             
                             {/* Base Case Marker Line */}
