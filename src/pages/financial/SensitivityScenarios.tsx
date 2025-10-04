@@ -1688,7 +1688,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-8">
+                          <div className="relative pt-4">
                             <Slider
                               value={[variable.currentValue]}
                               onValueChange={(value) => handleSensitivityChange(variable.key, value)}
@@ -1700,7 +1700,7 @@ const SensitivityScenarios = () => {
                             
                             {/* Base Case Marker Line */}
                             <div 
-                              className="absolute top-5 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
+                              className="absolute top-1 h-2 w-0.5 bg-blue-500 -translate-x-1/2 pointer-events-none"
                               style={{
                                 left: `${((variable.baseValue - variable.min) / (variable.max - variable.min)) * 100}%`
                               }}
