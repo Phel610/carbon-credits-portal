@@ -634,6 +634,8 @@ const FinancialStatements = () => {
           </Card>
         )}
       </div>
+
+      <FinancialStatementsGuide open={showGuide} onOpenChange={setShowGuide} />
     </FinancialPlatformLayout>
   );
 };
