@@ -1292,7 +1292,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-6 mt-10 my-[30px]">
+                          <div className="relative pt-6 mt-10 my-[45px]">
                             <Slider value={[variable.currentValue]} onValueChange={value => handleSensitivityChange(variable.key, value)} min={variable.min} max={variable.max} step={variable.step} className="w-full" />
                             
                             {/* Base Case Marker Line */}
