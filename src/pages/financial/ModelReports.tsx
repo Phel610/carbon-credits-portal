@@ -11,11 +11,13 @@ import {
   FileText,
   TrendingUp,
   Sparkles,
-  BarChart3
+  BarChart3,
+  HelpCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import ReportPreview from '@/components/financial/ReportPreview';
+import { ReportsGuide } from '@/components/help/ReportsGuide';
 
 interface FinancialModel {
   id: string;
@@ -34,6 +36,7 @@ const ModelReports = () => {
   const [model, setModel] = useState<FinancialModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [previewReport, setPreviewReport] = useState<'standard' | 'ai-assisted' | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -113,11 +116,17 @@ const ModelReports = () => {
             </Button>
           </div>
 
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">{model.name} - Reports</h1>
-            <p className="text-muted-foreground">
-              Generate comprehensive PDF reports with preview functionality
-            </p>
+          <div className="flex justify-between items-start">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold tracking-tight">{model.name} - Reports</h1>
+              <p className="text-muted-foreground">
+                Generate comprehensive PDF reports with preview functionality
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setShowGuide(true)}>
+              <HelpCircle className="h-4 w-4 mr-2" />
+              Help Guide
+            </Button>
           </div>
 
           {/* Report Types */}
@@ -269,6 +278,9 @@ const ModelReports = () => {
           onClose={() => setPreviewReport(null)}
         />
       )}
+
+      {/* Help Guide */}
+      <ReportsGuide open={showGuide} onOpenChange={setShowGuide} />
     </>
   );
 };
