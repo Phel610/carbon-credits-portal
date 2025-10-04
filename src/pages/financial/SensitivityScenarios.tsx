@@ -1688,7 +1688,7 @@ const SensitivityScenarios = () => {
                           </div>
                           
                           {/* Enhanced Slider with Base Case Marker */}
-                          <div className="relative pt-4">
+                          <div className="relative pt-2">
                             <Slider
                               value={[variable.currentValue]}
                               onValueChange={(value) => handleSensitivityChange(variable.key, value)}
