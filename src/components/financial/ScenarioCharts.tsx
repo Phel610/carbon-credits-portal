@@ -167,7 +167,7 @@ const ScenarioCharts = ({ selectedScenarios }: ScenarioChartsProps) => {
                 <XAxis dataKey="metric" />
                 <YAxis />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
+                <ChartLegend content={<ChartLegendContent payload={[]} />} />
                 {selectedScenarios.map((scenario, idx) => (
                   <Bar
                     key={scenario.id}
@@ -197,7 +197,7 @@ const ScenarioCharts = ({ selectedScenarios }: ScenarioChartsProps) => {
                   <XAxis dataKey="year" />
                   <YAxis />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <ChartLegend content={<ChartLegendContent />} />
+                  <ChartLegend content={<ChartLegendContent payload={[]} />} />
                   {selectedScenarios.map((scenario, idx) => (
                     <Line
                       key={scenario.id}
